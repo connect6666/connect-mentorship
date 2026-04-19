@@ -214,11 +214,26 @@ footer {
 
 
 
-.logo{
+nav .container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  margin-right: auto;
+}
+
+
+.nav-links {
+  display: flex;
+  gap: 25px;
+}
+
+.logo img{
   height: 60px;
   width: auto;
   border-radius: 8px;
- 
+  transform: scale(1.2);
 }
 
 
