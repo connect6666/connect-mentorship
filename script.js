@@ -1,15 +1,17 @@
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 document.addEventListener("DOMContentLoaded", () => {
 
   console.log("Connect Mentorship Platform Loaded");
 
   /* ============================
-     ASK QUESTION
+     ASK QUESTION → FIREBASE
   ============================ */
   const questionForm = document.getElementById("questionForm");
   const questionMessage = document.getElementById("formMessage");
 
   if (questionForm) {
-    questionForm.addEventListener("submit", function (e) {
+    questionForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const questionData = {
@@ -28,18 +30,22 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      let questions = JSON.parse(localStorage.getItem("questions")) || [];
-      questions.push(questionData);
-      localStorage.setItem("questions", JSON.stringify(questions));
+      try {
+        await addDoc(collection(window.db, "questions"), questionData);
 
-      questionMessage.style.color = "green";
-      questionMessage.innerText = "Your question has been submitted successfully!";
-      questionForm.reset();
+        questionMessage.style.color = "green";
+        questionMessage.innerText = "Saved to Firebase ✅";
+
+        questionForm.reset();
+
+      } catch (error) {
+        console.error("Error saving:", error);
+      }
     });
   }
 
   /* ============================
-     MENTOR FORM
+     MENTOR FORM → LOCALSTORAGE
   ============================ */
   const mentorForm = document.getElementById("mentorForm");
   const mentorMessage = document.getElementById("mentorMessage");
@@ -80,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* ============================
-     CONTACT FORM
+     CONTACT FORM → LOCALSTORAGE
   ============================ */
   const contactForm = document.getElementById("contactForm");
   const contactFormMessage = document.getElementById("contactFormMessage");
@@ -112,5 +118,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  
 });
