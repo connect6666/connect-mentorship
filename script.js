@@ -112,5 +112,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  loadPublicQuestions();
+  
 });
