@@ -261,3 +261,31 @@ footer {
     justify-content: center;
   }
 }
+
+
+
+
+
+
+
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.hero-left {
+  flex: 1;
+}
+
+.hero-right {
+  flex: 1;
+}
+
+.hero-right img {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  border-radius: 12px;
+}
