@@ -221,10 +221,6 @@ nav .container {
   margin-right: auto;
 }
 
-.logo img {
-  height: 40px;
-  width: auto;
-}
 
 .nav-links {
   display: flex;
