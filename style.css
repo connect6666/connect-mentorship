@@ -212,6 +212,31 @@ footer {
 }
 
 
+nav .container {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  margin-right: auto;
+}
+
+.logo img {
+  height: 40px;
+  width: auto;
+}
+
+.nav-links {
+  display: flex;
+  gap: 25px;
+}
+
+.logo img {
+  height: 60px;
+  width: auto;
+  border-radius: 8px;
+  transform: scale(1.2);
+}
 
 
 
