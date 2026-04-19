@@ -136,8 +136,8 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
 
 <!-- Firebase -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -149,13 +149,9 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
     measurementId: "G-RJM7CM2LCB"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-
-  // 🔥 IMPORTANT (this is what you actually need)
   const db = getFirestore(app);
 
-  // make global
   window.db = db;
 </script>
 
