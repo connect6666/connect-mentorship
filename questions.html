@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Questions | Connect</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .questions-container {
+      max-width: 800px;
+      margin: 40px auto;
+    }
+
+    .question-card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .question-meta {
+      font-size: 14px;
+      color: gray;
+      margin-top: 10px;
+    }
+
+    .answer {
+      margin-top: 12px;
+      padding: 12px;
+      background: #eef2ff;
+      border-left: 4px solid #4f46e5;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    .answer-box {
+      margin-top: 15px;
+    }
+
+    .answer-box textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .answer-box button {
+      margin-top: 10px;
+      padding: 8px 15px;
+      border: none;
+      background: #4f46e5;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <div class="logo">Connect</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="ask.html">Ask</a>
+      <a href="questions.html">Questions</a>
+    </div>
+  </div>
+</nav>
+
+<!-- TITLE -->
+<section>
+  <div class="container">
+    <h2>All Questions</h2>
+  </div>
+</section>
+
+<!-- QUESTIONS -->
+<div class="questions-container" id="questionsList"></div>
+
+<!-- FIREBASE + LOGIC -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  addDoc, 
+  query, 
+  where 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f",
+  measurementId: "G-RJM7CM2LCB"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const container = document.getElementById("questionsList");
+
+
+// 🔐 SAFE HTML (XSS protection)
+function escapeHTML(str) {
+  if (!str) return "";
+  return str.replace(/[&<>"']/g, function(m) {
+    return {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;"
+    }[m];
+  });
+}
+
+
+// 🔥 LOAD QUESTIONS + ANSWERS
+async function loadQuestions() {
+  const questionsSnap = await getDocs(collection(db, "questions"));
+  container.innerHTML = "";
+
+  for (const docSnap of questionsSnap.docs) {
+    const q = docSnap.data();
+    const id = docSnap.id;
+
+    // Fetch answers
+    const answersQuery = query(
+      collection(db, "answers"),
+      where("questionId", "==", id)
+    );
+
+    const answersSnap = await getDocs(answersQuery);
+
+    let answersHTML = "";
+
+    answersSnap.forEach(a => {
+      const ans = a.data();
+      answersHTML += `
+        <div class="answer">
+          <strong>Answer:</strong><br>
+          ${escapeHTML(ans.text)}
+        </div>
+      `;
+    });
+
+    container.innerHTML += `
+      <div class="question-card">
+        <h3>${escapeHTML(q.question)}</h3>
+
+        <div class="question-meta">
+          Asked by: 
+          <strong>${escapeHTML(q.name || "User" + Math.floor(Math.random()*1000))}</strong> 
+          | ${escapeHTML(q.category)}
+        </div>
+
+        ${answersHTML || "<p style='color:gray;'>No answers yet</p>"}
+
+        <div class="answer-box">
+          <textarea id="ans-${id}" placeholder="Write your answer..."></textarea>
+          <button onclick="submitAnswer('${id}')">Submit Answer</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+
+// 🔥 SUBMIT ANSWER
+window.submitAnswer = async function(id) {
+  const textarea = document.getElementById("ans-" + id);
+  const text = textarea.value.trim();
+
+  if (!text) return alert("Write something");
+
+  await addDoc(collection(db, "answers"), {
+    questionId: id,
+    text: text,
+    createdAt: new Date().toLocaleString()
+  });
+
+  textarea.value = "";
+
+  // reload
+  loadQuestions();
+};
+
+
+// 🚀 START
+loadQuestions();
+
+</script>
+
+</body>
+</html>
