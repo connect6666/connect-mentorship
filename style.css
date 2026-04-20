@@ -161,12 +161,15 @@ footer {
 
   .nav-links {
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
+    font-size: 12px; /* 👈 smaller text */
+    flex-wrap: wrap; /* 👈 IMPORTANT */
   }
 
-  .container {
-    padding: 0 10px;
+  .nav-links a {
+    padding: 4px 6px; /* 👈 spacing fix */
   }
+
 }
 
 /* FORM */
