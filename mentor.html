@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Become a Mentor | Connect Mentorship</title>
 
-  <!-- ✅ CANONICAL (VERY IMPORTANT) -->
+  <!-- ✅ CANONICAL -->
   <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/mentor.html">
 
   <link rel="stylesheet" href="style.css">
@@ -34,11 +34,6 @@
   fbq('track', 'PageView');
   </script>
 
-  <noscript>
-    <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"/>
-  </noscript>
-
 </head>
 
 <body>
@@ -48,7 +43,6 @@
   <div class="container">
     <div class="logo">Connect</div>
     <div class="nav-links">
-      <!-- ✅ FIXED RELATIVE LINKS -->
       <a href="index.html">Home</a>
       <a href="ask.html">Ask Question</a>
       <a href="mentor.html">Become Mentor</a>
@@ -64,31 +58,8 @@
   <div class="container">
     <h2>Become a Mentor</h2>
     <p class="center-text">
-      Share your experience and guide juniors on exams, college life, careers, and skills.
+      Share your experience and guide juniors.
     </p>
-  </div>
-</section>
-
-<section class="light-bg">
-  <div class="container page-section">
-    <h2>Why Become a Mentor?</h2>
-
-    <div class="steps">
-      <div class="step-card">
-        <h3>Help Juniors</h3>
-        <p>Guide students who need real advice.</p>
-      </div>
-
-      <div class="step-card">
-        <h3>Build Profile</h3>
-        <p>Show leadership and communication skills.</p>
-      </div>
-
-      <div class="step-card">
-        <h3>Give Back</h3>
-        <p>Make real impact in student community.</p>
-      </div>
-    </div>
   </div>
 </section>
 
@@ -126,25 +97,59 @@
   <p>© 2026 Connect Mentorship</p>
 </footer>
 
-<!-- JS -->
-<script type="module" src="script.js"></script>
-
-<!-- FIREBASE (MATCH VERSION WITH OTHER PAGES) -->
+<!-- 🔥 FIREBASE + SUBMIT LOGIC -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSy...",
-    authDomain: "connect-mentorship.firebaseapp.com",
-    projectId: "connect-mentorship",
-    appId: "1:229549559214:web:..."
-  };
+// ✅ YOUR CONFIG (same as questions page)
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-  window.db = db;
+// 🚀 SUBMIT FORM
+const form = document.getElementById("mentorForm");
+const msg = document.getElementById("mentorMessage");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById("mentorName").value.trim();
+  const email = document.getElementById("mentorEmail").value.trim();
+  const level = document.getElementById("mentorLevel").value;
+  const expertise = document.getElementById("mentorExpertise").value;
+  const reason = document.getElementById("mentorReason").value.trim();
+
+  if (!name || !email || !level || !expertise || !reason) {
+    msg.innerText = "Please fill all fields";
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "mentorApplications"), {
+      name,
+      email,
+      level,
+      expertise,
+      reason,
+      createdAt: new Date().toLocaleString()
+    });
+
+    msg.innerText = "✅ Application submitted successfully!";
+    form.reset();
+
+  } catch (error) {
+    msg.innerText = "❌ Error: " + error.message;
+  }
+});
 </script>
 
 </body>
