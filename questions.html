@@ -60,7 +60,6 @@
 
 <body>
 
-<!-- NAV -->
 <nav>
   <div class="container">
     <div class="logo">Connect</div>
@@ -68,37 +67,28 @@
       <a href="index.html">Home</a>
       <a href="ask.html">Ask</a>
       <a href="questions.html">Questions</a>
-      <a href="/connect-mentorship/mentor.html">Become Mentor</a>
-      <a href="/connect-mentorship/about.html">About</a>
-      <a href="/connect-mentorship/contact.html">Contact</a>
-      <a href="questions.html">Questions</a>
-      <a href="signup.html">Signup</a>
-      <a href="login.html">Login</a>
+      <a href="mentor.html">Become Mentor</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
     </div>
   </div>
 </nav>
 
-<!-- TITLE -->
 <section>
   <div class="container">
     <h2>All Questions</h2>
   </div>
 </section>
 
-<!-- QUESTIONS -->
 <div class="questions-container" id="questionsList"></div>
 
-<!-- FIREBASE + LOGIC -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  addDoc, 
-  query, 
-  where 
+  getFirestore, collection, getDocs, addDoc, query, where, doc, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -106,17 +96,34 @@ const firebaseConfig = {
   projectId: "connect-mentorship",
   storageBucket: "connect-mentorship.firebasestorage.app",
   messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f",
-  measurementId: "G-RJM7CM2LCB"
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const container = document.getElementById("questionsList");
 
+let isMentor = false;
 
-// 🔐 SAFE HTML (XSS protection)
+// 🔐 CHECK USER ROLE
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const docSnap = await getDoc(doc(db, "users", user.uid));
+    if (docSnap.exists()) {
+      const role = docSnap.data().role;
+      if (role === "mentor") {
+        isMentor = true;
+      }
+    }
+  }
+
+  loadQuestions();
+});
+
+
+// 🔐 SAFE HTML
 function escapeHTML(str) {
   if (!str) return "";
   return str.replace(/[&<>"']/g, function(m) {
@@ -131,7 +138,7 @@ function escapeHTML(str) {
 }
 
 
-// 🔥 LOAD QUESTIONS + ANSWERS
+// 🔥 LOAD QUESTIONS
 async function loadQuestions() {
   const questionsSnap = await getDocs(collection(db, "questions"));
   container.innerHTML = "";
@@ -140,7 +147,6 @@ async function loadQuestions() {
     const q = docSnap.data();
     const id = docSnap.id;
 
-    // Fetch answers
     const answersQuery = query(
       collection(db, "answers"),
       where("questionId", "==", id)
@@ -153,12 +159,20 @@ async function loadQuestions() {
     answersSnap.forEach(a => {
       const ans = a.data();
       answersHTML += `
-        <div class="answer">
-          <strong>Answer:</strong><br>
-          ${escapeHTML(ans.text)}
-        </div>
+        <div class="answer">${escapeHTML(ans.text)}</div>
       `;
     });
+
+    // 🔥 ONLY SHOW IF MENTOR
+    let answerBoxHTML = "";
+    if (isMentor) {
+      answerBoxHTML = `
+        <div class="answer-box">
+          <textarea id="ans-${id}" placeholder="Write your answer..."></textarea>
+          <button onclick="submitAnswer('${id}')">Submit Answer</button>
+        </div>
+      `;
+    }
 
     container.innerHTML += `
       <div class="question-card">
@@ -166,24 +180,27 @@ async function loadQuestions() {
 
         <div class="question-meta">
           Asked by: 
-          <strong>${escapeHTML(q.name || "User" + Math.floor(Math.random()*1000))}</strong> 
+          <strong>${escapeHTML(q.name || "User")}</strong> 
           | ${escapeHTML(q.category)}
         </div>
 
         ${answersHTML || "<p style='color:gray;'>No answers yet</p>"}
 
-        <div class="answer-box">
-          <textarea id="ans-${id}" placeholder="Write your answer..."></textarea>
-          <button onclick="submitAnswer('${id}')">Submit Answer</button>
-        </div>
+        ${answerBoxHTML}
       </div>
     `;
   }
 }
 
 
-// 🔥 SUBMIT ANSWER
+// 🔥 SUBMIT ANSWER (PROTECTED)
 window.submitAnswer = async function(id) {
+
+  if (!isMentor) {
+    alert("Only mentors can answer ❌");
+    return;
+  }
+
   const textarea = document.getElementById("ans-" + id);
   const text = textarea.value.trim();
 
@@ -192,18 +209,12 @@ window.submitAnswer = async function(id) {
   await addDoc(collection(db, "answers"), {
     questionId: id,
     text: text,
-    createdAt: new Date().toLocaleString()
+    createdAt: new Date()
   });
 
   textarea.value = "";
-
-  // reload
   loadQuestions();
 };
-
-
-// 🚀 START
-loadQuestions();
 
 </script>
 
