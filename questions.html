@@ -7,12 +7,69 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    .questions-container { max-width: 800px; margin: 40px auto; }
-    .question-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-    .question-meta { font-size: 14px; color: gray; margin-top: 10px; }
-    .answer { margin-top: 12px; padding: 12px; background: #eef2ff; border-left: 4px solid #4f46e5; border-radius: 8px; }
-    .reply { font-size: 14px; margin-top: 6px; padding-left: 10px; }
-    .vote-btn { margin-top: 6px; cursor: pointer; background: none; border: none; color: #4f46e5; font-weight: bold; }
+    .questions-container {
+      max-width: 800px;
+      margin: 40px auto;
+    }
+
+    .question-card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .question-meta {
+      font-size: 14px;
+      color: gray;
+      margin-top: 10px;
+    }
+
+    .answer {
+      margin-top: 12px;
+      padding: 12px;
+      background: #eef2ff;
+      border-left: 4px solid #4f46e5;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    .answer small {
+      display: block;
+      margin-top: 6px;
+      color: gray;
+    }
+
+    .vote-btn {
+      margin-top: 6px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #4f46e5;
+      font-weight: bold;
+    }
+
+    .answer-box {
+      margin-top: 15px;
+    }
+
+    .answer-box textarea {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .answer-box button {
+      margin-top: 10px;
+      padding: 8px 15px;
+      border: none;
+      background: #4f46e5;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 
@@ -44,16 +101,26 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
-  getFirestore, collection, addDoc, query, where, doc,
-  getDoc, updateDoc, onSnapshot
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  doc,
+  getDoc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship",
-  appId: "1:229549559214:web:..."
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -65,193 +132,148 @@ const container = document.getElementById("questionsList");
 let currentUser = null;
 let isMentor = false;
 
-// ✅ PER ANSWER COOLDOWN
-let replyCooldown = {};
-
-// 🔐 AUTH
+// 🔐 CHECK USER ROLE
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
+
     const snap = await getDoc(doc(db, "users", user.uid));
     if (snap.exists() && snap.data().role === "mentor") {
       isMentor = true;
     }
   }
-  loadRealtime();
+
+  loadQuestions();
 });
 
 // 🔐 SAFE HTML
 function escapeHTML(str) {
-  return str?.replace(/[&<>"']/g, m => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
-  }[m])) || "";
+  if (!str) return "";
+  return str.replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
 }
 
-// 🚀 REALTIME LOAD
-function loadRealtime() {
+// 🔥 LOAD QUESTIONS
+async function loadQuestions() {
+  const questionsSnap = await getDocs(collection(db, "questions"));
+  container.innerHTML = "";
 
-  onSnapshot(collection(db, "questions"), (qSnap) => {
+  for (const docSnap of questionsSnap.docs) {
+    const q = docSnap.data();
+    const qId = docSnap.id;
 
-    container.innerHTML = "";
+    const answersSnap = await getDocs(query(
+      collection(db, "answers"),
+      where("questionId", "==", qId)
+    ));
 
-    qSnap.forEach(qDoc => {
-
-      const q = qDoc.data();
-      const qId = qDoc.id;
-
-      const answersQuery = query(collection(db, "answers"), where("questionId", "==", qId));
-
-      onSnapshot(answersQuery, (aSnap) => {
-
-        let answers = [];
-        aSnap.forEach(d => answers.push({ id: d.id, ...d.data() }));
-
-        answers.sort((a,b) => (b.votes||0)-(a.votes||0));
-
-        let html = "";
-
-        answers.forEach(ans => {
-
-          // replies listener
-          onSnapshot(query(collection(db,"replies"),where("answerId","==",ans.id)), (rSnap)=>{
-            const replies = [];
-            rSnap.forEach(r=>replies.push(r.data()));
-
-            const el = document.getElementById("replies-"+ans.id);
-            if(el){
-              el.innerHTML = replies.map(r=>`
-                <div class="reply">💬 <strong>${escapeHTML(r.userName)}</strong>: ${escapeHTML(r.text)}</div>
-              `).join("");
-            }
-
-            const count = document.getElementById("count-"+ans.id);
-            if(count) count.innerText = replies.length;
-          });
-
-          html += `
-          <div class="answer">
-            ${escapeHTML(ans.text)}
-            <small>Answered by ${escapeHTML(ans.mentorName||"Mentor")}</small>
-
-            👍 ${ans.votes||0}
-            <button onclick="upvote('${ans.id}')">Upvote</button>
-
-            <div>
-              <button onclick="toggleReplies('${ans.id}')">
-                💬 <span id="count-${ans.id}">0</span> Replies
-              </button>
-            </div>
-
-            <div id="replies-${ans.id}" style="display:none;"></div>
-
-            <input id="reply-${ans.id}" placeholder="Write reply...">
-            <button onclick="submitReply('${ans.id}')">Reply</button>
-          </div>
-          `;
-        });
-
-        let answerBox = "";
-        if(isMentor){
-          answerBox = `
-          <textarea id="ans-${qId}"></textarea>
-          <button onclick="submitAnswer('${qId}')">Answer</button>`;
-        }
-
-        container.innerHTML += `
-        <div class="question-card">
-          <h3>${escapeHTML(q.question)}</h3>
-          <div class="question-meta">${escapeHTML(q.name||"User")} | ${escapeHTML(q.category)}</div>
-          ${html}
-          ${answerBox}
-        </div>`;
-      });
+    let answers = [];
+    answersSnap.forEach(d => {
+      answers.push({ id: d.id, ...d.data() });
     });
-  });
+
+    // 🔥 SORT BY VOTES
+    answers.sort((a, b) => (b.votes || 0) - (a.votes || 0));
+
+    let answersHTML = "";
+
+    answers.forEach(ans => {
+      answersHTML += `
+        <div class="answer">
+          ${escapeHTML(ans.text)}
+
+          <small>Answered by ${escapeHTML(ans.mentorName || "Mentor")}</small>
+
+          👍 <span>${ans.votes || 0}</span>
+          <button class="vote-btn" onclick="upvote('${ans.id}')">Upvote</button>
+        </div>
+      `;
+    });
+
+    let answerBox = "";
+    if (isMentor) {
+      answerBox = `
+        <div class="answer-box">
+          <textarea id="ans-${qId}" placeholder="Write answer..."></textarea>
+          <button onclick="submitAnswer('${qId}')">Submit Answer</button>
+        </div>
+      `;
+    }
+
+    container.innerHTML += `
+      <div class="question-card">
+        <h3>${escapeHTML(q.question)}</h3>
+
+        <div class="question-meta">
+          ${escapeHTML(q.name || "User")} | ${escapeHTML(q.category)}
+        </div>
+
+        ${answersHTML || "<p>No answers yet</p>"}
+
+        ${answerBox}
+      </div>
+    `;
+  }
 }
 
-// 🔥 TOGGLE
-window.toggleReplies = id => {
-  const el = document.getElementById("replies-"+id);
-  el.style.display = el.style.display==="none"?"block":"none";
-};
+// 🔥 SUBMIT ANSWER
+window.submitAnswer = async function(qId) {
 
-// 🔥 ANSWER
-window.submitAnswer = async function(qId){
+  if (!isMentor) return alert("Only mentors ❌");
 
-  const text = document.getElementById("ans-"+qId).value.trim();
+  const text = document.getElementById("ans-" + qId).value.trim();
+  if (!text) return alert("Write answer");
 
-  if(!text) return alert("Write answer ❌");
-  if(text.length>500) return alert("Max 500 characters ❌");
+  let name = "Mentor";
 
-  const snap = await getDoc(doc(db,"users",currentUser.uid));
-  const name = snap.exists()?snap.data().name:"Mentor";
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
+  if (snap.exists()) {
+    name = snap.data().name || "Mentor";
+  }
 
-  await addDoc(collection(db,"answers"),{
-    questionId:qId,
+  await addDoc(collection(db, "answers"), {
+    questionId: qId,
     text,
-    mentorName:name,
-    userId:currentUser.uid,
-    votes:0,
-    upvotedBy:[],
-    createdAt:new Date()
+    mentorName: name,
+    userId: currentUser.uid,
+    votes: 0,
+    upvotedBy: [],
+    createdAt: new Date()
   });
+
+  loadQuestions();
 };
 
-// 🔥 UPVOTE
-window.upvote = async function(id){
+// 🔥 UPVOTE (ONE TIME ONLY)
+window.upvote = async function(answerId) {
 
-  if(!currentUser) return alert("Login required");
+  if (!currentUser) {
+    alert("Login required");
+    return;
+  }
 
-  const ref = doc(db,"answers",id);
+  const ref = doc(db, "answers", answerId);
   const snap = await getDoc(ref);
+
   const data = snap.data();
+  const userId = currentUser.uid;
 
-  if((data.upvotedBy||[]).includes(currentUser.uid)){
-    return alert("Already voted ❌");
+  if ((data.upvotedBy || []).includes(userId)) {
+    alert("Already voted ❌");
+    return;
   }
 
-  await updateDoc(ref,{
-    votes:(data.votes||0)+1,
-    upvotedBy:[...(data.upvotedBy||[]),currentUser.uid]
-  });
-};
-
-// 🔥 REPLY
-window.submitReply = async function(answerId){
-
-  const input = document.getElementById("reply-"+answerId);
-  const btn = input.nextElementSibling;
-
-  const text = input.value.trim();
-
-  if(!text) return alert("Write reply");
-  if(text.length>300) return alert("Max 300 chars");
-
-  const now = Date.now();
-  if(replyCooldown[answerId] && now - replyCooldown[answerId] < 5000){
-    return alert("Wait 5 sec ❌");
-  }
-  replyCooldown[answerId] = now;
-
-  btn.disabled = true;
-  btn.innerText = "Sending...";
-
-  let name="User";
-  if(currentUser){
-    const snap = await getDoc(doc(db,"users",currentUser.uid));
-    if(snap.exists()) name=snap.data().name;
-  }
-
-  await addDoc(collection(db,"replies"),{
-    answerId,text,userName:name,createdAt:new Date()
+  await updateDoc(ref, {
+    votes: (data.votes || 0) + 1,
+    upvotedBy: [...(data.upvotedBy || []), userId]
   });
 
-  input.value="";
-
-  setTimeout(()=>{
-    btn.disabled=false;
-    btn.innerText="Reply";
-  },3000);
+  loadQuestions();
 };
 
 </script>
