@@ -197,3 +197,22 @@ footer {
   text-align: center;
   font-weight: bold;
 }
+
+
+#userArea {
+  display: none;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Hide empty state completely */
+#userArea:empty {
+  display: none !important;
+}
+
+/* Fix button ghost background */
+#userArea .btn {
+  background: transparent; /* 🔥 remove white box */
+  border: 2px solid white;
+  color: white;
+}
