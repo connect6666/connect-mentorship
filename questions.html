@@ -37,10 +37,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "YOUR_KEY",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship",
-  appId: "1:229549559214:web:..."
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -54,7 +54,7 @@ let isMentor = false;
 let replyCooldown = {};
 
 
-// ✅ AUTH FIX (IMPORTANT)
+// ✅ FIXED AUTH SYSTEM
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
@@ -77,7 +77,7 @@ function escapeHTML(str) {
 }
 
 
-// 🚀 REALTIME SYSTEM
+// 🚀 REALTIME
 function loadRealtime() {
 
   onSnapshot(collection(db, "questions"), (qSnap) => {
@@ -96,14 +96,14 @@ function loadRealtime() {
         let answers = [];
         aSnap.forEach(d => answers.push({ id: d.id, ...d.data() }));
 
-        // ✅ SORT BY VOTES
+        // 🔥 SORT BY VOTES
         answers.sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
         let html = "";
 
         answers.forEach(ans => {
 
-          // 🔥 REPLIES REALTIME
+          // 🔥 REPLIES
           onSnapshot(query(collection(db,"replies"), where("answerId","==",ans.id)), (rSnap) => {
 
             const replies = [];
@@ -164,14 +164,14 @@ function loadRealtime() {
 }
 
 
-// 🔥 TOGGLE REPLIES
+// 🔥 TOGGLE
 window.toggleReplies = id => {
   const el = document.getElementById("replies-" + id);
   el.style.display = el.style.display === "none" ? "block" : "none";
 };
 
 
-// 🔥 SUBMIT ANSWER (MENTOR ONLY)
+// 🔥 ANSWER
 window.submitAnswer = async function(qId) {
 
   if (!currentUser) return alert("Login required ❌");
@@ -198,12 +198,10 @@ window.submitAnswer = async function(qId) {
 };
 
 
-// 🔥 FIXED UPVOTE (MAIN BUG FIX)
+// 🔥 ✅ FINAL UPVOTE FIX
 window.upvote = async function(id) {
 
-  const user = auth.currentUser; // ✅ ALWAYS CORRECT
-
-  if (!user) {
+  if (!currentUser) {
     alert("Login required ❌");
     return;
   }
@@ -212,19 +210,18 @@ window.upvote = async function(id) {
   const snap = await getDoc(ref);
   const data = snap.data();
 
-  // ✅ PREVENT MULTIPLE VOTES
-  if ((data.upvotedBy || []).includes(user.uid)) {
+  if ((data.upvotedBy || []).includes(currentUser.uid)) {
     return alert("Already voted ❌");
   }
 
   await updateDoc(ref, {
-    votes: increment(1), // ✅ FIXED
-    upvotedBy: [...(data.upvotedBy || []), user.uid]
+    votes: increment(1),
+    upvotedBy: [...(data.upvotedBy || []), currentUser.uid]
   });
 };
 
 
-// 🔥 REPLY SYSTEM
+// 🔥 REPLY
 window.submitReply = async function(answerId) {
 
   const input = document.getElementById("reply-" + answerId);
@@ -258,7 +255,6 @@ window.submitReply = async function(answerId) {
     createdAt: new Date()
   });
 
-  // ✅ CLEAR INPUT (FIXED BUG)
   input.value = "";
   input.placeholder = "Reply sent ✅";
 
