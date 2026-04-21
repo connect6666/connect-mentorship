@@ -2,43 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>All Questions | Connect</title>
   <link rel="stylesheet" href="style.css">
 
   <style>
     .questions-container { max-width: 800px; margin: 40px auto; }
-    .question-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-    .question-meta { font-size: 14px; color: gray; margin-top: 10px; }
-    .answer { margin-top: 12px; padding: 12px; background: #eef2ff; border-left: 4px solid #4f46e5; border-radius: 8px; }
-    .reply { font-size: 14px; margin-top: 6px; padding-left: 10px; }
-    .vote-btn { margin-top: 6px; cursor: pointer; background: none; border: none; color: #4f46e5; font-weight: bold; }
+    .question-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 10px; }
+    .answer { margin-top: 12px; padding: 12px; background: #eef2ff; border-left: 4px solid #4f46e5; }
+    .reply { font-size: 14px; margin-top: 6px; }
+    button { cursor: pointer; margin-top: 5px; }
   </style>
 </head>
 
 <body>
-
-<nav>
-  <div class="container">
-    <div class="logo">Connect</div>
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask</a>
-      <a href="questions.html">Questions</a>
-      <a href="mentor.html">Become Mentor</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="login.html">login</a>
-
-    </div>
-  </div>
-</nav>
-
-<section>
-  <div class="container">
-    <h2>All Questions</h2>
-  </div>
-</section>
 
 <div class="questions-container" id="questionsList"></div>
 
@@ -46,9 +22,18 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
-  getFirestore, collection, addDoc, query, where, doc,
-  getDoc, updateDoc, onSnapshot
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  where,
+  doc,
+  getDoc,
+  updateDoc,
+  onSnapshot,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -66,21 +51,23 @@ const container = document.getElementById("questionsList");
 
 let currentUser = null;
 let isMentor = false;
-
-// ✅ PER ANSWER COOLDOWN
 let replyCooldown = {};
 
-// 🔐 AUTH
+
+// ✅ AUTH FIX (IMPORTANT)
 onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+
   if (user) {
-    currentUser = user;
     const snap = await getDoc(doc(db, "users", user.uid));
     if (snap.exists() && snap.data().role === "mentor") {
       isMentor = true;
     }
   }
+
   loadRealtime();
 });
+
 
 // 🔐 SAFE HTML
 function escapeHTML(str) {
@@ -89,7 +76,8 @@ function escapeHTML(str) {
   }[m])) || "";
 }
 
-// 🚀 REALTIME LOAD
+
+// 🚀 REALTIME SYSTEM
 function loadRealtime() {
 
   onSnapshot(collection(db, "questions"), (qSnap) => {
@@ -108,34 +96,37 @@ function loadRealtime() {
         let answers = [];
         aSnap.forEach(d => answers.push({ id: d.id, ...d.data() }));
 
-        answers.sort((a,b) => (b.votes||0)-(a.votes||0));
+        // ✅ SORT BY VOTES
+        answers.sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
         let html = "";
 
         answers.forEach(ans => {
 
-          // replies listener
-          onSnapshot(query(collection(db,"replies"),where("answerId","==",ans.id)), (rSnap)=>{
-            const replies = [];
-            rSnap.forEach(r=>replies.push(r.data()));
+          // 🔥 REPLIES REALTIME
+          onSnapshot(query(collection(db,"replies"), where("answerId","==",ans.id)), (rSnap) => {
 
-            const el = document.getElementById("replies-"+ans.id);
-            if(el){
-              el.innerHTML = replies.map(r=>`
-                <div class="reply">💬 <strong>${escapeHTML(r.userName)}</strong>: ${escapeHTML(r.text)}</div>
+            const replies = [];
+            rSnap.forEach(r => replies.push(r.data()));
+
+            const el = document.getElementById("replies-" + ans.id);
+            if (el) {
+              el.innerHTML = replies.map(r => `
+                <div class="reply">💬 <b>${escapeHTML(r.userName)}</b>: ${escapeHTML(r.text)}</div>
               `).join("");
             }
 
-            const count = document.getElementById("count-"+ans.id);
-            if(count) count.innerText = replies.length;
+            const count = document.getElementById("count-" + ans.id);
+            if (count) count.innerText = replies.length;
           });
 
           html += `
           <div class="answer">
-            ${escapeHTML(ans.text)}
-            <small>Answered by ${escapeHTML(ans.mentorName||"Mentor")}</small>
 
-            👍 ${ans.votes||0}
+            ${escapeHTML(ans.text)}
+            <br><small>Answered by ${escapeHTML(ans.mentorName || "Mentor")}</small>
+
+            <br>👍 ${ans.votes || 0}
             <button onclick="upvote('${ans.id}')">Upvote</button>
 
             <div>
@@ -148,21 +139,22 @@ function loadRealtime() {
 
             <input id="reply-${ans.id}" placeholder="Write reply...">
             <button onclick="submitReply('${ans.id}')">Reply</button>
-          </div>
-          `;
+
+          </div>`;
         });
 
         let answerBox = "";
-        if(isMentor){
+        if (isMentor) {
           answerBox = `
-          <textarea id="ans-${qId}"></textarea>
-          <button onclick="submitAnswer('${qId}')">Answer</button>`;
+            <textarea id="ans-${qId}" placeholder="Write answer..."></textarea>
+            <button onclick="submitAnswer('${qId}')">Answer</button>
+          `;
         }
 
         container.innerHTML += `
         <div class="question-card">
           <h3>${escapeHTML(q.question)}</h3>
-          <div class="question-meta">${escapeHTML(q.name||"User")} | ${escapeHTML(q.category)}</div>
+          <div>${escapeHTML(q.name || "User")} | ${escapeHTML(q.category)}</div>
           ${html}
           ${answerBox}
         </div>`;
@@ -171,89 +163,110 @@ function loadRealtime() {
   });
 }
 
-// 🔥 TOGGLE
+
+// 🔥 TOGGLE REPLIES
 window.toggleReplies = id => {
-  const el = document.getElementById("replies-"+id);
-  el.style.display = el.style.display==="none"?"block":"none";
+  const el = document.getElementById("replies-" + id);
+  el.style.display = el.style.display === "none" ? "block" : "none";
 };
 
-// 🔥 ANSWER
-window.submitAnswer = async function(qId){
 
-  const text = document.getElementById("ans-"+qId).value.trim();
+// 🔥 SUBMIT ANSWER (MENTOR ONLY)
+window.submitAnswer = async function(qId) {
 
-  if(!text) return alert("Write answer ❌");
-  if(text.length>500) return alert("Max 500 characters ❌");
+  if (!currentUser) return alert("Login required ❌");
+
+  const text = document.getElementById("ans-" + qId).value.trim();
+
+  if (!text) return alert("Write answer ❌");
+  if (text.length > 500) return alert("Max 500 characters ❌");
 
   const snap = await getDoc(doc(db,"users",currentUser.uid));
-  const name = snap.exists()?snap.data().name:"Mentor";
+  const name = snap.exists() ? snap.data().name : "Mentor";
 
-  await addDoc(collection(db,"answers"),{
-    questionId:qId,
+  await addDoc(collection(db,"answers"), {
+    questionId: qId,
     text,
-    mentorName:name,
-    userId:currentUser.uid,
-    votes:0,
-    upvotedBy:[],
-    createdAt:new Date()
+    mentorName: name,
+    userId: currentUser.uid,
+    votes: 0,
+    upvotedBy: [],
+    createdAt: new Date()
   });
+
+  document.getElementById("ans-" + qId).value = "";
 };
 
-// 🔥 UPVOTE
-window.upvote = async function(id){
 
-  if(!currentUser) return alert("Login required");
+// 🔥 FIXED UPVOTE (MAIN BUG FIX)
+window.upvote = async function(id) {
 
-  const ref = doc(db,"answers",id);
+  const user = auth.currentUser; // ✅ ALWAYS CORRECT
+
+  if (!user) {
+    alert("Login required ❌");
+    return;
+  }
+
+  const ref = doc(db, "answers", id);
   const snap = await getDoc(ref);
   const data = snap.data();
 
-  if((data.upvotedBy||[]).includes(currentUser.uid)){
+  // ✅ PREVENT MULTIPLE VOTES
+  if ((data.upvotedBy || []).includes(user.uid)) {
     return alert("Already voted ❌");
   }
 
-  await updateDoc(ref,{
-    votes:(data.votes||0)+1,
-    upvotedBy:[...(data.upvotedBy||[]),currentUser.uid]
+  await updateDoc(ref, {
+    votes: increment(1), // ✅ FIXED
+    upvotedBy: [...(data.upvotedBy || []), user.uid]
   });
 };
 
-// 🔥 REPLY
-window.submitReply = async function(answerId){
 
-  const input = document.getElementById("reply-"+answerId);
+// 🔥 REPLY SYSTEM
+window.submitReply = async function(answerId) {
+
+  const input = document.getElementById("reply-" + answerId);
   const btn = input.nextElementSibling;
-
   const text = input.value.trim();
 
-  if(!text) return alert("Write reply");
-  if(text.length>300) return alert("Max 300 chars");
+  if (!text) return alert("Write reply ❌");
+  if (text.length > 300) return alert("Max 300 chars ❌");
 
   const now = Date.now();
-  if(replyCooldown[answerId] && now - replyCooldown[answerId] < 5000){
+  if (replyCooldown[answerId] && now - replyCooldown[answerId] < 5000) {
     return alert("Wait 5 sec ❌");
   }
+
   replyCooldown[answerId] = now;
 
   btn.disabled = true;
   btn.innerText = "Sending...";
 
-  let name="User";
-  if(currentUser){
+  let name = "User";
+
+  if (currentUser) {
     const snap = await getDoc(doc(db,"users",currentUser.uid));
-    if(snap.exists()) name=snap.data().name;
+    if (snap.exists()) name = snap.data().name;
   }
 
-  await addDoc(collection(db,"replies"),{
-    answerId,text,userName:name,createdAt:new Date()
+  await addDoc(collection(db,"replies"), {
+    answerId,
+    text,
+    userName: name,
+    createdAt: new Date()
   });
 
-  input.value="";
+  // ✅ CLEAR INPUT (FIXED BUG)
+  input.value = "";
+  input.placeholder = "Reply sent ✅";
 
-  setTimeout(()=>{
-    btn.disabled=false;
-    btn.innerText="Reply";
-  },3000);
+  setTimeout(() => {
+    input.placeholder = "Write reply...";
+    btn.disabled = false;
+    btn.innerText = "Reply";
+  }, 1500);
 };
 
 </script>
