@@ -299,13 +299,18 @@ window.upvote = async function(id) {
 // 🔥 REPLY
 window.submitReply = async function(answerId) {
 
-  const text = document.getElementById("reply-" + answerId).value;
+  const input = document.getElementById("reply-" + answerId);
+  const text = input.value.trim();
+
+  if (!text) return alert("Write reply");
 
   let name = "User";
 
   if (currentUser) {
     const snap = await getDoc(doc(db, "users", currentUser.uid));
-    if (snap.exists()) name = snap.data().name;
+    if (snap.exists()) {
+      name = snap.data().name || "User";
+    }
   }
 
   await addDoc(collection(db, "replies"), {
@@ -314,8 +319,18 @@ window.submitReply = async function(answerId) {
     userName: name,
     createdAt: new Date()
   });
-};
 
+  // ✅ CLEAR INPUT
+  input.value = "";
+
+  // ✅ SHOW SUCCESS FEEDBACK
+  input.placeholder = "Reply sent ✅";
+
+  setTimeout(() => {
+    input.placeholder = "Write reply...";
+  }, 1500);
+
+};
 </script>
 
 
