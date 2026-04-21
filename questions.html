@@ -35,6 +35,21 @@
       font-size: 15px;
     }
 
+    .answer small {
+      display: block;
+      margin-top: 6px;
+      color: gray;
+    }
+
+    .vote-btn {
+      margin-top: 6px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      color: #4f46e5;
+      font-weight: bold;
+    }
+
     .answer-box {
       margin-top: 15px;
     }
@@ -83,12 +98,21 @@
 <div class="questions-container" id="questionsList"></div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { 
-  getFirestore, collection, getDocs, addDoc, query, where, doc, getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  where,
+  doc,
+  getDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -105,38 +129,34 @@ const auth = getAuth(app);
 
 const container = document.getElementById("questionsList");
 
+let currentUser = null;
 let isMentor = false;
 
 // 🔐 CHECK USER ROLE
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    const docSnap = await getDoc(doc(db, "users", user.uid));
-    if (docSnap.exists()) {
-      const role = docSnap.data().role;
-      if (role === "mentor") {
-        isMentor = true;
-      }
+    currentUser = user;
+
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists() && snap.data().role === "mentor") {
+      isMentor = true;
     }
   }
 
   loadQuestions();
 });
 
-
 // 🔐 SAFE HTML
 function escapeHTML(str) {
   if (!str) return "";
-  return str.replace(/[&<>"']/g, function(m) {
-    return {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[m];
-  });
+  return str.replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
 }
-
 
 // 🔥 LOAD QUESTIONS
 async function loadQuestions() {
@@ -145,31 +165,42 @@ async function loadQuestions() {
 
   for (const docSnap of questionsSnap.docs) {
     const q = docSnap.data();
-    const id = docSnap.id;
+    const qId = docSnap.id;
 
-    const answersQuery = query(
+    const answersSnap = await getDocs(query(
       collection(db, "answers"),
-      where("questionId", "==", id)
-    );
+      where("questionId", "==", qId)
+    ));
 
-    const answersSnap = await getDocs(answersQuery);
+    let answers = [];
+    answersSnap.forEach(d => {
+      answers.push({ id: d.id, ...d.data() });
+    });
+
+    // 🔥 SORT BY VOTES
+    answers.sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
     let answersHTML = "";
 
-    answersSnap.forEach(a => {
-      const ans = a.data();
+    answers.forEach(ans => {
       answersHTML += `
-        <div class="answer">${escapeHTML(ans.text)}</div>
+        <div class="answer">
+          ${escapeHTML(ans.text)}
+
+          <small>Answered by ${escapeHTML(ans.mentorName || "Mentor")}</small>
+
+          👍 <span>${ans.votes || 0}</span>
+          <button class="vote-btn" onclick="upvote('${ans.id}')">Upvote</button>
+        </div>
       `;
     });
 
-    // 🔥 ONLY SHOW IF MENTOR
-    let answerBoxHTML = "";
+    let answerBox = "";
     if (isMentor) {
-      answerBoxHTML = `
+      answerBox = `
         <div class="answer-box">
-          <textarea id="ans-${id}" placeholder="Write your answer..."></textarea>
-          <button onclick="submitAnswer('${id}')">Submit Answer</button>
+          <textarea id="ans-${qId}" placeholder="Write answer..."></textarea>
+          <button onclick="submitAnswer('${qId}')">Submit Answer</button>
         </div>
       `;
     }
@@ -179,40 +210,69 @@ async function loadQuestions() {
         <h3>${escapeHTML(q.question)}</h3>
 
         <div class="question-meta">
-          Asked by: 
-          <strong>${escapeHTML(q.name || "User")}</strong> 
-          | ${escapeHTML(q.category)}
+          ${escapeHTML(q.name || "User")} | ${escapeHTML(q.category)}
         </div>
 
-        ${answersHTML || "<p style='color:gray;'>No answers yet</p>"}
+        ${answersHTML || "<p>No answers yet</p>"}
 
-        ${answerBoxHTML}
+        ${answerBox}
       </div>
     `;
   }
 }
 
+// 🔥 SUBMIT ANSWER
+window.submitAnswer = async function(qId) {
 
-// 🔥 SUBMIT ANSWER (PROTECTED)
-window.submitAnswer = async function(id) {
+  if (!isMentor) return alert("Only mentors ❌");
 
-  if (!isMentor) {
-    alert("Only mentors can answer ❌");
-    return;
+  const text = document.getElementById("ans-" + qId).value.trim();
+  if (!text) return alert("Write answer");
+
+  let name = "Mentor";
+
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
+  if (snap.exists()) {
+    name = snap.data().name || "Mentor";
   }
 
-  const textarea = document.getElementById("ans-" + id);
-  const text = textarea.value.trim();
-
-  if (!text) return alert("Write something");
-
   await addDoc(collection(db, "answers"), {
-    questionId: id,
-    text: text,
+    questionId: qId,
+    text,
+    mentorName: name,
+    userId: currentUser.uid,
+    votes: 0,
+    upvotedBy: [],
     createdAt: new Date()
   });
 
-  textarea.value = "";
+  loadQuestions();
+};
+
+// 🔥 UPVOTE (ONE TIME ONLY)
+window.upvote = async function(answerId) {
+
+  if (!currentUser) {
+    alert("Login required");
+    return;
+  }
+
+  const ref = doc(db, "answers", answerId);
+  const snap = await getDoc(ref);
+
+  const data = snap.data();
+  const userId = currentUser.uid;
+
+  if ((data.upvotedBy || []).includes(userId)) {
+    alert("Already voted ❌");
+    return;
+  }
+
+  await updateDoc(ref, {
+    votes: (data.votes || 0) + 1,
+    upvotedBy: [...(data.upvotedBy || []), userId]
+  });
+
   loadQuestions();
 };
 
