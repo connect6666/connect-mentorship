@@ -13,6 +13,8 @@
   <input type="text" id="name" placeholder="Your Name"><br><br>
   <input type="email" id="email" placeholder="Email"><br><br>
   <input type="password" id="password" placeholder="Password (min 6 characters)"><br><br>
+  <input type="text" id="phone" placeholder="WhatsApp Number (e.g. 919876543210)">
+<br><br>
 
   <!-- ROLE SELECT -->
   <select id="role">
@@ -51,6 +53,7 @@ window.signup = async function() {
   const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value;
   const role = document.getElementById("role").value;
+  const phone = document.getElementById("phone").value.trim();
   const msg = document.getElementById("msg");
 
   // 🔴 VALIDATION
@@ -59,6 +62,18 @@ window.signup = async function() {
     msg.innerText = "All fields are required ❌";
     return;
   }
+
+  if (!phone) {
+  msg.style.color = "red";
+  msg.innerText = "Phone number required ❌";
+  return;
+}
+
+if (!/^\d{10,15}$/.test(phone)) {
+  msg.style.color = "red";
+  msg.innerText = "Enter valid phone (numbers only, no +) ❌";
+  return;
+}
 
   if (pass.length < 6) {
     msg.style.color = "red";
@@ -73,11 +88,12 @@ window.signup = async function() {
     const userCred = await createUserWithEmailAndPassword(auth, email, pass);
 
     // 🔥 SAVE USER DATA
-    await setDoc(doc(db, "users", userCred.user.uid), {
-      name: name,
-      role: role,
-      createdAt: new Date()
-    });
+  await setDoc(doc(db, "users", userCred.user.uid), {
+  name: name,
+  role: role,
+  phone: phone, // 👈 IMPORTANT
+  createdAt: new Date()
+});
 
     msg.style.color = "green";
     msg.innerText = "Account created successfully ✅";
