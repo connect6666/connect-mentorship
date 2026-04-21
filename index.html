@@ -312,8 +312,6 @@ academic and career decisions with confidence.
   <!-- JS -->
 
 
-<script type="module" src="script.js"></script>
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -335,33 +333,34 @@ const db = getFirestore(app);
 
 const userArea = document.getElementById("userArea");
 
-// 🔥 MAIN LOGIC
+// ✅ HIDE INITIALLY (IMPORTANT FIX)
+userArea.style.display = "none";
+
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
-    // ✅ Get user name from Firestore
     const docRef = doc(db, "users", user.uid);
     const docSnap = await getDoc(docRef);
 
     let name = "User";
-
     if (docSnap.exists()) {
       name = docSnap.data().name;
     }
 
     userArea.innerHTML = `
-      <span>👤 ${name}</span>
+      <span style="color:white;">👤 ${name}</span>
       <button onclick="logout()" class="btn">Logout</button>
     `;
 
   } else {
-    // ❌ Not logged in
     userArea.innerHTML = `
-      <a href="login.html">Login</a>
-      <a href="signup.html">Signup</a>
+      <a href="login.html" class="btn">Login</a>
+      <a href="signup.html" class="btn btn-outline">Signup</a>
     `;
   }
 
+  // ✅ SHOW ONLY AFTER READY
+  userArea.style.display = "flex";
 });
 
 // 🔐 Logout
