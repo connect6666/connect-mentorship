@@ -56,13 +56,6 @@
       <p id="formMessage"></p>
     </form>
 
-    <!-- 🔥 MENTOR BOX -->
-    <div id="mentorBox" style="display:none; margin-top:30px;">
-      <h3>Answer as Mentor</h3>
-      <textarea id="mentorAnswer" placeholder="Write answer..."></textarea>
-      <button class="btn" onclick="submitAnswer()">Submit Answer</button>
-    </div>
-
   </div>
 </section>
 
@@ -97,43 +90,30 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 const userArea = document.getElementById("userArea");
-const mentorBox = document.getElementById("mentorBox");
 
-// 🔥 NAVBAR + ROLE SYSTEM
+// 🔥 NAVBAR LOGIN SYSTEM
 userArea.style.display = "none";
-
-let currentUser = null;
 
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
-    currentUser = user;
+    let name = "User";
 
     try {
       const docSnap = await getDoc(doc(db, "users", user.uid));
 
-      let name = "User";
-      let role = "user";
-
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        name = data.name || "User";
-        role = data.role || "user";
-      }
-
-      userArea.innerHTML = `
-        <span style="color:white;">👤 ${name}</span>
-        <button onclick="logout()" class="btn">Logout</button>
-      `;
-
-      // ✅ SHOW ONLY FOR MENTOR
-      if (role === "mentor") {
-        mentorBox.style.display = "block";
+        name = docSnap.data().name || "User";
       }
 
     } catch (error) {
-      console.error("Error loading user:", error);
+      console.log("User fetch error");
     }
+
+    userArea.innerHTML = `
+      <span style="color:white;">👤 ${name}</span>
+      <button onclick="logout()" class="btn">Logout</button>
+    `;
 
   } else {
     userArea.innerHTML = `
@@ -186,32 +166,6 @@ document.getElementById("questionForm").addEventListener("submit", async (e) => 
     msg.style.color = "red";
   }
 });
-
-// ✅ SAVE ANSWER
-window.submitAnswer = async function() {
-
-  const text = document.getElementById("mentorAnswer").value;
-
-  if (!text) {
-    alert("Write answer ❌");
-    return;
-  }
-
-  try {
-    await addDoc(collection(db, "answers"), {
-      text: text,
-      userId: currentUser?.uid || null,
-      createdAt: new Date()
-    });
-
-    alert("Answer saved ✅");
-
-    document.getElementById("mentorAnswer").value = "";
-
-  } catch (error) {
-    alert("Error saving ❌");
-  }
-};
 
 </script>
 
