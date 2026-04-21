@@ -5,142 +5,214 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ask a Question | Connect Mentorship</title>
 
-  <!-- ✅ ONLY ONE CANONICAL -->
   <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/ask.html">
-
-  <!-- CSS -->
   <link rel="stylesheet" href="style.css">
-
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3LGEDFCNKG"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-3LGEDFCNKG');
-  </script>
-
-  <!-- Meta Pixel -->
-  <script>
-  !function(f,b,e,v,n,t,s){
-  if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-  n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];
-  s.parentNode.insertBefore(t,s)}(window, document,'script',
-  'https://connect.facebook.net/en_US/fbevents.js');
-
-  fbq('init', '1611562653181636');
-  fbq('track', 'PageView');
-  </script>
-
-  <noscript>
-    <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"/>
-  </noscript>
-
 </head>
 
 <body>
 
-<!-- NAV -->
+<!-- NAVBAR -->
 <nav>
   <div class="container">
     <div class="logo">Connect</div>
+
     <div class="nav-links">
-      <!-- ✅ RELATIVE LINKS (important for SEO) -->
       <a href="index.html">Home</a>
       <a href="ask.html">Ask Question</a>
       <a href="mentor.html">Become Mentor</a>
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <a href="questions.html">Questions</a>
-      <a href="signup.html">Signup</a>
-      <a href="login.html">Login</a>
+
+      <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
-<!-- SECTION -->
+<!-- ASK SECTION -->
 <section class="page-section">
   <div class="container">
+
     <h2>Ask Your Question</h2>
 
-    <p class="center-text">
-      Ask anything about exams, college life, careers, or skills.  
-      Seniors will guide you with real experience.
-    </p>
-
-    <!-- FORM -->
+    <!-- QUESTION FORM -->
     <form id="questionForm" class="question-form">
 
-      <label>Your Name (optional)</label>
-      <input type="text" id="name" placeholder="Enter your name">
+      <input type="text" id="name" placeholder="Your Name (optional)">
+      <input type="email" id="email" placeholder="Email (optional)">
 
-      <label>Email (optional)</label>
-      <input type="email" id="email" placeholder="Enter your email">
-
-      <label>Category</label>
       <select id="category" required>
-        <option value="">Select a category</option>
-        <option value="Exams">Exams</option>
-        <option value="College Life">College Life</option>
-        <option value="Career">Career</option>
-        <option value="Skills">Skills</option>
+        <option value="">Select Category</option>
+        <option>Exams</option>
+        <option>College Life</option>
+        <option>Career</option>
+        <option>Skills</option>
       </select>
 
-      <label>Your Question *</label>
-      <textarea id="question" rows="6" placeholder="Write your question clearly..." required></textarea>
+      <textarea id="question" placeholder="Write your question..." required></textarea>
 
       <button type="submit" class="btn">Submit Question</button>
 
-      <p id="formMessage" class="form-message"></p>
+      <p id="formMessage"></p>
     </form>
 
-    <hr>
-
-    <h2>Answered Questions</h2>
-    <div id="publicQuestions"></div>
-
-    <!-- INTERNAL LINK -->
-    <div class="internal-link-box">
-      <p>
-        Already experienced exams or college life?
-        <a href="mentor.html">Become a mentor and guide juniors</a>
-      </p>
+    <!-- 🔥 MENTOR BOX -->
+    <div id="mentorBox" style="display:none; margin-top:30px;">
+      <h3>Answer as Mentor</h3>
+      <textarea id="mentorAnswer" placeholder="Write answer..."></textarea>
+      <button class="btn" onclick="submitAnswer()">Submit Answer</button>
     </div>
 
   </div>
 </section>
 
-<!-- FOOTER -->
 <footer>
-  <p>© 2026 Connect Mentorship. Made for Indian Students.</p>
+  <p>© 2026 Connect Mentorship</p>
 </footer>
 
-<!-- MAIN SCRIPT -->
-<script type="module" src="script.js"></script>
-
-<!-- FIREBASE INIT -->
+<!-- FIREBASE -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
-    authDomain: "connect-mentorship.firebaseapp.com",
-    projectId: "connect-mentorship",
-    storageBucket: "connect-mentorship.firebasestorage.app",
-    messagingSenderId: "229549559214",
-    appId: "1:229549559214:web:254671d221c2aaebc80c3f",
-    measurementId: "G-RJM7CM2LCB"
-  };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  collection, 
+  addDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+};
 
-  window.db = db;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const userArea = document.getElementById("userArea");
+const mentorBox = document.getElementById("mentorBox");
+
+// 🔥 NAVBAR + ROLE SYSTEM
+userArea.style.display = "none";
+
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user) => {
+
+  if (user) {
+    currentUser = user;
+
+    try {
+      const docSnap = await getDoc(doc(db, "users", user.uid));
+
+      let name = "User";
+      let role = "user";
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        name = data.name || "User";
+        role = data.role || "user";
+      }
+
+      userArea.innerHTML = `
+        <span style="color:white;">👤 ${name}</span>
+        <button onclick="logout()" class="btn">Logout</button>
+      `;
+
+      // ✅ SHOW ONLY FOR MENTOR
+      if (role === "mentor") {
+        mentorBox.style.display = "block";
+      }
+
+    } catch (error) {
+      console.error("Error loading user:", error);
+    }
+
+  } else {
+    userArea.innerHTML = `
+      <a href="login.html" class="btn">Login</a>
+      <a href="signup.html" class="btn btn-outline">Signup</a>
+    `;
+  }
+
+  userArea.style.display = "flex";
+});
+
+// 🔐 LOGOUT
+window.logout = async function() {
+  await signOut(auth);
+  location.reload();
+};
+
+// ✅ SAVE QUESTION
+document.getElementById("questionForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById("name").value;
+  const email = document.getElementById("email").value;
+  const category = document.getElementById("category").value;
+  const question = document.getElementById("question").value;
+  const msg = document.getElementById("formMessage");
+
+  if (!category || !question) {
+    msg.innerText = "Fill required fields ❌";
+    msg.style.color = "red";
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "questions"), {
+      name,
+      email,
+      category,
+      question,
+      createdAt: new Date()
+    });
+
+    msg.innerText = "Question submitted ✅";
+    msg.style.color = "green";
+
+    e.target.reset();
+
+  } catch (error) {
+    msg.innerText = "Error submitting ❌";
+    msg.style.color = "red";
+  }
+});
+
+// ✅ SAVE ANSWER
+window.submitAnswer = async function() {
+
+  const text = document.getElementById("mentorAnswer").value;
+
+  if (!text) {
+    alert("Write answer ❌");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "answers"), {
+      text: text,
+      userId: currentUser?.uid || null,
+      createdAt: new Date()
+    });
+
+    alert("Answer saved ✅");
+
+    document.getElementById("mentorAnswer").value = "";
+
+  } catch (error) {
+    alert("Error saving ❌");
+  }
+};
+
 </script>
 
 </body>
