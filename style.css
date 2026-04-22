@@ -269,3 +269,52 @@ footer {
 .whatsapp-float:hover {
   transform: scale(1.1);
 }
+
+/* 🔥 CHAT BUTTON ANIMATION */
+.chat-section .btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  animation: pulse 2s infinite;
+}
+
+/* 💡 Hover effect */
+.chat-section .btn:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+}
+
+/* 🔥 Pulse animation */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255,255,255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255,255,255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255,255,255, 0);
+  }
+}
+
+/* ✨ Shine effect */
+.chat-section .btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255,255,255,0.5),
+    transparent
+  );
+  transform: skewX(-20deg);
+}
+
+.chat-section .btn:hover::after {
+  left: 120%;
+  transition: 0.6s;
+}
