@@ -390,3 +390,14 @@ footer {
   transform: scale(1.05);
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
 }
+
+
+.audio-booking {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.audio-booking .btn {
+  margin: 10px;
+  display: inline-block;
+}
