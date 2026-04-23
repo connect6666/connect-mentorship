@@ -149,29 +149,43 @@ footer {
 }
 
 /* MOBILE FIX 🔥 */
+/* HAMBURGER BUTTON */
+.menu-toggle {
+  display: none;
+  font-size: 24px;
+  color: white;
+  cursor: pointer;
+}
+
+/* MOBILE NAV */
 @media (max-width: 768px) {
 
-  .hero h1 {
-    font-size: 2rem;
-  }
-
-  .hero p {
-    font-size: 1rem;
+  .menu-toggle {
+    display: block;
+    margin-left: auto;
   }
 
   .nav-links {
-    justify-content: center;
-    gap: 8px;
-    font-size: 12px; /* 👈 smaller text */
-    flex-wrap: wrap; /* 👈 IMPORTANT */
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background: #4f46e5;
+    flex-direction: column;
+    align-items: center;
+    display: none; /* 🔥 hidden */
+    padding: 20px 0;
+  }
+
+  .nav-links.active {
+    display: flex;
   }
 
   .nav-links a {
-    padding: 4px 6px; /* 👈 spacing fix */
+    padding: 12px;
+    font-size: 16px;
   }
-
 }
-
 /* FORM */
 .question-form {
   max-width: 600px;
