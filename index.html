@@ -3,7 +3,7 @@
 <head>
 
 
-  <link rel="manifest" href="./manifest.json">
+<link rel="manifest" href="/connect-mentorship/manifest.json">
 <meta name="theme-color" content="#4f46e5">
   <link rel="canonical" href="https://himanshu617.github.io/connect-mentorship/" />
   <meta charset="UTF-8" />
@@ -446,7 +446,7 @@ function toggleMenu() {
 
   <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js')
+  navigator.serviceWorker.register('/connect-mentorship/sw.js')
     .then(() => console.log("SW ready"))
     .catch(err => console.log(err));
 }
