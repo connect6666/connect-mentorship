@@ -51,6 +51,10 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
     <img src="./logo.png" alt="Connect Logo">
   </a>
 </div>
+
+
+<div class="menu-toggle" onclick="toggleMenu()">☰</div>
+      
     <div class="nav-links">
       
       <a href="/connect-mentorship/">Home</a>
@@ -425,6 +429,13 @@ window.logout = async function() {
   await signOut(auth);
   window.location.href = "login.html";
 };
+</script>
+
+
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
 </script>
   
 </body>
