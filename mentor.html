@@ -38,6 +38,8 @@
 
 <body>
 
+  <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
 <!-- NAV -->
 <nav>
   <div class="container">
@@ -152,6 +154,12 @@ form.addEventListener("submit", async (e) => {
     msg.innerText = "❌ Error: " + error.message;
   }
 });
+</script>
+
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
 </script>
 
 </body>
