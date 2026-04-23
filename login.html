@@ -7,28 +7,6 @@
 
 <body>
 
-  <nav>
-  <div class="container">
-    
-    <div class="logo">Connect</div>
-
-    <!-- ✅ HAMBURGER BUTTON -->
-    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
-
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask Question</a>
-      <a href="mentor.html">Become Mentor</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="questions.html">Questions</a>
-
-      <span id="userArea"></span>
-    </div>
-
-  </div>
-</nav>
-
 <div style="max-width:400px;margin:100px auto;text-align:center;">
   <h2>Login</h2>
 
@@ -37,15 +15,34 @@
 
   <button onclick="login()" class="btn">Login</button>
 
+  <!-- ✅ GOOGLE LOGIN BUTTON -->
+  <button id="googleLogin" class="btn" style="margin-top:10px;">
+    🔵 Continue with Google
+  </button>
+
   <p>New user? <a href="signup.html">Signup</a></p>
 
   <p id="msg"></p>
 </div>
 
-<!-- 🔥 FIREBASE LOGIN (CLEAN + CORRECT VERSION) -->
+<!-- FIREBASE -->
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import { 
+  getAuth, 
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -53,44 +50,74 @@ const firebaseConfig = {
   projectId: "connect-mentorship",
   storageBucket: "connect-mentorship.firebasestorage.app",
   messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f",
-  measurementId: "G-RJM7CM2LCB"
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
-// Init
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-// LOGIN FUNCTION
+const msg = document.getElementById("msg");
+
+
+// 🔐 EMAIL LOGIN
 window.login = async function() {
+
   const email = document.getElementById("email").value;
   const pass = document.getElementById("password").value;
-
-  if (!email || !pass) {
-    document.getElementById("msg").innerText = "Fill all fields ⚠️";
-    return;
-  }
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
 
-    document.getElementById("msg").innerText = "Login successful ✅";
+    msg.style.color = "green";
+    msg.innerText = "Login successful ✅";
 
-    // redirect after login
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 1000);
+    window.location.href = "index.html";
 
   } catch (error) {
-    document.getElementById("msg").innerText = "Wrong email or password ❌";
+    msg.style.color = "red";
+    msg.innerText = "Wrong email or password ❌";
   }
 };
-</script>
 
-  <script>
-function toggleMenu() {
-  document.querySelector(".nav-links").classList.toggle("active");
+
+// 🔵 GOOGLE LOGIN
+const googleBtn = document.getElementById("googleLogin");
+
+if (googleBtn) {
+
+  googleBtn.addEventListener("click", async () => {
+
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // 🔥 SAVE USER IF NOT EXISTS
+      const userRef = doc(db, "users", user.uid);
+      const snap = await getDoc(userRef);
+
+      if (!snap.exists()) {
+        await setDoc(userRef, {
+          name: user.displayName || "User",
+          role: "user",
+          createdAt: new Date()
+        });
+      }
+
+      window.location.href = "index.html";
+
+    } catch (error) {
+      console.error(error);
+      msg.style.color = "red";
+      msg.innerText = "Google login failed ❌";
+    }
+
+  });
+
 }
+
 </script>
 
 </body>
