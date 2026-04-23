@@ -492,7 +492,15 @@ footer {
 
 
 
-
+#installBtn {
+  margin-top: 15px;
+  background: white;
+  color: #4f46e5;
+  border-radius: 30px;
+  padding: 12px 20px;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
 
 
 
