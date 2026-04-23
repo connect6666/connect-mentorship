@@ -44,7 +44,23 @@ button {
 
 <nav>
   <div class="container">
+    
     <div class="logo">Connect</div>
+
+    <!-- ✅ HAMBURGER BUTTON -->
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="ask.html">Ask Question</a>
+      <a href="mentor.html">Become Mentor</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="questions.html">Questions</a>
+
+      <span id="userArea"></span>
+    </div>
+
   </div>
 </nav>
 
@@ -299,6 +315,18 @@ window.submitReply = async function(answerId) {
   }, 1500);
 };
 
+</script>
+
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
 </script>
 
 </body>
