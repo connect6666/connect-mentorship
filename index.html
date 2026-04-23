@@ -481,6 +481,16 @@ document.getElementById("installBtn").addEventListener("click", async () => {
   }
 });
 </script>
+
+  <script>
+window.addEventListener('appinstalled', () => {
+  document.getElementById("installBtn").style.display = "none";
+});
+</script>
+
+  setTimeout(() => {
+  document.getElementById("installBtn").style.display = "inline-block";
+}, 3000);
   
 </body>
 </html>
