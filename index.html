@@ -486,11 +486,13 @@ document.getElementById("installBtn").addEventListener("click", async () => {
 window.addEventListener('appinstalled', () => {
   document.getElementById("installBtn").style.display = "none";
 });
-</script>
 
-  setTimeout(() => {
+      setTimeout(() => {
   document.getElementById("installBtn").style.display = "inline-block";
 }, 3000);
+</script>
+
+
   
 </body>
 </html>
