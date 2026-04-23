@@ -7,12 +7,11 @@
 
 <body>
 
-  <nav>
+<!-- NAVBAR -->
+<nav>
   <div class="container">
-    
     <div class="logo">Connect</div>
 
-    <!-- ✅ HAMBURGER BUTTON -->
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
@@ -22,22 +21,20 @@
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <a href="questions.html">Questions</a>
-
       <span id="userArea"></span>
     </div>
-
   </div>
 </nav>
+
+<!-- SIGNUP -->
 <div style="max-width:400px;margin:100px auto;text-align:center;">
   <h2>Create Account</h2>
 
   <input type="text" id="name" placeholder="Your Name"><br><br>
   <input type="email" id="email" placeholder="Email"><br><br>
   <input type="password" id="password" placeholder="Password (min 6 characters)"><br><br>
-  <input type="text" id="phone" placeholder="WhatsApp Number (e.g. 919876543210)">
-<br><br>
+  <input type="text" id="phone" placeholder="WhatsApp Number (e.g. 919876543210)"><br><br>
 
-  <!-- ROLE SELECT -->
   <select id="role">
     <option value="user">Student</option>
     <option value="mentor">Mentor</option>
@@ -47,14 +44,32 @@
 
   <p>Already have account? <a href="login.html">Login</a></p>
 
+  <!-- GOOGLE BUTTON -->
+  <button id="googleLogin" class="btn" style="margin-top:10px;">
+    🔵 Continue with Google
+  </button>
+
   <p id="msg" style="margin-top:10px;"></p>
 </div>
 
 <!-- FIREBASE -->
 <script type="module">
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import { 
+  getFirestore, 
+  setDoc, 
+  doc,
+  getDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -69,77 +84,100 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+const msg = document.getElementById("msg");
+
+
+// 🔐 EMAIL SIGNUP
 window.signup = async function() {
+
   const name = document.getElementById("name").value.trim();
   const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value;
   const role = document.getElementById("role").value;
   const phone = document.getElementById("phone").value.trim();
-  const msg = document.getElementById("msg");
 
-  // 🔴 VALIDATION
   if (!name || !email || !pass) {
+    msg.innerText = "All fields required ❌";
     msg.style.color = "red";
-    msg.innerText = "All fields are required ❌";
     return;
   }
 
-  if (!phone) {
-  msg.style.color = "red";
-  msg.innerText = "Phone number required ❌";
-  return;
-}
-
-if (!/^\d{10,15}$/.test(phone)) {
-  msg.style.color = "red";
-  msg.innerText = "Enter valid phone (numbers only, no +) ❌";
-  return;
-}
+  if (!/^\d{10,15}$/.test(phone)) {
+    msg.innerText = "Enter valid phone number ❌";
+    msg.style.color = "red";
+    return;
+  }
 
   if (pass.length < 6) {
+    msg.innerText = "Password must be 6+ characters ❌";
     msg.style.color = "red";
-    msg.innerText = "Password must be at least 6 characters ❌";
     return;
   }
 
   try {
-    msg.style.color = "black";
     msg.innerText = "Creating account...";
 
     const userCred = await createUserWithEmailAndPassword(auth, email, pass);
 
-    // 🔥 SAVE USER DATA
-  await setDoc(doc(db, "users", userCred.user.uid), {
-  name: name,
-  role: role,
-  phone: phone, // 👈 IMPORTANT
-  createdAt: new Date()
-});
+    await setDoc(doc(db, "users", userCred.user.uid), {
+      name,
+      role,
+      phone,
+      createdAt: new Date()
+    });
 
-    msg.style.color = "green";
-    msg.innerText = "Account created successfully ✅";
-
-    setTimeout(() => {
-      window.location.href = "login.html";
-    }, 1000);
+    window.location.href = "login.html";
 
   } catch (error) {
+    msg.innerText = error.message;
     msg.style.color = "red";
-
-    if (error.code === "auth/email-already-in-use") {
-      msg.innerText = "Email already registered ❌";
-    } else if (error.code === "auth/invalid-email") {
-      msg.innerText = "Invalid email format ❌";
-    } else {
-      msg.innerText = error.message;
-    }
   }
 };
+
+
+// 🔵 GOOGLE LOGIN / SIGNUP
+const googleBtn = document.getElementById("googleLogin");
+
+if (googleBtn) {
+
+  googleBtn.addEventListener("click", async () => {
+
+    const provider = new GoogleAuthProvider();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const userRef = doc(db, "users", user.uid);
+      const snap = await getDoc(userRef);
+
+      if (!snap.exists()) {
+        await setDoc(userRef, {
+          name: user.displayName || "User",
+          role: "user",
+          createdAt: new Date()
+        });
+      }
+
+      window.location.href = "index.html";
+
+    } catch (error) {
+      msg.innerText = "Google login failed ❌";
+      msg.style.color = "red";
+    }
+
+  });
+
+}
+
 </script>
+
+<!-- MENU SCRIPT -->
 <script>
 function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }
 </script>
+
 </body>
 </html>
