@@ -150,15 +150,22 @@ onAuthStateChanged(auth, async (user) => {
 
   const name = data.name || "User";
   const role = data.role || "user";
+  const verified = data.verified || false;
   const phone = data.phone || "";
+
 
   card.innerHTML = `
     <img src="https://ui-avatars.com/api/?name=${name}" class="profile-img">
 
     <h2>${name}</h2>
     <p>${user.email}</p>
+${role === "mentor" || role === "user" ? `
+  <div class="badge">
+    Mentor ${verified ? "✅ Verified" : "⏳ Pending"}
+  </div>
 
-    ${role === "mentor" ? `<div class="badge">Mentor</div>` : ""}
+  ${!verified ? `<button class="btn" onclick="applyVerification()">Apply for Verification</button>` : ""}
+` : ""}
 
     <input id="editName" value="${name}">
     <input id="editPhone" placeholder="Phone number" value="${phone}">
@@ -218,6 +225,17 @@ window.saveProfile = async function() {
 window.logout = async function() {
   await signOut(auth);
   window.location.href = "index.html";
+};
+
+  window.applyVerification = async function() {
+
+  await updateDoc(doc(db, "users", currentUser.uid), {
+    role: "mentor",
+    verified: false
+  });
+
+  alert("Applied for verification ✅");
+  location.reload();
 };
 
 </script>
