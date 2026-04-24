@@ -155,6 +155,7 @@ document.getElementById("questionForm").addEventListener("submit", async (e) => 
       email,
       category,
       question,
+      userId: auth.currentUser.uid,
       createdAt: new Date()
     });
 

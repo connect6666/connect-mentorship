@@ -149,43 +149,29 @@ footer {
 }
 
 /* MOBILE FIX 🔥 */
-/* HAMBURGER BUTTON */
-.menu-toggle {
-  display: none;
-  font-size: 24px;
-  color: white;
-  cursor: pointer;
-}
-
-/* MOBILE NAV */
 @media (max-width: 768px) {
 
-  .menu-toggle {
-    display: block;
-    margin-left: auto;
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero p {
+    font-size: 1rem;
   }
 
   .nav-links {
-    position: absolute;
-    top: 70px;
-    left: 0;
-    width: 100%;
-    background: #4f46e5;
-    flex-direction: column;
-    align-items: center;
-    display: none; /* 🔥 hidden */
-    padding: 20px 0;
-  }
-
-  .nav-links.active {
-    display: flex;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px; /* 👈 smaller text */
+    flex-wrap: wrap; /* 👈 IMPORTANT */
   }
 
   .nav-links a {
-    padding: 12px;
-    font-size: 16px;
+    padding: 4px 6px; /* 👈 spacing fix */
   }
+
 }
+
 /* FORM */
 .question-form {
   max-width: 600px;
@@ -491,13 +477,14 @@ footer {
 
 
 
-#googleLogin {
-  background: white;
-  color: #333;
-  border: 1px solid #ddd;
-  margin-top: 10px;
-}
 
-#googleLogin:hover {
-  background: #f5f5f5;
-}
+
+
+
+
+
+
+
+
+
+

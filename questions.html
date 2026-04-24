@@ -33,6 +33,10 @@
   margin-top: 6px;
   padding-left: 10px;
 }
+
+button {
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -40,15 +44,23 @@
 
 <nav>
   <div class="container">
+    
     <div class="logo">Connect</div>
+
+    <!-- ✅ HAMBURGER BUTTON -->
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
       <a href="index.html">Home</a>
       <a href="ask.html">Ask Question</a>
+      <a href="mentor.html">Become Mentor</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
       <a href="questions.html">Questions</a>
+
       <span id="userArea"></span>
     </div>
+
   </div>
 </nav>
 
@@ -58,6 +70,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
   getFirestore,
   collection,
@@ -73,7 +86,10 @@ import {
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship"
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -85,27 +101,22 @@ const container = document.getElementById("questionsList");
 let currentUser = null;
 let isMentor = false;
 
-// ✅ CHECK VERIFIED MENTOR
+// 🔐 USER CHECK
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
     currentUser = user;
 
     const snap = await getDoc(doc(db, "users", user.uid));
-
-    if (snap.exists()) {
-      const data = snap.data();
-
-      if (data.role === "mentor" && data.verified === true) {
-        isMentor = true;
-      }
+    if (snap.exists() && snap.data().role === "mentor") {
+      isMentor = true;
     }
   }
 
   loadRealtime();
 });
 
-// SAFE HTML
+// 🔐 SAFE HTML
 function escapeHTML(str) {
   if (!str) return "";
   return str.replace(/[&<>"']/g, m => ({
@@ -117,7 +128,7 @@ function escapeHTML(str) {
   }[m]));
 }
 
-// REALTIME QUESTIONS
+// 🚀 REALTIME LOAD
 function loadRealtime() {
 
   onSnapshot(collection(db, "questions"), (questionsSnap) => {
@@ -139,7 +150,7 @@ function loadRealtime() {
 
       container.appendChild(card);
 
-      // ANSWERS REALTIME
+      // 🔥 ANSWERS REALTIME
       const answersQuery = query(
         collection(db, "answers"),
         where("questionId", "==", qId)
@@ -153,6 +164,7 @@ function loadRealtime() {
         let answers = [];
         answersSnap.forEach(a => answers.push({ id: a.id, ...a.data() }));
 
+        // SORT BY VOTES
         answers.sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
         answers.forEach(ans => {
@@ -163,10 +175,7 @@ function loadRealtime() {
           ansDiv.innerHTML = `
             ${escapeHTML(ans.text)}
             <br>
-            <small>
-              Answered by ${escapeHTML(ans.mentorName || "Mentor")}
-              ${ans.verified ? "✅" : ""}
-            </small>
+            <small>Answered by ${escapeHTML(ans.mentorName || "Mentor")}</small>
             <br>
             👍 ${ans.votes || 0}
             <button onclick="upvote('${ans.id}')">Upvote</button>
@@ -185,7 +194,7 @@ function loadRealtime() {
 
           answersContainer.appendChild(ansDiv);
 
-          // REPLIES REALTIME
+          // 🔥 REPLIES REALTIME
           const repliesQuery = query(
             collection(db, "replies"),
             where("answerId", "==", ans.id)
@@ -212,11 +221,11 @@ function loadRealtime() {
           });
         });
 
-        // ANSWER BOX (ONLY VERIFIED)
+        // 🔥 ANSWER BOX (MENTOR ONLY)
         if (isMentor) {
           answersContainer.innerHTML += `
-            <textarea id="ans-${qId}" placeholder="Write answer..."></textarea>
-            <button onclick="submitAnswer('${qId}')">Submit Answer</button>
+            <textarea id="ans-${qId}"></textarea>
+            <button onclick="submitAnswer('${qId}')">Answer</button>
           `;
         }
 
@@ -227,35 +236,34 @@ function loadRealtime() {
   });
 }
 
-// TOGGLE REPLIES
+// 🔥 TOGGLE
 window.toggleReplies = function(id) {
   const el = document.getElementById("replies-" + id);
   el.style.display = el.style.display === "none" ? "block" : "none";
 };
 
-// SUBMIT ANSWER
+// 🔥 ANSWER
 window.submitAnswer = async function(qId) {
 
-  if (!isMentor) return alert("Only verified mentors allowed");
+  if (!isMentor) return alert("Only mentors");
 
   const text = document.getElementById("ans-" + qId).value;
 
   const snap = await getDoc(doc(db, "users", currentUser.uid));
-  const data = snap.data();
+  const name = snap.exists() ? snap.data().name : "Mentor";
 
   await addDoc(collection(db, "answers"), {
     questionId: qId,
     text,
-    mentorName: data.name || "Mentor",
+    mentorName: name,
     userId: currentUser.uid,
-    verified: true,
     votes: 0,
     upvotedBy: [],
     createdAt: new Date()
   });
 };
 
-// UPVOTE
+// 🔥 UPVOTE
 window.upvote = async function(id) {
 
   if (!currentUser) return alert("Login required");
@@ -274,7 +282,7 @@ window.upvote = async function(id) {
   });
 };
 
-// REPLY
+// 🔥 REPLY (WITH FIX + UX)
 window.submitReply = async function(answerId) {
 
   const input = document.getElementById("reply-" + answerId);
@@ -295,15 +303,28 @@ window.submitReply = async function(answerId) {
     answerId,
     text,
     userName: name,
+    userId: auth.currentUser.uid,
     createdAt: new Date()
   });
 
+  // ✅ CLEAR + FEEDBACK
   input.value = "";
+  input.placeholder = "Reply sent ✅";
+
+  setTimeout(() => {
+    input.placeholder = "Write reply...";
+  }, 1500);
 };
 
 </script>
 
-<script>
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+  <script>
 function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }

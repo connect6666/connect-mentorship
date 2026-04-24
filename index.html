@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-
-<link rel="manifest" href="/connect-mentorship/manifest.json">
-<meta name="theme-color" content="#4f46e5">
   <link rel="canonical" href="https://himanshu617.github.io/connect-mentorship/" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -68,7 +64,6 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
       <a href="/connect-mentorship/contact.html">Contact</a>
       <a href="questions.html">Questions</a>
       <a href="profile.html">Profile</a>
-
       <a href="signup.html">Signup</a>
       <a href="login.html">Login</a>
       <span id="userArea"></span>
@@ -77,8 +72,6 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
     </div>
   </div>
 </nav>
-
-  
   <!-- Hero -->
 
 <section class="hero" id="home">
@@ -93,9 +86,6 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
       <p>
        Feeling confused about your next step after school or college? You’re not alone. Connect lets you talk to seniors who’ve already faced these challenges and can guide you with honest, real-life advice so you can choose the right path without stress.
       </p>
-      <button id="installBtn" class="btn" style="display:none;">
-  📲 Install App
-</button>
 
       <div class="hero-buttons">
         <a href="ask.html" class="btn">Ask Your Question</a>
@@ -448,52 +438,6 @@ function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }
 </script>
-
-  <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/connect-mentorship/sw.js')
-    .then(() => console.log("SW ready"))
-    .catch(err => console.log(err));
-}
-</script>
-
-  <script>
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-
-  document.getElementById("installBtn").style.display = "inline-block";
-});
-
-document.getElementById("installBtn").addEventListener("click", async () => {
-  if (deferredPrompt) {
-    deferredPrompt.prompt();
-
-    const choice = await deferredPrompt.userChoice;
-
-    if (choice.outcome === 'accepted') {
-      console.log('User installed app');
-    }
-
-    deferredPrompt = null;
-  }
-});
-</script>
-
-  <script>
-window.addEventListener('appinstalled', () => {
-  document.getElementById("installBtn").style.display = "none";
-});
-
-      setTimeout(() => {
-  document.getElementById("installBtn").style.display = "inline-block";
-}, 3000);
-</script>
-
-
   
 </body>
 </html>
-

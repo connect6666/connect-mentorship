@@ -53,6 +53,7 @@
   margin-top: 15px;
 }
 
+/* SECTIONS */
 .profile-section {
   max-width: 800px;
   margin: 40px auto;
@@ -115,13 +116,16 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { 
   getFirestore, doc, getDoc, updateDoc,
-  collection, getDocs, query, where, onSnapshot
+  collection, getDocs, query, where 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -140,14 +144,12 @@ onAuthStateChanged(auth, async (user) => {
 
   currentUser = user;
 
-  
-onSnapshot(doc(db, "users", user.uid), (snap) => {
+  const snap = await getDoc(doc(db, "users", user.uid));
 
   let data = snap.exists() ? snap.data() : {};
 
   const name = data.name || "User";
   const role = data.role || "user";
-  const verified = data.verified || false;
   const phone = data.phone || "";
 
   card.innerHTML = `
@@ -156,23 +158,7 @@ onSnapshot(doc(db, "users", user.uid), (snap) => {
     <h2>${name}</h2>
     <p>${user.email}</p>
 
-    ${
-      role === "mentor"
-        ? `
-        <div class="badge">
-          Mentor ${verified ? "✅ Verified" : "⏳ Pending"}
-        </div>
-
-        ${
-          !verified
-            ? `<button class="btn" onclick="applyVerification()">Apply for Verification</button>`
-            : ""
-        }
-      `
-        : `
-        <button class="btn" onclick="applyVerification()">Become Mentor</button>
-      `
-    }
+    ${role === "mentor" ? `<div class="badge">Mentor</div>` : ""}
 
     <input id="editName" value="${name}">
     <input id="editPhone" placeholder="Phone number" value="${phone}">
@@ -180,20 +166,37 @@ onSnapshot(doc(db, "users", user.uid), (snap) => {
     <button class="btn" onclick="saveProfile()">Save</button>
     <button class="btn btn-outline" onclick="logout()">Logout</button>
   `;
+
+  // LOAD QUESTIONS
+  // 🔥 CLEAR OLD DATA (IMPORTANT FIX)
+myQuestions.innerHTML = "";
+myAnswers.innerHTML = "";
+
+// LOAD QUESTIONS
+const qSnap = await getDocs(
+  query(collection(db,"questions"), where("userId","==",user.uid))
+);
+
+qSnap.forEach(doc=>{
+  myQuestions.innerHTML += `
+    <div class="step-card">
+      ${doc.data().question}
+    </div>
+  `;
 });
 
-  // LOAD ANSWERS
-  const aSnap = await getDocs(
-    query(collection(db,"answers"), where("userId","==",user.uid))
-  );
+// LOAD ANSWERS
+const aSnap = await getDocs(
+  query(collection(db,"answers"), where("userId","==",user.uid))
+);
 
-  aSnap.forEach(doc=>{
-    myAnswers.innerHTML += `
-      <div class="step-card">
-        ${doc.data().text}
-      </div>
-    `;
-  });
+aSnap.forEach(doc=>{
+  myAnswers.innerHTML += `
+    <div class="step-card">
+      ${doc.data().text}
+    </div>
+  `;
+});
 
 });
 
@@ -203,30 +206,11 @@ window.saveProfile = async function() {
   const phone = document.getElementById("editPhone").value;
 
   await updateDoc(doc(db, "users", currentUser.uid), {
-    name,
-    phone
+    name: name,
+    phone: phone
   });
 
   alert("Profile updated ✅");
-  location.reload();
-};
-
-// APPLY MENTOR
-window.applyVerification = async function() {
-
-  const snap = await getDoc(doc(db, "users", currentUser.uid));
-  const data = snap.data();
-
-  if (data.role === "mentor" && data.verified === false) {
-    return alert("Already applied ⏳");
-  }
-
-  await updateDoc(doc(db, "users", currentUser.uid), {
-    role: "mentor",
-    verified: false
-  });
-
-  alert("Applied for mentor ✅");
   location.reload();
 };
 

@@ -98,15 +98,14 @@ if (googleBtn) {
       const userRef = doc(db, "users", user.uid);
       const snap = await getDoc(userRef);
 
-     if (!snap.exists()) {
+      if (!snap.exists()) {
   await setDoc(userRef, {
     name: user.displayName || "User",
     role: "", // empty role
     createdAt: new Date()
   });
 }
-
-      const data = (await getDoc(userRef)).data();
+const data = (await getDoc(userRef)).data();
 
 if (!data.role) {
   window.location.href = "select-role.html";
