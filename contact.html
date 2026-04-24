@@ -1,99 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Us | Connect Mentorship</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Contact Us | Connect Mentorship</title>
-
-<link rel="canonical" href="https://connect6666.github.io/connect-mentorship/contact.html">
-<link rel="stylesheet" href="style.css">
-
-<style>
-
-/* =========================
-   🎯 PAGE
-========================= */
-
-.contact-wrapper {
-  max-width: 700px;
-  margin: 50px auto;
-  padding: 0 20px;
-}
-
-.contact-header {
-  text-align: center;
-  margin-bottom: 25px;
-}
-
-.contact-header p {
-  color: #64748b;
-}
-
-/* CARD */
-.contact-box {
-  background: white;
-  padding: 25px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
-/* INPUTS */
-.contact-box input,
-.contact-box textarea {
-  width: 100%;
-  padding: 12px;
-  margin-top: 12px;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-}
-
-/* EXTRA CONTACT */
-.contact-alt {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #64748b;
-  text-align: center;
-}
-
-.contact-alt a {
-  color: #4f46e5;
-  text-decoration: none;
-}
-
-</style>
-
+  <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/contact.html">
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+  <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
 <!-- NAV -->
 <nav>
-  <div class="container nav-flex">
-    <div class="logo"><a href="index.html">Connect</a></div>
-
+  <div class="container">
+    <div class="logo">Connect</div>
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
-
     <div class="nav-links">
       <a href="index.html">Home</a>
-      <a href="ask.html">Ask</a>
+      <a href="ask.html">Ask Question</a>
+      <a href="mentor.html">Become Mentor</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
       <a href="questions.html">Questions</a>
-      <a href="mentor.html">Mentors</a>
+      <a href="signup.html">Signup</a>
+      <a href="login.html">Login</a>
     </div>
   </div>
 </nav>
 
-<div class="contact-wrapper">
+<!-- CONTACT SECTION -->
+<section class="page-section">
+  <div class="container">
+    <h2>Send Us a Message</h2>
 
-  <div class="contact-header">
-    <h2>Contact Us</h2>
-    <p>Have questions, feedback, or suggestions? We’d love to hear from you.</p>
-  </div>
-
-  <div class="contact-box">
-
-    <form id="contactForm">
+    <form class="question-form" id="contactForm">
 
       <input type="text" id="contactName" placeholder="Your Name" required>
 
@@ -104,38 +47,26 @@
       <button type="submit" class="btn">Send Message</button>
 
       <p id="contactFormMessage"></p>
-
     </form>
-
-    <!-- EXTRA OPTIONS -->
-    <div class="contact-alt">
-      <p>Or reach us directly:</p>
-      <p>📧 connectmentorship2026@gmail.com</p>
-      <p>
-        💬 <a href="https://wa.me/916284644053" target="_blank">
-        Chat on WhatsApp
-        </a>
-      </p>
-    </div>
-
   </div>
-
-</div>
+</section>
 
 <footer>
   <p>© 2026 Connect Mentorship</p>
 </footer>
 
-<!-- FIREBASE -->
+<!-- 🔥 FIREBASE WORKING CODE -->
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship"
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -147,13 +78,12 @@ const message = document.getElementById("contactFormMessage");
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const name = contactName.value.trim();
-  const email = contactEmail.value.trim();
-  const msg = contactMessage.value.trim();
+  const name = document.getElementById("contactName").value.trim();
+  const email = document.getElementById("contactEmail").value.trim();
+  const msg = document.getElementById("contactMessage").value.trim();
 
   if (!name || !email || !msg) {
     message.innerText = "❌ Fill all fields";
-    message.style.color = "red";
     return;
   }
 
@@ -162,22 +92,22 @@ form.addEventListener("submit", async (e) => {
       name,
       email,
       message: msg,
-      createdAt: new Date()
+      createdAt: new Date().toISOString()
     });
 
+    console.log("Saved to Firebase ✅");
+
     message.innerText = "✅ Message sent successfully!";
-    message.style.color = "green";
     form.reset();
 
   } catch (error) {
+    console.error(error);
     message.innerText = "❌ Error sending message";
-    message.style.color = "red";
   }
 });
-
 </script>
 
-<script>
+  <script>
 function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }
