@@ -1,28 +1,80 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login | Connect</title>
-  <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Login | Connect Mentorship</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+/* =========================
+   🎯 LOGIN
+========================= */
+
+.login-wrapper {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 0 20px;
+}
+
+.login-card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.login-card input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.google-btn {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #333;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<div style="max-width:400px;margin:100px auto;text-align:center;">
-  <h2>Login</h2>
+<div class="login-wrapper">
 
-  <input type="email" id="email" placeholder="Email"><br><br>
-  <input type="password" id="password" placeholder="Password"><br><br>
+  <div class="login-card">
 
-  <button onclick="login()" class="btn">Login</button>
+    <h2>Welcome Back 👋</h2>
+    <p style="color:#64748b;">Login to continue</p>
 
-  <!-- ✅ GOOGLE LOGIN BUTTON -->
-  <button id="googleLogin" class="btn" style="margin-top:10px;">
-    🔵 Continue with Google
-  </button>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
 
-  <p>New user? <a href="signup.html">Signup</a></p>
+    <button onclick="login()" class="btn" id="loginBtn">
+      Login
+    </button>
 
-  <p id="msg"></p>
+    <button id="googleLogin" class="btn google-btn">
+      🔵 Continue with Google
+    </button>
+
+    <p style="margin-top:15px;">
+      New user? <a href="signup.html">Signup</a>
+    </p>
+
+    <p id="msg"></p>
+
+  </div>
+
 </div>
 
 <!-- FIREBASE -->
@@ -45,12 +97,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  apiKey: "AIzaSy...",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship",
-  storageBucket: "connect-mentorship.firebasestorage.app",
-  messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+  projectId: "connect-mentorship"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -59,12 +108,17 @@ const db = getFirestore(app);
 
 const msg = document.getElementById("msg");
 
+/* =========================
+   🔐 EMAIL LOGIN
+========================= */
 
-// 🔐 EMAIL LOGIN
 window.login = async function() {
 
-  const email = document.getElementById("email").value;
-  const pass = document.getElementById("password").value;
+  const email = email.value;
+  const pass = password.value;
+
+  const btn = document.getElementById("loginBtn");
+  btn.innerText = "Logging in...";
 
   try {
     await signInWithEmailAndPassword(auth, email, pass);
@@ -78,52 +132,49 @@ window.login = async function() {
     msg.style.color = "red";
     msg.innerText = "Wrong email or password ❌";
   }
+
+  btn.innerText = "Login";
 };
 
 
-// 🔵 GOOGLE LOGIN
-const googleBtn = document.getElementById("googleLogin");
+/* =========================
+   🔵 GOOGLE LOGIN
+========================= */
 
-if (googleBtn) {
+document.getElementById("googleLogin").addEventListener("click", async () => {
 
-  googleBtn.addEventListener("click", async () => {
+  const provider = new GoogleAuthProvider();
 
-    const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
 
-      // 🔥 SAVE USER IF NOT EXISTS
-      const userRef = doc(db, "users", user.uid);
-      const snap = await getDoc(userRef);
-
-      if (!snap.exists()) {
-  await setDoc(userRef, {
-    name: user.displayName || "User",
-    role: "", // empty role
-    createdAt: new Date()
-  });
-}
-const data = (await getDoc(userRef)).data();
-
-if (!data.role) {
-  window.location.href = "select-role.html";
-} else {
-  window.location.href = "index.html";
-}
-
-      window.location.href = "index.html";
-
-    } catch (error) {
-      console.error(error);
-      msg.style.color = "red";
-      msg.innerText = "Google login failed ❌";
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        name: user.displayName || "User",
+        role: "",
+        createdAt: new Date()
+      });
     }
 
-  });
+    const data = (await getDoc(userRef)).data();
 
-}
+    // ✅ FIXED REDIRECT LOGIC
+    if (!data.role) {
+      window.location.href = "select-role.html";
+    } else {
+      window.location.href = "index.html";
+    }
+
+  } catch (error) {
+    msg.style.color = "red";
+    msg.innerText = "Google login failed ❌";
+  }
+
+});
 
 </script>
 
