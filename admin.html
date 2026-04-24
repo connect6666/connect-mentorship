@@ -1,75 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel | Connect Mentorship</title>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="style.css">
 
-<title>Admin Panel | Connect Mentorship</title>
+  <style>
+    .admin-section {
+      max-width: 1100px;
+      margin: 40px auto;
+    }
 
-<meta name="robots" content="noindex, nofollow">
-<link rel="stylesheet" href="style.css">
+    .data-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
 
-<style>
+    .btn {
+      padding: 10px 20px;
+      border-radius: 30px;
+      border: none;
+      background: #4f46e5;
+      color: white;
+      cursor: pointer;
+    }
 
-.admin-section {
-  max-width: 1100px;
-  margin: 40px auto;
-}
+    .danger-btn {
+      background: #ef4444;
+      color: white;
+      padding: 8px 15px;
+      border-radius: 20px;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
 
-.data-card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-}
+    #loginBox {
+      text-align: center;
+      margin-top: 120px;
+    }
 
-.actions {
-  margin-top: 10px;
-}
-
-.btn {
-  margin-right: 10px;
-}
-
-.approve-btn {
-  background: #16a34a;
-}
-
-.danger-btn {
-  background: #ef4444;
-}
-
-#loginBox {
-  text-align: center;
-  margin-top: 120px;
-}
-
-</style>
-
+    input {
+      padding: 10px;
+      width: 250px;
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
+<!-- 🔐 LOGIN -->
 <div id="loginBox">
   <h2>Admin Login</h2>
   <input type="password" id="adminPass" placeholder="Enter password">
   <br><br>
   <button class="btn" onclick="checkLogin()">Login</button>
-  <p id="loginMsg"></p>
+  <p id="loginMsg" style="color:red;"></p>
 </div>
 
-<!-- ADMIN -->
+<!-- 🔥 ADMIN CONTENT -->
 <div id="adminContent" style="display:none;">
 
 <nav>
-  <div class="container nav-flex">
-    <div class="logo">Admin Panel</div>
-    <button onclick="logout()" class="btn">Logout</button>
+  <div class="container">
+    <div class="logo">Connect Admin</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <button onclick="logout()" class="btn">Logout</button>
+    </div>
   </div>
 </nav>
+
+<section class="admin-section">
+  <h2>Questions</h2>
+  <div id="questionsList"></div>
+</section>
 
 <section class="admin-section">
   <h2>Mentor Applications</h2>
@@ -77,8 +88,8 @@
 </section>
 
 <section class="admin-section">
-  <h2>Questions</h2>
-  <div id="questionsList"></div>
+  <h2>Contact Messages</h2>
+  <div id="contactsList"></div>
 </section>
 
 <footer style="text-align:center;">
@@ -87,23 +98,24 @@
 
 </div>
 
+<!-- 🔐 LOGIN SCRIPT -->
 <script>
 const ADMIN_PASSWORD = "connect@2026#admin";
 
 function checkLogin() {
-  const pass = adminPass.value;
+  const pass = document.getElementById("adminPass").value;
 
   if (pass === ADMIN_PASSWORD) {
     localStorage.setItem("adminAuth", "true");
     showAdmin();
   } else {
-    loginMsg.innerText = "Wrong password ❌";
+    document.getElementById("loginMsg").innerText = "Wrong password ❌";
   }
 }
 
 function showAdmin() {
-  loginBox.style.display = "none";
-  adminContent.style.display = "block";
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("adminContent").style.display = "block";
 }
 
 function logout() {
@@ -116,103 +128,30 @@ if (localStorage.getItem("adminAuth") === "true") {
 }
 </script>
 
-<!-- FIREBASE -->
+<!-- 🔥 FIREBASE ADMIN -->
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   collection,
   getDocs,
   deleteDoc,
-  doc,
-  setDoc
+  doc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship"
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* =========================
-   🔥 LOAD MENTOR APPLICATIONS
-========================= */
-
-async function loadMentors() {
-  const container = document.getElementById("mentorsList");
-  const snap = await getDocs(collection(db, "mentorApplications"));
-
-  container.innerHTML = "";
-
-  snap.forEach(docSnap => {
-    const m = docSnap.data();
-    const id = docSnap.id;
-
-    container.innerHTML += `
-      <div class="data-card">
-        <h3>${m.name}</h3>
-        <p>${m.email}</p>
-        <p>Experience: ${m.experience || 0} years</p>
-
-        <div class="actions">
-          <button class="btn approve-btn" onclick="approveMentor('${id}')">
-            Approve
-          </button>
-
-          <button class="btn danger-btn" onclick="deleteItem('mentorApplications','${id}')">
-            Reject
-          </button>
-        </div>
-      </div>
-    `;
-  });
-}
-
-/* =========================
-   ✅ APPROVE MENTOR
-========================= */
-
-window.approveMentor = async function(id) {
-
-  const snap = await getDocs(collection(db, "mentorApplications"));
-  let selected;
-
-  snap.forEach(docSnap => {
-    if (docSnap.id === id) {
-      selected = docSnap.data();
-    }
-  });
-
-  if (!selected) return alert("Error");
-
-  // 🔥 CREATE USER
-  const newId = Date.now().toString();
-
-  await setDoc(doc(db, "users", newId), {
-    name: selected.name,
-    email: selected.email,
-    role: "mentor",
-    verified: true,
-    experience: Number(selected.experience) || 0,
-    phone: selected.phone || ""
-  });
-
-  // 🔥 DELETE APPLICATION
-  await deleteDoc(doc(db, "mentorApplications", id));
-
-  alert("Mentor approved ✅");
-
-  loadMentors();
-};
-
-/* =========================
-   QUESTIONS
-========================= */
-
+// 🔹 LOAD QUESTIONS
 async function loadQuestions() {
   const container = document.getElementById("questionsList");
   const snap = await getDocs(collection(db, "questions"));
@@ -225,25 +164,72 @@ async function loadQuestions() {
 
     container.innerHTML += `
       <div class="data-card">
-        <p>${q.question}</p>
-        <button class="btn danger-btn" onclick="deleteItem('questions','${id}')">
-          Delete
-        </button>
+        <h4>${q.question}</h4>
+        <p>${q.name || "User"}</p>
+        <button class="danger-btn" onclick="deleteItem('questions','${id}')">Delete</button>
       </div>
     `;
   });
 }
 
-/* DELETE */
+// 🔹 LOAD MENTORS
+async function loadMentors() {
+  const container = document.getElementById("mentorsList");
+  const snap = await getDocs(collection(db, "mentorApplications"));
+
+  container.innerHTML = "";
+
+  snap.forEach(docSnap => {
+    const m = docSnap.data();
+    const id = docSnap.id;
+
+    container.innerHTML += `
+      <div class="data-card">
+        <h4>${m.name}</h4>
+        <p>${m.email}</p>
+        <p>${m.expertise}</p>
+        <button class="danger-btn" onclick="deleteItem('mentorApplications','${id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+// 🔹 LOAD CONTACTS
+async function loadContacts() {
+  const container = document.getElementById("contactsList");
+  const snap = await getDocs(collection(db, "contactMessages"));
+
+  container.innerHTML = "";
+
+  snap.forEach(docSnap => {
+    const c = docSnap.data();
+    const id = docSnap.id;
+
+    container.innerHTML += `
+      <div class="data-card">
+        <h4>${c.name}</h4>
+        <p>${c.email}</p>
+        <p>${c.message}</p>
+        <button class="danger-btn" onclick="deleteItem('contactMessages','${id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+// 🔥 DELETE
 window.deleteItem = async function(col, id) {
   await deleteDoc(doc(db, col, id));
-  loadMentors();
+  alert("Deleted");
+
   loadQuestions();
+  loadMentors();
+  loadContacts();
 };
 
-/* INIT */
-loadMentors();
+// 🚀 INIT
 loadQuestions();
+loadMentors();
+loadContacts();
 
 </script>
 
