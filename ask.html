@@ -1,44 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ask a Question | Connect Mentorship</title>
 
-  <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/ask.html">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ask a Question | Connect Mentorship</title>
+
+<link rel="canonical" href="https://connect6666.github.io/connect-mentorship/ask.html">
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+/* =========================
+   🎯 PAGE
+========================= */
+
+.ask-wrapper {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* HEADER */
+.ask-header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.ask-header p {
+  color: #64748b;
+}
+
+/* FORM BOX */
+.ask-box {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* INPUTS */
+.ask-box input,
+.ask-box select,
+.ask-box textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+/* TIPS */
+.ask-tips {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.ask-tips li {
+  margin-bottom: 5px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<!-- NAVBAR -->
+<!-- NAV -->
 <nav>
-  <div class="container">
-    <div class="logo">Connect</div>
+  <div class="container nav-flex">
+    <div class="logo"><a href="index.html">Connect</a></div>
 
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
       <a href="index.html">Home</a>
-      <a href="ask.html">Ask Question</a>
-      <a href="mentor.html">Become Mentor</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
+      <a href="ask.html">Ask</a>
       <a href="questions.html">Questions</a>
-
+      <a href="mentor.html">Mentors</a>
       <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
-<!-- ASK SECTION -->
-<section class="page-section">
-  <div class="container">
+<div class="ask-wrapper">
 
+  <div class="ask-header">
     <h2>Ask Your Question</h2>
+    <p>Get real advice from students who’ve already been there</p>
+  </div>
 
-    <!-- QUESTION FORM -->
-    <form id="questionForm" class="question-form">
+  <div class="ask-box">
+
+    <form id="questionForm">
 
       <input type="text" id="name" placeholder="Your Name (optional)">
       <input type="email" id="email" placeholder="Email (optional)">
@@ -51,15 +107,27 @@
         <option>Skills</option>
       </select>
 
-      <textarea id="question" placeholder="Write your question..." required></textarea>
+      <textarea id="question" placeholder="Write your question clearly..." required></textarea>
 
       <button type="submit" class="btn">Submit Question</button>
 
       <p id="formMessage"></p>
+
     </form>
 
+    <!-- 💡 GUIDANCE -->
+    <div class="ask-tips">
+      <strong>Tips for better answers:</strong>
+      <ul>
+        <li>Be specific (mention exam / situation)</li>
+        <li>Avoid one-line questions</li>
+        <li>Explain your confusion clearly</li>
+      </ul>
+    </div>
+
   </div>
-</section>
+
+</div>
 
 <footer>
   <p>© 2026 Connect Mentorship</p>
@@ -79,38 +147,30 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  apiKey: "AIzaSy...",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship",
-  storageBucket: "connect-mentorship.firebasestorage.app",
-  messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+  projectId: "connect-mentorship"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const userArea = document.getElementById("userArea");
+let currentUser = null;
 
-// 🔥 NAVBAR LOGIN SYSTEM
+const userArea = document.getElementById("userArea");
 userArea.style.display = "none";
 
+/* NAVBAR */
 onAuthStateChanged(auth, async (user) => {
+
+  currentUser = user;
 
   if (user) {
     let name = "User";
 
-    try {
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-
-      if (docSnap.exists()) {
-        name = docSnap.data().name || "User";
-      }
-
-    } catch (error) {
-      console.log("User fetch error");
-    }
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (snap.exists()) name = snap.data().name || "User";
 
     userArea.innerHTML = `
       <span style="color:white;">👤 ${name}</span>
@@ -127,21 +187,21 @@ onAuthStateChanged(auth, async (user) => {
   userArea.style.display = "flex";
 });
 
-// 🔐 LOGOUT
+/* LOGOUT */
 window.logout = async function() {
   await signOut(auth);
   location.reload();
 };
 
-// ✅ SAVE QUESTION
+/* SAVE QUESTION */
 document.getElementById("questionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const category = document.getElementById("category").value;
-  const question = document.getElementById("question").value;
-  const msg = document.getElementById("formMessage");
+  const name = nameInput.value;
+  const email = emailInput.value;
+  const category = category.value;
+  const question = question.value;
+  const msg = formMessage;
 
   if (!category || !question) {
     msg.innerText = "Fill required fields ❌";
@@ -155,7 +215,7 @@ document.getElementById("questionForm").addEventListener("submit", async (e) => 
       email,
       category,
       question,
-      userId: auth.currentUser.uid,
+      userId: currentUser ? currentUser.uid : null,
       createdAt: new Date()
     });
 
@@ -165,14 +225,14 @@ document.getElementById("questionForm").addEventListener("submit", async (e) => 
     e.target.reset();
 
   } catch (error) {
-    msg.innerText = "Error submitting ❌";
+    msg.innerText = "Error ❌";
     msg.style.color = "red";
   }
 });
 
 </script>
 
-  <script>
+<script>
 function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }
