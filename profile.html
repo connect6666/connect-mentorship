@@ -53,7 +53,6 @@
   margin-top: 15px;
 }
 
-/* SECTIONS */
 .profile-section {
   max-width: 800px;
   margin: 40px auto;
@@ -123,9 +122,6 @@ const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship",
-  storageBucket: "connect-mentorship.firebasestorage.app",
-  messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -145,7 +141,6 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
   const snap = await getDoc(doc(db, "users", user.uid));
-
   let data = snap.exists() ? snap.data() : {};
 
   const name = data.name || "User";
@@ -153,19 +148,29 @@ onAuthStateChanged(auth, async (user) => {
   const verified = data.verified || false;
   const phone = data.phone || "";
 
-
   card.innerHTML = `
     <img src="https://ui-avatars.com/api/?name=${name}" class="profile-img">
 
     <h2>${name}</h2>
     <p>${user.email}</p>
-${role === "mentor" || role === "user" ? `
-  <div class="badge">
-    Mentor ${verified ? "✅ Verified" : "⏳ Pending"}
-  </div>
 
-  ${!verified ? `<button class="btn" onclick="applyVerification()">Apply for Verification</button>` : ""}
-` : ""}
+    ${
+      role === "mentor"
+        ? `
+        <div class="badge">
+          Mentor ${verified ? "✅ Verified" : "⏳ Pending"}
+        </div>
+
+        ${
+          !verified
+            ? `<button class="btn" onclick="applyVerification()">Apply for Verification</button>`
+            : ""
+        }
+      `
+        : `
+        <button class="btn" onclick="applyVerification()">Become Mentor</button>
+      `
+    }
 
     <input id="editName" value="${name}">
     <input id="editPhone" placeholder="Phone number" value="${phone}">
@@ -174,36 +179,35 @@ ${role === "mentor" || role === "user" ? `
     <button class="btn btn-outline" onclick="logout()">Logout</button>
   `;
 
+  // CLEAR OLD DATA
+  myQuestions.innerHTML = "";
+  myAnswers.innerHTML = "";
+
   // LOAD QUESTIONS
-  // 🔥 CLEAR OLD DATA (IMPORTANT FIX)
-myQuestions.innerHTML = "";
-myAnswers.innerHTML = "";
+  const qSnap = await getDocs(
+    query(collection(db,"questions"), where("userId","==",user.uid))
+  );
 
-// LOAD QUESTIONS
-const qSnap = await getDocs(
-  query(collection(db,"questions"), where("userId","==",user.uid))
-);
+  qSnap.forEach(doc=>{
+    myQuestions.innerHTML += `
+      <div class="step-card">
+        ${doc.data().question}
+      </div>
+    `;
+  });
 
-qSnap.forEach(doc=>{
-  myQuestions.innerHTML += `
-    <div class="step-card">
-      ${doc.data().question}
-    </div>
-  `;
-});
+  // LOAD ANSWERS
+  const aSnap = await getDocs(
+    query(collection(db,"answers"), where("userId","==",user.uid))
+  );
 
-// LOAD ANSWERS
-const aSnap = await getDocs(
-  query(collection(db,"answers"), where("userId","==",user.uid))
-);
-
-aSnap.forEach(doc=>{
-  myAnswers.innerHTML += `
-    <div class="step-card">
-      ${doc.data().text}
-    </div>
-  `;
-});
+  aSnap.forEach(doc=>{
+    myAnswers.innerHTML += `
+      <div class="step-card">
+        ${doc.data().text}
+      </div>
+    `;
+  });
 
 });
 
@@ -213,11 +217,30 @@ window.saveProfile = async function() {
   const phone = document.getElementById("editPhone").value;
 
   await updateDoc(doc(db, "users", currentUser.uid), {
-    name: name,
-    phone: phone
+    name,
+    phone
   });
 
   alert("Profile updated ✅");
+  location.reload();
+};
+
+// APPLY MENTOR
+window.applyVerification = async function() {
+
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
+  const data = snap.data();
+
+  if (data.role === "mentor" && data.verified === false) {
+    return alert("Already applied ⏳");
+  }
+
+  await updateDoc(doc(db, "users", currentUser.uid), {
+    role: "mentor",
+    verified: false
+  });
+
+  alert("Applied for mentor ✅");
   location.reload();
 };
 
@@ -225,17 +248,6 @@ window.saveProfile = async function() {
 window.logout = async function() {
   await signOut(auth);
   window.location.href = "index.html";
-};
-
-  window.applyVerification = async function() {
-
-  await updateDoc(doc(db, "users", currentUser.uid), {
-    role: "mentor",
-    verified: false
-  });
-
-  alert("Applied for verification ✅");
-  location.reload();
 };
 
 </script>
