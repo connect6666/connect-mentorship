@@ -1,122 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>All Questions | Connect Mentorship</title>
-
+<title>All Questions | Connect</title>
 <link rel="stylesheet" href="style.css">
 
 <style>
-
-/* =========================
-   🎯 PAGE
-========================= */
-
-.questions-wrapper {
-  max-width: 850px;
+.questions-container {
+  max-width: 800px;
   margin: 40px auto;
-  padding: 0 20px;
 }
 
-/* HEADER */
-.questions-header {
-  text-align: center;
-  margin-bottom: 25px;
-}
-
-.questions-header p {
-  color: #64748b;
-}
-
-/* CARD */
 .question-card {
   background: white;
   padding: 20px;
   margin-bottom: 20px;
-  border-radius: 14px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
 }
 
-/* META */
-.question-meta {
-  font-size: 13px;
-  color: #64748b;
-  margin-top: 6px;
-}
-
-/* ANSWERS */
 .answer {
-  margin-top: 15px;
-  padding: 15px;
+  margin-top: 12px;
+  padding: 12px;
   background: #eef2ff;
   border-left: 4px solid #4f46e5;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
-.answer small {
-  display: block;
-  margin-top: 6px;
-  color: #64748b;
-}
-
-/* REPLIES */
 .reply {
-  margin-top: 8px;
   font-size: 14px;
+  margin-top: 6px;
   padding-left: 10px;
 }
 
-/* INPUT */
-textarea, input {
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
 button {
-  margin-top: 8px;
+  cursor: pointer;
 }
-
 </style>
-
 </head>
 
 <body>
 
 <nav>
-  <div class="container nav-flex">
-    <div class="logo"><a href="index.html">Connect</a></div>
+  <div class="container">
+    
+    <div class="logo">Connect</div>
 
+    <!-- ✅ HAMBURGER BUTTON -->
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
       <a href="index.html">Home</a>
-      <a href="ask.html">Ask</a>
+      <a href="ask.html">Ask Question</a>
+      <a href="mentor.html">Become Mentor</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
       <a href="questions.html">Questions</a>
+
+      <span id="userArea"></span>
     </div>
+
   </div>
 </nav>
 
-<div class="questions-wrapper">
-
-  <div class="questions-header">
-    <h2>Explore Questions</h2>
-    <p>Learn from real answers shared by students</p>
-  </div>
-
-  <div id="questionsList"></div>
-
-</div>
+<div class="questions-container" id="questionsList"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 import {
   getFirestore,
   collection,
@@ -130,9 +84,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship"
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -144,26 +101,22 @@ const container = document.getElementById("questionsList");
 let currentUser = null;
 let isMentor = false;
 
-/* AUTH */
+// 🔐 USER CHECK
 onAuthStateChanged(auth, async (user) => {
 
   if (user) {
     currentUser = user;
 
     const snap = await getDoc(doc(db, "users", user.uid));
-
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.role === "mentor" && data.verified === true) {
-        isMentor = true;
-      }
+    if (snap.exists() && snap.data().role === "mentor") {
+      isMentor = true;
     }
   }
 
   loadRealtime();
 });
 
-/* SAFE */
+// 🔐 SAFE HTML
 function escapeHTML(str) {
   if (!str) return "";
   return str.replace(/[&<>"']/g, m => ({
@@ -175,7 +128,7 @@ function escapeHTML(str) {
   }[m]));
 }
 
-/* REALTIME */
+// 🚀 REALTIME LOAD
 function loadRealtime() {
 
   onSnapshot(collection(db, "questions"), (questionsSnap) => {
@@ -189,19 +142,15 @@ function loadRealtime() {
 
       const card = document.createElement("div");
       card.className = "question-card";
-
       card.innerHTML = `
         <h3>${escapeHTML(q.question)}</h3>
-        <div class="question-meta">
-          ${escapeHTML(q.name || "User")} • ${escapeHTML(q.category)}
-        </div>
-
+        <small>${escapeHTML(q.name || "User")} | ${escapeHTML(q.category)}</small>
         <div id="answers-${qId}"></div>
       `;
 
       container.appendChild(card);
 
-      /* ANSWERS */
+      // 🔥 ANSWERS REALTIME
       const answersQuery = query(
         collection(db, "answers"),
         where("questionId", "==", qId)
@@ -209,74 +158,74 @@ function loadRealtime() {
 
       onSnapshot(answersQuery, (answersSnap) => {
 
-        const box = document.getElementById("answers-" + qId);
-        box.innerHTML = "";
+        const answersContainer = document.getElementById("answers-" + qId);
+        answersContainer.innerHTML = "";
 
         let answers = [];
         answersSnap.forEach(a => answers.push({ id: a.id, ...a.data() }));
 
-        answers.sort((a,b)=> (b.votes||0)-(a.votes||0));
+        // SORT BY VOTES
+        answers.sort((a, b) => (b.votes || 0) - (a.votes || 0));
 
         answers.forEach(ans => {
 
-          box.innerHTML += `
-            <div class="answer">
-              ${escapeHTML(ans.text)}
+          const ansDiv = document.createElement("div");
+          ansDiv.className = "answer";
 
-              <small>
-                ${escapeHTML(ans.mentorName || "Mentor")}
-                ${ans.verified ? "✅" : ""}
-              </small>
+          ansDiv.innerHTML = `
+            ${escapeHTML(ans.text)}
+            <br>
+            <small>Answered by ${escapeHTML(ans.mentorName || "Mentor")}</small>
+            <br>
+            👍 ${ans.votes || 0}
+            <button onclick="upvote('${ans.id}')">Upvote</button>
 
-              👍 ${ans.votes || 0}
-              <button onclick="upvote('${ans.id}')">Upvote</button>
-
-              <div>
-                <button onclick="toggleReplies('${ans.id}')">
-                  💬 <span id="count-${ans.id}">0</span> Replies
-                </button>
-              </div>
-
-              <div id="replies-${ans.id}" style="display:none;"></div>
-
-              <input id="reply-${ans.id}" placeholder="Write reply...">
-              <button onclick="submitReply('${ans.id}')">Reply</button>
+            <div>
+              <button onclick="toggleReplies('${ans.id}')">
+                💬 <span id="count-${ans.id}">0</span> Replies
+              </button>
             </div>
+
+            <div id="replies-${ans.id}" style="display:none;"></div>
+
+            <input id="reply-${ans.id}" placeholder="Write reply..." style="width:70%;">
+            <button onclick="submitReply('${ans.id}')">Reply</button>
           `;
 
-          /* REPLIES */
+          answersContainer.appendChild(ansDiv);
+
+          // 🔥 REPLIES REALTIME
           const repliesQuery = query(
             collection(db, "replies"),
-            where("answerId","==",ans.id)
+            where("answerId", "==", ans.id)
           );
 
-          onSnapshot(repliesQuery, snap => {
+          onSnapshot(repliesQuery, (snap) => {
 
-            const rBox = document.getElementById("replies-"+ans.id);
+            const box = document.getElementById("replies-" + ans.id);
             let count = 0;
-            rBox.innerHTML = "";
+            box.innerHTML = "";
 
-            snap.forEach(r=>{
+            snap.forEach(r => {
               count++;
               const data = r.data();
 
-              rBox.innerHTML += `
+              box.innerHTML += `
                 <div class="reply">
                   💬 <b>${escapeHTML(data.userName)}</b>: ${escapeHTML(data.text)}
                 </div>
               `;
             });
 
-            document.getElementById("count-"+ans.id).innerText = count;
+            document.getElementById("count-" + ans.id).innerText = count;
           });
-
         });
 
-        /* ANSWER BOX */
+        // 🔥 ANSWER BOX (MENTOR ONLY)
         if (isMentor) {
-          box.innerHTML += `
-            <textarea id="ans-${qId}" placeholder="Write answer..."></textarea>
-            <button onclick="submitAnswer('${qId}')">Submit Answer</button>
+          answersContainer.innerHTML += `
+            <textarea id="ans-${qId}"></textarea>
+            <button onclick="submitAnswer('${qId}')">Answer</button>
           `;
         }
 
@@ -287,54 +236,56 @@ function loadRealtime() {
   });
 }
 
-/* ACTIONS */
+// 🔥 TOGGLE
 window.toggleReplies = function(id) {
   const el = document.getElementById("replies-" + id);
   el.style.display = el.style.display === "none" ? "block" : "none";
 };
 
+// 🔥 ANSWER
 window.submitAnswer = async function(qId) {
 
-  if (!isMentor) return alert("Only verified mentors");
+  if (!isMentor) return alert("Only mentors");
 
-  const text = document.getElementById("ans-"+qId).value;
+  const text = document.getElementById("ans-" + qId).value;
 
-  const snap = await getDoc(doc(db,"users",currentUser.uid));
-  const data = snap.data();
+  const snap = await getDoc(doc(db, "users", currentUser.uid));
+  const name = snap.exists() ? snap.data().name : "Mentor";
 
-  await addDoc(collection(db,"answers"),{
-    questionId:qId,
+  await addDoc(collection(db, "answers"), {
+    questionId: qId,
     text,
-    mentorName:data.name||"Mentor",
-    userId:currentUser.uid,
-    verified:true,
-    votes:0,
-    upvotedBy:[],
-    createdAt:new Date()
+    mentorName: name,
+    userId: currentUser.uid,
+    votes: 0,
+    upvotedBy: [],
+    createdAt: new Date()
   });
 };
 
+// 🔥 UPVOTE
 window.upvote = async function(id) {
 
   if (!currentUser) return alert("Login required");
 
-  const ref = doc(db,"answers",id);
+  const ref = doc(db, "answers", id);
   const snap = await getDoc(ref);
   const data = snap.data();
 
-  if ((data.upvotedBy||[]).includes(currentUser.uid)) {
+  if ((data.upvotedBy || []).includes(currentUser.uid)) {
     return alert("Already voted");
   }
 
-  await updateDoc(ref,{
-    votes:(data.votes||0)+1,
-    upvotedBy:[...(data.upvotedBy||[]),currentUser.uid]
+  await updateDoc(ref, {
+    votes: (data.votes || 0) + 1,
+    upvotedBy: [...(data.upvotedBy || []), currentUser.uid]
   });
 };
 
+// 🔥 REPLY (WITH FIX + UX)
 window.submitReply = async function(answerId) {
 
-  const input = document.getElementById("reply-"+answerId);
+  const input = document.getElementById("reply-" + answerId);
   const text = input.value.trim();
 
   if (!text) return alert("Write reply");
@@ -342,23 +293,38 @@ window.submitReply = async function(answerId) {
   let name = "User";
 
   if (currentUser) {
-    const snap = await getDoc(doc(db,"users",currentUser.uid));
-    if (snap.exists()) name = snap.data().name || "User";
+    const snap = await getDoc(doc(db, "users", currentUser.uid));
+    if (snap.exists()) {
+      name = snap.data().name || "User";
+    }
   }
 
-  await addDoc(collection(db,"replies"),{
+  await addDoc(collection(db, "replies"), {
     answerId,
     text,
-    userName:name,
-    createdAt:new Date()
+    userName: name,
+    userId: auth.currentUser.uid,
+    createdAt: new Date()
   });
 
+  // ✅ CLEAR + FEEDBACK
   input.value = "";
+  input.placeholder = "Reply sent ✅";
+
+  setTimeout(() => {
+    input.placeholder = "Write reply...";
+  }, 1500);
 };
 
 </script>
 
-<script>
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+  <script>
 function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }
