@@ -55,6 +55,12 @@
   margin-top: 40px;
 }
 
+.empty-state {
+  text-align: center;
+  color: gray;
+  margin-top: 30px;
+}
+
 </style>
 
 </head>
@@ -81,6 +87,7 @@
   <div class="container">
     <h2>Browse Mentors</h2>
     <div class="mentor-container" id="mentorList"></div>
+    <p id="emptyState" class="empty-state"></p>
   </div>
 </section>
 
@@ -155,10 +162,13 @@ form.addEventListener("submit", async (e) => {
     });
 
     msg.innerText = "Application submitted ✅";
+    msg.style.color = "green";
     form.reset();
 
   } catch (error) {
     msg.innerText = "Error ❌";
+    msg.style.color = "red";
+    console.log(error);
   }
 });
 
@@ -166,15 +176,22 @@ form.addEventListener("submit", async (e) => {
    LOAD MENTORS
 ========================= */
 const container = document.getElementById("mentorList");
+const emptyState = document.getElementById("emptyState");
 
 onSnapshot(collection(db, "users"), (snap) => {
 
   container.innerHTML = "";
+  let count = 0;
 
   snap.forEach(doc => {
     const data = doc.data();
 
+    // DEBUG
+    console.log("User:", doc.id, data);
+
     if (data.role === "mentor" && data.verified === true) {
+
+      count++;
 
       container.innerHTML += `
         <div class="mentor-card">
@@ -184,7 +201,7 @@ onSnapshot(collection(db, "users"), (snap) => {
 
             <div class="badge">Available</div>
 
-            <h3>${data.name}</h3>
+            <h3>${data.name || "User"}</h3>
             <p>${data.phone || "Mentor"}</p>
 
             <button onclick="viewProfile('${doc.id}')">
@@ -197,12 +214,19 @@ onSnapshot(collection(db, "users"), (snap) => {
     }
   });
 
+  if (count === 0) {
+    emptyState.innerText = "No verified mentors yet 😕";
+  } else {
+    emptyState.innerText = "";
+  }
+
 });
 
 /* =========================
    VIEW PROFILE
 ========================= */
 window.viewProfile = function(id) {
+  console.log("Opening profile:", id);
   window.location.href = "mentor-profile.html?id=" + id;
 };
 
