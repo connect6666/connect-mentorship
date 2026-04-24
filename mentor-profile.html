@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentor Profile | Connect</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+.profile-container {
+  max-width: 800px;
+  margin: 40px auto;
+}
+
+.profile-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.profile-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin-bottom: 15px;
+}
+
+.badge {
+  background: #16a34a;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  display: inline-block;
+  margin-top: 5px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">Connect</div>
+  </div>
+</nav>
+
+<div class="profile-container">
+  <div class="profile-card" id="profile">
+    Loading...
+  </div>
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// GET ID FROM URL
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
+
+const profile = document.getElementById("profile");
+
+if (!id) {
+  profile.innerHTML = "Mentor not found";
+} else {
+
+  const snap = await getDoc(doc(db, "users", id));
+
+  if (!snap.exists()) {
+    profile.innerHTML = `
+  <img src="https://ui-avatars.com/api/?name=${data.name}" class="profile-img">
+
+  <h2>${data.name}</h2>
+  <p>${data.role || "Mentor"}</p>
+
+  ${data.verified ? `<div class="badge">Verified Mentor ✅</div>` : ""}
+
+  <p style="margin-top:15px;">
+    Experience: ${data.experience || "Not added"} years
+  </p>
+
+  <p>
+    Phone: ${data.phone || "Not provided"}
+  </p>
+
+  <button onclick="startChat('${id}')">
+    Chat with Mentor
+  </button>
+`;
+  }
+}
+
+// CHAT BUTTON
+window.startChat = function(id) {
+  alert("Start chat with mentor: " + id);
+};
+
+
+
+</script>
+
+</body>
+</html>
