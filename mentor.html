@@ -99,6 +99,7 @@
     <form id="mentorForm" class="question-form">
       <input type="text" id="mentorName" placeholder="Your Name" required>
       <input type="email" id="mentorEmail" placeholder="Email" required>
+      <input type="number" id="mentorExperience" placeholder="Years of Experience (e.g. 5)" required>
 
       <select id="mentorLevel" required>
         <option value="">Select Level</option>
@@ -151,15 +152,16 @@ form.addEventListener("submit", async (e) => {
   const email = document.getElementById("mentorEmail").value;
   const level = document.getElementById("mentorLevel").value;
   const reason = document.getElementById("mentorReason").value;
-
+const experience = document.getElementById("mentorExperience").value;
   try {
     await addDoc(collection(db, "mentorApplications"), {
-      name,
-      email,
-      level,
-      reason,
-      createdAt: new Date()
-    });
+  name,
+  email,
+  level,
+  reason,
+  experience,
+  createdAt: new Date()
+});
 
     msg.innerText = "Application submitted ✅";
     msg.style.color = "green";
