@@ -115,7 +115,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { 
   getFirestore, doc, getDoc, updateDoc,
-  collection, getDocs, query, where 
+  collection, getDocs, query, where, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -140,7 +140,9 @@ onAuthStateChanged(auth, async (user) => {
 
   currentUser = user;
 
-  const snap = await getDoc(doc(db, "users", user.uid));
+  
+onSnapshot(doc(db, "users", user.uid), (snap) => {
+
   let data = snap.exists() ? snap.data() : {};
 
   const name = data.name || "User";
@@ -178,23 +180,7 @@ onAuthStateChanged(auth, async (user) => {
     <button class="btn" onclick="saveProfile()">Save</button>
     <button class="btn btn-outline" onclick="logout()">Logout</button>
   `;
-
-  // CLEAR OLD DATA
-  myQuestions.innerHTML = "";
-  myAnswers.innerHTML = "";
-
-  // LOAD QUESTIONS
-  const qSnap = await getDocs(
-    query(collection(db,"questions"), where("userId","==",user.uid))
-  );
-
-  qSnap.forEach(doc=>{
-    myQuestions.innerHTML += `
-      <div class="step-card">
-        ${doc.data().question}
-      </div>
-    `;
-  });
+});
 
   // LOAD ANSWERS
   const aSnap = await getDocs(
