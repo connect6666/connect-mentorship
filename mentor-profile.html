@@ -1,42 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mentor Profile | Connect</title>
+
+<title>Mentor Profile | Connect Mentorship</title>
 
 <link rel="stylesheet" href="style.css">
 
 <style>
 
-.profile-container {
-  max-width: 800px;
-  margin: 40px auto;
+/* =========================
+   🎯 PROFILE LAYOUT
+========================= */
+
+.profile-wrapper {
+  max-width: 900px;
+  margin: 50px auto;
+  padding: 0 20px;
 }
 
 .profile-card {
   background: white;
-  padding: 30px;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  padding: 30px;
+}
+
+/* HEADER */
+.profile-header {
   text-align: center;
 }
 
 .profile-img {
-  width: 120px;
-  height: 120px;
+  width: 110px;
+  height: 110px;
   border-radius: 50%;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
+.profile-header h2 {
+  margin-bottom: 5px;
+}
+
+.profile-role {
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* BADGE */
 .badge {
-  background: #16a34a;
-  color: white;
-  padding: 6px 12px;
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-size: 12px;
-  display: inline-block;
-  margin-top: 5px;
+  font-weight: 600;
+}
+
+.badge.verified {
+  background: #16a34a;
+  color: white;
+}
+
+.badge.pending {
+  background: #f59e0b;
+  color: white;
+}
+
+/* INFO */
+.profile-info {
+  margin-top: 25px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 20px;
+}
+
+.info-row {
+  margin-bottom: 12px;
+  font-size: 15px;
+}
+
+/* CTA */
+.profile-actions {
+  margin-top: 25px;
+  text-align: center;
+}
+
+.profile-actions .btn {
+  margin: 8px;
 }
 
 </style>
@@ -45,18 +97,24 @@
 
 <body>
 
+<!-- NAV -->
 <nav>
-  <div class="container">
-    <div class="logo">Connect</div>
+  <div class="container nav-flex">
+    <div class="logo">
+      <a href="index.html">Connect</a>
+    </div>
   </div>
 </nav>
 
-<div class="profile-container">
+<div class="profile-wrapper">
+
   <div class="profile-card" id="profile">
     Loading...
   </div>
+
 </div>
 
+<!-- FIREBASE -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -67,7 +125,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  apiKey: "AIzaSy...",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship"
 };
@@ -75,7 +133,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// GET ID FROM URL
+// GET ID
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
@@ -94,50 +152,65 @@ if (!id) {
 
       const data = snap.data();
 
+      const experienceText = data.experience
+        ? data.experience >= 5
+          ? data.experience + "+ years"
+          : data.experience + " years"
+        : "Not added";
+
       profile.innerHTML = `
-        <img src="https://ui-avatars.com/api/?name=${data.name}" class="profile-img">
+        <div class="profile-header">
 
-        <h2 style="margin-bottom:5px;">${data.name}</h2>
+          <img src="https://ui-avatars.com/api/?name=${data.name}" class="profile-img">
 
-        <p style="color: gray; margin-top:5px;">
-          ${data.role || "Mentor"}
-        </p>
+          <h2>${data.name}</h2>
 
-        ${
-          data.verified
-            ? `<div class="badge">Verified Mentor ✅</div>`
-            : `<div class="badge" style="background:#f59e0b;">Pending Verification ⏳</div>`
-        }
+          <div class="profile-role">${data.role || "Mentor"}</div>
 
-        <p style="margin-top:15px;">
-         Experience: ${
-  data.experience
-    ? data.experience >= 5
-      ? data.experience + "+ years"
-      : data.experience + " years"
-    : "Not added"
-}
-        </p>
+          ${
+            data.verified
+              ? `<div class="badge verified">Verified Mentor</div>`
+              : `<div class="badge pending">Pending Verification</div>`
+          }
 
-        <p>
-          Phone: ${data.phone || "Not provided"}
-        </p>
+        </div>
 
-        <button class="chat-btn" onclick="startChat('${id}')">
-          💬 Chat with Mentor
-        </button>
+        <div class="profile-info">
+
+          <div class="info-row">
+            <strong>Experience:</strong> ${experienceText}
+          </div>
+
+          <div class="info-row">
+            <strong>Phone:</strong> ${data.phone || "Not provided"}
+          </div>
+
+        </div>
+
+        <div class="profile-actions">
+
+          <button class="btn" onclick="startChat('${data.phone}')">
+            💬 Chat on WhatsApp
+          </button>
+
+        </div>
       `;
     }
 
   } catch (error) {
-    console.log("Error:", error);
+    console.log(error);
     profile.innerHTML = "Error loading profile ❌";
   }
 }
 
-// CHAT BUTTON
-window.startChat = function(id) {
-  alert("Start chat with mentor: " + id);
+// CHAT
+window.startChat = function(phone) {
+  if (!phone) {
+    alert("Phone not available ❌");
+    return;
+  }
+
+  window.open(`https://wa.me/${phone}?text=Hi%20I%20found%20you%20on%20Connect%20Mentorship`, "_blank");
 };
 
 </script>
