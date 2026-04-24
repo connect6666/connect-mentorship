@@ -1,55 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Signup | Connect</title>
-  <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Signup | Connect Mentorship</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+/* =========================
+   🎯 SIGNUP
+========================= */
+
+.signup-wrapper {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 0 20px;
+}
+
+.signup-card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.signup-card input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.google-btn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #333;
+}
+
+.helper-text {
+  font-size: 13px;
+  color: #64748b;
+  margin-top: 10px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<!-- NAVBAR -->
-<nav>
-  <div class="container">
-    <div class="logo">Connect</div>
+<div class="signup-wrapper">
 
-    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+  <div class="signup-card">
 
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask Question</a>
-      <a href="mentor.html">Become Mentor</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="questions.html">Questions</a>
-      <span id="userArea"></span>
-    </div>
+    <h2>Create Your Account 🚀</h2>
+    <p style="color:#64748b;">Start your mentorship journey</p>
+
+    <input type="text" id="name" placeholder="Your Name">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password (min 6 characters)">
+    <input type="text" id="phone" placeholder="WhatsApp Number (e.g. 919876543210)">
+
+    <p class="helper-text">
+      You can apply as a mentor later from your profile.
+    </p>
+
+    <button onclick="signup()" class="btn" id="signupBtn">
+      Create Account
+    </button>
+
+    <button id="googleLogin" class="btn google-btn">
+      🔵 Continue with Google
+    </button>
+
+    <p style="margin-top:15px;">
+      Already have account? <a href="login.html">Login</a>
+    </p>
+
+    <p id="msg"></p>
+
   </div>
-</nav>
 
-<!-- SIGNUP -->
-<div style="max-width:400px;margin:100px auto;text-align:center;">
-  <h2>Create Account</h2>
-
-  <input type="text" id="name" placeholder="Your Name"><br><br>
-  <input type="email" id="email" placeholder="Email"><br><br>
-  <input type="password" id="password" placeholder="Password (min 6 characters)"><br><br>
-  <input type="text" id="phone" placeholder="WhatsApp Number (e.g. 919876543210)"><br><br>
-
-  <select id="role">
-    <option value="user">Student</option>
-    <option value="mentor">Mentor</option>
-  </select><br><br>
-
-  <button onclick="signup()" class="btn">Signup</button>
-
-  <p>Already have account? <a href="login.html">Login</a></p>
-
-  <!-- GOOGLE BUTTON -->
-  <button id="googleLogin" class="btn" style="margin-top:10px;">
-    🔵 Continue with Google
-  </button>
-
-  <p id="msg" style="margin-top:10px;"></p>
 </div>
 
 <!-- FIREBASE -->
@@ -72,12 +109,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  apiKey: "AIzaSy...",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship",
-  storageBucket: "connect-mentorship.firebasestorage.app",
-  messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+  projectId: "connect-mentorship"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -86,97 +120,97 @@ const db = getFirestore(app);
 
 const msg = document.getElementById("msg");
 
+/* =========================
+   🔐 EMAIL SIGNUP
+========================= */
 
-// 🔐 EMAIL SIGNUP
 window.signup = async function() {
 
-  const name = document.getElementById("name").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const pass = document.getElementById("password").value;
-  const role = document.getElementById("role").value;
-  const phone = document.getElementById("phone").value.trim();
+  const name = nameInput.value.trim();
+  const email = emailInput.value.trim();
+  const pass = passwordInput.value;
+  const phone = phoneInput.value.trim();
 
-  if (!name || !email || !pass) {
+  const btn = document.getElementById("signupBtn");
+  btn.innerText = "Creating...";
+
+  if (!name || !email || !pass || !phone) {
     msg.innerText = "All fields required ❌";
     msg.style.color = "red";
+    btn.innerText = "Create Account";
     return;
   }
 
   if (!/^\d{10,15}$/.test(phone)) {
     msg.innerText = "Enter valid phone number ❌";
     msg.style.color = "red";
+    btn.innerText = "Create Account";
     return;
   }
 
   if (pass.length < 6) {
     msg.innerText = "Password must be 6+ characters ❌";
     msg.style.color = "red";
+    btn.innerText = "Create Account";
     return;
   }
 
   try {
-    msg.innerText = "Creating account...";
-
     const userCred = await createUserWithEmailAndPassword(auth, email, pass);
 
+    // ✅ ALWAYS USER
     await setDoc(doc(db, "users", userCred.user.uid), {
       name,
-      role,
+      role: "user",
       phone,
+      verified: false,
       createdAt: new Date()
     });
 
-    window.location.href = "login.html";
+    window.location.href = "index.html";
 
   } catch (error) {
     msg.innerText = error.message;
     msg.style.color = "red";
   }
+
+  btn.innerText = "Create Account";
 };
 
 
-// 🔵 GOOGLE LOGIN / SIGNUP
-const googleBtn = document.getElementById("googleLogin");
+/* =========================
+   🔵 GOOGLE SIGNUP
+========================= */
 
-if (googleBtn) {
+document.getElementById("googleLogin").addEventListener("click", async () => {
 
-  googleBtn.addEventListener("click", async () => {
+  const provider = new GoogleAuthProvider();
 
-    const provider = new GoogleAuthProvider();
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
 
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
 
-      const userRef = doc(db, "users", user.uid);
-      const snap = await getDoc(userRef);
-
-      if (!snap.exists()) {
-        await setDoc(userRef, {
-          name: user.displayName || "User",
-          role: "user",
-          createdAt: new Date()
-        });
-      }
-
-      window.location.href = "index.html";
-
-    } catch (error) {
-      msg.innerText = "Google login failed ❌";
-      msg.style.color = "red";
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        name: user.displayName || "User",
+        role: "user",
+        verified: false,
+        createdAt: new Date()
+      });
     }
 
-  });
+    window.location.href = "index.html";
 
-}
+  } catch (error) {
+    msg.innerText = "Google login failed ❌";
+    msg.style.color = "red";
+  }
 
-</script>
+});
 
-<!-- MENU SCRIPT -->
-<script>
-function toggleMenu() {
-  document.querySelector(".nav-links").classList.toggle("active");
-}
 </script>
 
 </body>
