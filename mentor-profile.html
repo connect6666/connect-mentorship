@@ -82,32 +82,43 @@ const id = params.get("id");
 const profile = document.getElementById("profile");
 
 if (!id) {
-  profile.innerHTML = "Mentor not found";
+  profile.innerHTML = "Mentor not found ❌";
 } else {
 
-  const snap = await getDoc(doc(db, "users", id));
+  try {
+    const snap = await getDoc(doc(db, "users", id));
 
-  if (!snap.exists()) {
-    profile.innerHTML = `
-  <img src="https://ui-avatars.com/api/?name=${data.name}" class="profile-img">
+    if (!snap.exists()) {
+      profile.innerHTML = "Mentor not found ❌";
+    } else {
 
-  <h2>${data.name}</h2>
-  <p>${data.role || "Mentor"}</p>
+      const data = snap.data();
 
-  ${data.verified ? `<div class="badge">Verified Mentor ✅</div>` : ""}
+      profile.innerHTML = `
+        <img src="https://ui-avatars.com/api/?name=${data.name}" class="profile-img">
 
-  <p style="margin-top:15px;">
-    Experience: ${data.experience || "Not added"} years
-  </p>
+        <h2>${data.name}</h2>
+        <p>${data.role || "Mentor"}</p>
 
-  <p>
-    Phone: ${data.phone || "Not provided"}
-  </p>
+        ${data.verified ? `<div class="badge">Verified Mentor ✅</div>` : ""}
 
-  <button onclick="startChat('${id}')">
-    Chat with Mentor
-  </button>
-`;
+        <p style="margin-top:15px;">
+          Experience: ${data.experience || "Not added"} years
+        </p>
+
+        <p>
+          Phone: ${data.phone || "Not provided"}
+        </p>
+
+        <button onclick="startChat('${id}')">
+          Chat with Mentor
+        </button>
+      `;
+    }
+
+  } catch (error) {
+    console.log(error);
+    profile.innerHTML = "Error loading profile ❌";
   }
 }
 
@@ -115,8 +126,6 @@ if (!id) {
 window.startChat = function(id) {
   alert("Start chat with mentor: " + id);
 };
-
-
 
 </script>
 
