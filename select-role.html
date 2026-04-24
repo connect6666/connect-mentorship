@@ -1,17 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Select Role</title>
-  <link rel="stylesheet" href="style.css">
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Select Role | Connect Mentorship</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+
+/* =========================
+   🎯 ROLE PAGE
+========================= */
+
+.role-wrapper {
+  max-width: 450px;
+  margin: 100px auto;
+  padding: 0 20px;
+}
+
+.role-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  text-align: center;
+}
+
+.role-card h2 {
+  margin-bottom: 10px;
+}
+
+.role-card p {
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.role-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<div style="max-width:400px;margin:100px auto;text-align:center;">
-  <h2>Select Your Role</h2>
+<div class="role-wrapper">
 
-  <button onclick="setRole('user')" class="btn">👨‍🎓 Student</button><br><br>
-  <button onclick="setRole('mentor')" class="btn">🧑‍🏫 Mentor</button>
+  <div class="role-card">
+
+    <h2>Choose Your Role</h2>
+    <p>How do you want to use Connect?</p>
+
+    <button onclick="selectStudent()" class="btn role-btn">
+      👨‍🎓 I am a Student
+    </button>
+
+    <button onclick="selectMentor()" class="btn btn-outline role-btn">
+      🧑‍🏫 I want to be a Mentor
+    </button>
+
+  </div>
+
 </div>
 
 <script type="module">
@@ -21,7 +75,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-aut
 import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  apiKey: "AIzaSy...",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship"
 };
@@ -30,20 +84,30 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-window.setRole = async function(role) {
+/* =========================
+   👨‍🎓 STUDENT
+========================= */
+
+window.selectStudent = async function() {
 
   const user = auth.currentUser;
 
-  if (!user) {
-    alert("Login again");
-    return;
-  }
+  if (!user) return alert("Login again");
 
   await updateDoc(doc(db, "users", user.uid), {
-    role: role
+    role: "user"
   });
 
   window.location.href = "index.html";
+};
+
+/* =========================
+   🧑‍🏫 MENTOR
+========================= */
+
+window.selectMentor = function() {
+  // 👉 redirect to proper mentor flow
+  window.location.href = "mentor.html";
 };
 
 </script>
