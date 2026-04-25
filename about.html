@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About Us | Connect Mentorship</title>
+
+  <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/about.html">
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3LGEDFCNKG"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-3LGEDFCNKG');
+</script>
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1611562653181636');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav>
+  <div class="container">
+    <div class="logo">Connect</div>
+
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+    <div class="nav-links">
+      
+      <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/ask.html">Ask Question</a>
+      <a href="/connect-mentorship/mentor.html">Become Mentor</a>
+      <a href="/connect-mentorship/about.html">About</a>
+      <a href="/connect-mentorship/contact.html">Contact</a>
+      <a href="signup.html">Signup</a>
+      <a href="login.html">Login</a>
+      
+    </div>
+  </div>
+</nav>
+
+  <!-- About Intro -->
+  <section class="page-section">
+    <div class="container">
+      <h2>About Connect Mentorship</h2>
+      <p class="center-text">
+        Connect Mentorship is a student-driven platform built to help juniors
+        get real, honest guidance from seniors who have already walked the same path.
+      </p>
+    </div>
+  </section>
+
+  <!-- Our Story -->
+  <section class="light-bg">
+    <div class="container page-section">
+      <h2>Our Story</h2>
+      <p class="center-text">
+        We know how confusing student life can be — exams pressure, college choices,
+        career decisions, and skill confusion. When we were students, finding the
+        right advice was hard.
+      </p>
+      <p class="center-text" style="margin-top: 15px;">
+        That’s why we created Connect — a simple place where juniors can ask questions
+        and seniors can share real experiences, not textbook answers.
+      </p>
+    </div>
+  </section>
+
+  <!-- Mission & Vision -->
+  <section class="page-section">
+    <div class="container">
+      <h2>Our Mission & Vision</h2>
+
+      <div class="steps">
+        <div class="step-card">
+          <h3>Our Mission</h3>
+          <p>
+            To make honest guidance easily available for every Indian student
+            through peer-to-peer mentorship.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <h3>Our Vision</h3>
+          <p>
+            A future where no student feels lost, confused, or alone while
+            making important academic and career decisions.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Trust Us -->
+  <section class="light-bg">
+    <div class="container page-section">
+      <h2>Why Trust Connect?</h2>
+
+      <ul style="max-width: 700px; margin: 0 auto; padding-left: 20px; font-size: 1.1rem;">
+        <li>Guidance from real seniors, not fake experts</li>
+        <li>Focus on Indian education and career paths</li>
+        <li>Simple, honest, and student-first approach</li>
+        <li>No spam, no pressure — just real help</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Call to Action -->
+  <section class="page-section">
+    <div class="container" style="text-align: center;">
+      <h2>Be Part of the Community</h2>
+      <p class="center-text">
+        Whether you’re a junior looking for clarity or a senior wanting to guide others,
+        Connect Mentorship welcomes you.
+      </p>
+
+      <div style="margin-top: 25px;">
+        <a href="ask.html" class="btn">Ask a Question</a>
+        <a href="mentor.html" class="btn btn-outline">Become a Mentor</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2026 Connect Mentorship. Made for Indian Students.</p>
+  </footer>
+
+  <!-- JS -->
+ <script type="module" src="script.js"></script>
+ 
+
+<!-- Firebase -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+    authDomain: "connect-mentorship.firebaseapp.com",
+    projectId: "connect-mentorship",
+    storageBucket: "connect-mentorship.firebasestorage.app",
+    messagingSenderId: "229549559214",
+    appId: "1:229549559214:web:254671d221c2aaebc80c3f",
+    measurementId: "G-RJM7CM2LCB"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.db = db;
+</script>
+
+
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+</body>
+</html>

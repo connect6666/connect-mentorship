@@ -1,0 +1,20 @@
+{
+  "name": "Connect Mentorship",
+  "short_name": "Connect",
+  "start_url": "/connect-mentorship/index.html",
+  "display": "standalone",
+  "background_color": "#4f46e5",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/connect-mentorship/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/connect-mentorship/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

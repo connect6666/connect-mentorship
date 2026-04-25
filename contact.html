@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Us | Connect Mentorship</title>
+
+  <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/contact.html">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
+<!-- NAV -->
+<nav>
+  <div class="container">
+    <div class="logo">Connect</div>
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="ask.html">Ask Question</a>
+      <a href="mentor.html">Become Mentor</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="questions.html">Questions</a>
+      <a href="signup.html">Signup</a>
+      <a href="login.html">Login</a>
+    </div>
+  </div>
+</nav>
+
+<!-- CONTACT SECTION -->
+<section class="page-section">
+  <div class="container">
+    <h2>Send Us a Message</h2>
+
+    <form class="question-form" id="contactForm">
+
+      <input type="text" id="contactName" placeholder="Your Name" required>
+
+      <input type="email" id="contactEmail" placeholder="Your Email" required>
+
+      <textarea id="contactMessage" placeholder="Your Message" required></textarea>
+
+      <button type="submit" class="btn">Send Message</button>
+
+      <p id="contactFormMessage"></p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Connect Mentorship</p>
+</footer>
+
+<!-- 🔥 FIREBASE WORKING CODE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const form = document.getElementById("contactForm");
+const message = document.getElementById("contactFormMessage");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById("contactName").value.trim();
+  const email = document.getElementById("contactEmail").value.trim();
+  const msg = document.getElementById("contactMessage").value.trim();
+
+  if (!name || !email || !msg) {
+    message.innerText = "❌ Fill all fields";
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "contactMessages"), {
+      name,
+      email,
+      message: msg,
+      createdAt: new Date().toISOString()
+    });
+
+    console.log("Saved to Firebase ✅");
+
+    message.innerText = "✅ Message sent successfully!";
+    form.reset();
+
+  } catch (error) {
+    console.error(error);
+    message.innerText = "❌ Error sending message";
+  }
+});
+</script>
+
+  <script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+</body>
+</html>
