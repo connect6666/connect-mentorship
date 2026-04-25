@@ -119,12 +119,15 @@ window.signup = async function() {
 
     const userCred = await createUserWithEmailAndPassword(auth, email, pass);
 
-    await setDoc(doc(db, "users", userCred.user.uid), {
-      name,
-      role,
-      phone,
-      createdAt: new Date()
-    });
+   await setDoc(doc(db, "users", userCred.user.uid), {
+  name,
+  email,
+  phone,
+  role,
+  verified: false,
+  experience: 0,
+  createdAt: new Date()
+});
 
     window.location.href = "login.html";
 
