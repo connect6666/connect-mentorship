@@ -71,14 +71,6 @@
 <nav>
   <div class="container">
     <div class="logo">Connect</div>
-    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
-
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask</a>
-      <a href="questions.html">Questions</a>
-      <a href="mentor.html">Mentors</a>
-    </div>
   </div>
 </nav>
 
@@ -123,12 +115,19 @@
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   collection,
-  addDoc,
-  onSnapshot
+  onSnapshot,
+  doc,
+  updateDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  getAuth
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -138,9 +137,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 /* =========================
-   APPLY FORM
+   APPLY FORM (FIXED 🔥)
 ========================= */
 const form = document.getElementById("mentorForm");
 const msg = document.getElementById("mentorMessage");
@@ -150,27 +150,44 @@ form.addEventListener("submit", async (e) => {
 
   const name = document.getElementById("mentorName").value;
   const email = document.getElementById("mentorEmail").value;
-  const level = document.getElementById("mentorLevel").value;
-  const reason = document.getElementById("mentorReason").value;
-const experience = document.getElementById("mentorExperience").value;
-  try {
-    await addDoc(collection(db, "mentorApplications"), {
-  name,
-  email,
-  level,
-  reason,
-  experience,
-  createdAt: new Date()
-});
+  const experience = document.getElementById("mentorExperience").value;
 
-    msg.innerText = "Application submitted ✅";
+  const user = auth.currentUser;
+
+  if (!user) {
+    msg.innerText = "Please login first ❌";
+    msg.style.color = "red";
+    return;
+  }
+
+  try {
+    // 🔥 UPDATE USERS COLLECTION
+    await updateDoc(doc(db, "users", user.uid), {
+      name,
+      email,
+      role: "mentor",
+      experience: Number(experience),
+      verified: false
+    });
+
+    msg.innerText = "Application submitted ✅ Wait for admin approval";
     msg.style.color = "green";
     form.reset();
 
   } catch (error) {
-    msg.innerText = "Error ❌";
-    msg.style.color = "red";
-    console.log(error);
+
+    // If doc doesn't exist → create
+    await setDoc(doc(db, "users", user.uid), {
+      name,
+      email,
+      role: "mentor",
+      experience: Number(experience),
+      verified: false,
+      createdAt: new Date()
+    });
+
+    msg.innerText = "Application submitted ✅";
+    msg.style.color = "green";
   }
 });
 
@@ -185,11 +202,8 @@ onSnapshot(collection(db, "users"), (snap) => {
   container.innerHTML = "";
   let count = 0;
 
-  snap.forEach(doc => {
-    const data = doc.data();
-
-    // DEBUG
-    console.log("User:", doc.id, data);
+  snap.forEach(docSnap => {
+    const data = docSnap.data();
 
     if (data.role === "mentor" && data.verified === true) {
 
@@ -201,12 +215,12 @@ onSnapshot(collection(db, "users"), (snap) => {
           
           <div class="mentor-info">
 
-            <div class="badge">Available</div>
+            <div class="badge">Verified Mentor</div>
 
             <h3>${data.name || "User"}</h3>
-            <p>${data.phone || "Mentor"}</p>
+            <p>${data.experience || 0} years experience</p>
 
-            <button onclick="viewProfile('${doc.id}')">
+            <button onclick="viewProfile('${docSnap.id}')">
               View Profile
             </button>
 
@@ -228,16 +242,9 @@ onSnapshot(collection(db, "users"), (snap) => {
    VIEW PROFILE
 ========================= */
 window.viewProfile = function(id) {
-  console.log("Opening profile:", id);
   window.location.href = "mentor-profile.html?id=" + id;
 };
 
-</script>
-
-<script>
-function toggleMenu() {
-  document.querySelector(".nav-links").classList.toggle("active");
-}
 </script>
 
 </body>
