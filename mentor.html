@@ -94,7 +94,16 @@
         <option>Graduate</option>
       </select>
 
+      <p style="text-align:center; font-size:12px; color:gray;">
+Mentors are independent individuals. Connect does not guarantee results or outcomes.
+</p>
+
       <textarea id="mentorReason" placeholder="Why mentor?" required></textarea>
+
+      <label style="font-size:12px;">
+  <input type="checkbox" id="agree" required>
+  I agree to help students honestly and follow mentor guidelines.
+</label>
 
       <button type="submit" class="btn">Apply</button>
       <p id="mentorMessage"></p>
@@ -115,8 +124,9 @@ import {
   collection,
   onSnapshot,
   doc,
-  updateDoc,
-  setDoc
+  setDoc,
+  query,
+  where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -124,7 +134,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* ✅ REAL CONFIG (DON'T SHORTEN API KEY) */
+/* 🔐 CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
@@ -132,12 +142,11 @@ const firebaseConfig = {
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 /* =========================
-   ✅ AUTH FIX (IMPORTANT)
+   AUTH
 ========================= */
 let currentUser = null;
 
@@ -146,7 +155,7 @@ onAuthStateChanged(auth, (user) => {
 });
 
 /* =========================
-   APPLY FORM
+   APPLY FORM (FIXED)
 ========================= */
 const form = document.getElementById("mentorForm");
 const msg = document.getElementById("mentorMessage");
@@ -157,118 +166,137 @@ form.addEventListener("submit", async (e) => {
   const name = document.getElementById("mentorName").value.trim();
   const email = document.getElementById("mentorEmail").value.trim();
   const experience = document.getElementById("mentorExperience").value;
+  const agree = document.getElementById("agree").checked;
+
+if (!agree) {
+  msg.innerText = "Please accept guidelines ❌";
+  msg.style.color = "red";
+  btn.disabled = false;
+  btn.innerText = "Apply";
+  return;
+}
+  const reason = document.getElementById("mentorReason").value.trim();
 
   const btn = form.querySelector("button");
 
   btn.disabled = true;
   btn.innerText = "Submitting...";
 
-  // ❌ VALIDATION
-  if (!email.includes("@") || !email.includes(".")) {
-    msg.innerText = "Invalid email ❌";
-    msg.style.color = "red";
-    btn.disabled = false;
-    btn.innerText = "Apply";
-    return;
+  // ✅ VALIDATION
+  if (!name || name.length < 2) {
+    return error("Enter valid name");
   }
 
-  // 🔥 AUTH FIX HERE
+  if (!email.includes("@") || !email.includes(".")) {
+    return error("Invalid email");
+  }
+
+  if (experience < 0 || experience > 50) {
+    return error("Experience must be between 0–50");
+  }
+
   if (!currentUser) {
-    msg.innerText = "Please login first ❌";
-    msg.style.color = "red";
-    btn.disabled = false;
-    btn.innerText = "Apply";
-    return;
+    return error("Please login first");
   }
 
   try {
-    await updateDoc(doc(db, "users", currentUser.uid), {
-      name,
-      email,
-      role: "mentor",
-      experience: Number(experience),
-      verified: false
-    });
-
-  } catch (error) {
+    /* ✅ MERGE TRUE FIX (IMPORTANT) */
     await setDoc(doc(db, "users", currentUser.uid), {
       name,
       email,
       role: "mentor",
       experience: Number(experience),
+      reason,
       verified: false,
-      createdAt: new Date()
-    });
+      updatedAt: new Date()
+    }, { merge: true });
+
+    msg.innerText = "Application submitted ✅ Wait for approval";
+    msg.style.color = "green";
+
+    form.reset();
+
+    setTimeout(() => msg.innerText = "", 4000);
+
+  } catch (err) {
+    console.error(err);
+    error("Something went wrong");
   }
 
-  msg.innerText = "Application submitted ✅ Wait for approval";
-  msg.style.color = "green";
+  resetBtn();
 
-  form.reset();
+  function error(text) {
+    msg.innerText = "❌ " + text;
+    msg.style.color = "red";
+    resetBtn();
+  }
 
-  setTimeout(() => msg.innerText = "", 4000);
+  function resetBtn() {
+    btn.disabled = false;
+    btn.innerText = "Apply";
+  }
 
-  btn.disabled = false;
-  btn.innerText = "Apply";
 });
 
 /* =========================
-   LOAD MENTORS
+   LOAD MENTORS (SECURE QUERY)
 ========================= */
 const container = document.getElementById("mentorList");
 const emptyState = document.getElementById("emptyState");
 
-onSnapshot(collection(db, "users"), (snap) => {
+/* 🔥 IMPORTANT FIX */
+const mentorQuery = query(
+  collection(db, "users"),
+  where("role", "==", "mentor"),
+  where("verified", "==", true)
+);
+
+/* 🔄 REAL-TIME */
+onSnapshot(mentorQuery, (snap) => {
 
   container.innerHTML = "";
-  let count = 0;
+
+  if (snap.empty) {
+    emptyState.innerText = "No verified mentors yet. Be the first to apply 🚀";
+    return;
+  }
 
   snap.forEach(docSnap => {
     const data = docSnap.data();
 
-    if (
-      data.role === "mentor" &&
-      data.verified === true &&
-      typeof data.name === "string"
-    ) {
+    const safeName = (data.name || "User")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
 
-      count++;
+    container.innerHTML += `
+      <div class="mentor-card">
+        <img src="https://ui-avatars.com/api/?name=${safeName}">
+        
+        <div class="mentor-info">
 
-      const safeName = (data.name || "User")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+          <div class="badge">Verified Mentor</div>
 
-      container.innerHTML += `
-        <div class="mentor-card">
-          <img src="https://ui-avatars.com/api/?name=${safeName}">
-          
-          <div class="mentor-info">
+          <h3>${safeName}</h3>
+          <p>${data.experience || 0} years experience</p>
 
-            <div class="badge">Verified Mentor</div>
+          <button onclick="viewProfile('${docSnap.id}')">
+            View Profile
+          </button>
 
-            <h3>${safeName}</h3>
-            <p>${data.experience || 0} years experience</p>
+          <p style="font-size:10px; color:gray;">
+            Verification confirms identity only.
+          </p>
 
-            <button onclick="viewProfile('${docSnap.id}')">
-              View Profile
-            </button>
-
-            <p style="font-size:10px; color:gray;">
-              Verification confirms identity only. Advice responsibility is individual.
-            </p>
-
-          </div>
         </div>
-      `;
-    }
+      </div>
+    `;
   });
 
-  if (count === 0) {
-    emptyState.innerText = "No verified mentors yet. Be the first to apply 🚀";
-  } else {
-    emptyState.innerText = "";
-  }
+  emptyState.innerText = "";
 
+}, (err) => {
+  console.error(err);
+  emptyState.innerText = "Error loading mentors ❌";
 });
 
 /* =========================
