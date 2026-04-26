@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>View Question | Connect</title>
+
+<title>Student Question & Answers | Connect Mentorship</title>
+
+<meta name="description" content="Read student questions and answers about career, exams, and college guidance. Learn from real experiences.">
+
+<meta name="robots" content="index, follow">
+
+<link rel="canonical" href="https://connect6666.github.io/connect-mentorship/view-question.html">
 
 <link rel="stylesheet" href="style.css">
 
@@ -19,14 +26,39 @@ textarea { width:100%; padding:10px; margin-top:10px; }
 
 <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+
+    <div class="logo">
+      <a href="/connect-mentorship/">Connect</a>
+    </div>
+
     <div class="nav-links">
-      <a href="index.html">Home</a>
+     <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/ask.html">Ask Question</a>
+      <a href="/connect-mentorship/mentor.html">Become Mentor</a>
+      <a href="/connect-mentorship/about.html">About</a>
+      <a href="/connect-mentorship/contact.html">Contact</a>
       <a href="questions.html">Questions</a>
+      <a href="view-question.html">View Questions</a>
+      <a href="profile.html">Profile</a>
       <span id="userArea"></span>
     </div>
+
   </div>
 </nav>
+
+<!-- SEO CONTENT -->
+<section class="container">
+  <h1>Student Question and Answers</h1>
+
+  <p>
+    Explore real questions asked by students and read answers from experienced mentors.
+  </p>
+
+  <p>
+    👉 You can also <a href="/connect-mentorship/ask.html">ask your own question</a> or 
+    <a href="/connect-mentorship/questions.html">browse more questions</a>.
+  </p>
+</section>
 
 <div class="container">
 
@@ -34,7 +66,7 @@ textarea { width:100%; padding:10px; margin-top:10px; }
 
   <div class="card" id="answerBox" style="display:none;">
     <h3>Write Answer</h3>
-    <textarea id="answerText"></textarea>
+    <textarea id="answerText" placeholder="Write your answer..."></textarea>
     <button id="answerBtn">Submit Answer</button>
     <p id="msg"></p>
   </div>
@@ -65,7 +97,7 @@ const msg = document.getElementById("msg");
 const btn = document.getElementById("answerBtn");
 
 let currentUserData = null;
-let replyListeners = {}; // 🔥 prevent memory leak
+let replyListeners = {};
 
 /* SAFE */
 function escapeHTML(str) {
@@ -78,9 +110,14 @@ function escapeHTML(str) {
 /* LOAD QUESTION */
 async function loadQuestion() {
   const snap = await getDoc(doc(db, "questions", qId));
-  if (!snap.exists()) return questionBox.innerHTML="Not found ❌";
+
+  if (!snap.exists()) {
+    questionBox.innerHTML = "Question not found ❌";
+    return;
+  }
 
   const q = snap.data();
+
   questionBox.innerHTML = `
     <h2>${escapeHTML(q.question)}</h2>
     <p>${escapeHTML(q.name)}</p>
@@ -147,8 +184,6 @@ btn.onclick = async () => {
   const text = document.getElementById("answerText").value.trim();
   if (!text) return msg.innerText="Write something ❌";
 
-  btn.disabled=true; btn.innerText="Posting...";
-
   const user = auth.currentUser;
 
   await addDoc(collection(db,"answers"),{
@@ -157,13 +192,12 @@ btn.onclick = async () => {
     userId:user.uid,
     name: currentUserData?.name || user.email,
     createdAt:serverTimestamp(),
-    votes: 0,            // ✅ FIX
-    upvotedBy: []        // ✅ FIX
+    votes: 0,
+    upvotedBy: []
   });
 
   msg.innerText="Answer added ✅";
   document.getElementById("answerText").value="";
-  btn.disabled=false; btn.innerText="Submit Answer";
 };
 
 /* UPVOTE */
@@ -174,84 +208,15 @@ window.upvote = async function(answerId) {
 
   const ref = doc(db, "answers", answerId);
   const snap = await getDoc(ref);
-  if (!snap.exists()) return;
 
   const data = snap.data();
-  const upvotedBy = data.upvotedBy || [];
-
-  if (upvotedBy.includes(user.uid)) {
-    alert("Already upvoted 👍");
-    return;
-  }
+  if ((data.upvotedBy || []).includes(user.uid)) return;
 
   await updateDoc(ref, {
     votes: increment(1),
     upvotedBy: arrayUnion(user.uid)
   });
 };
-
-/* TOGGLE REPLIES */
-window.toggleReplies = function(answerId){
-
-  const box = document.getElementById(`replies-${answerId}`);
-  const btn = document.getElementById(`btn-${answerId}`);
-
-  if (box.style.display === "block") {
-    box.style.display = "none";
-    btn.innerText = "View Replies";
-
-    if (replyListeners[answerId]) {
-      replyListeners[answerId]();
-      delete replyListeners[answerId];
-    }
-    return;
-  }
-
-  box.style.display = "block";
-  btn.innerText = "Hide Replies";
-
-  const ref = query(
-    collection(db,"replies"),
-    where("answerId","==",answerId),
-    orderBy("createdAt","asc")
-  );
-
-  const unsubscribe = onSnapshot(ref, snap => {
-    box.innerHTML = "";
-    snap.forEach(docSnap=>{
-      const d = docSnap.data();
-      box.innerHTML += `
-        <p>💬 ${escapeHTML(d.text)}<br>
-        <small>${escapeHTML(d.name)}</small></p>
-      `;
-    });
-  });
-
-  replyListeners[answerId] = unsubscribe;
-};
-
-/* REPLY */
-window.submitReply = async function(answerId){
-
-  const el = document.getElementById(`replyText-${answerId}`);
-  const text = el.value.trim();
-  if (!text) return alert("Write reply ❌");
-
-  const user = auth.currentUser;
-
-  await addDoc(collection(db,"replies"),{
-    text,
-    answerId,
-    userId:user.uid,
-    name: currentUserData?.name || user.email,
-    createdAt:serverTimestamp()
-  });
-
-  el.value="";
-};
-
-/* REPORT */
-window.reportAnswer = id => alert("Reported 🚨");
 
 /* AUTH */
 onAuthStateChanged(auth, async user=>{
