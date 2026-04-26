@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="description" content="Connect Mentorship helps Indian students get real career guidance from seniors.">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>About Us | Connect Mentorship</title>
@@ -40,7 +41,11 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
   <!-- Navbar -->
   <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+  <div class="logo">
+  <a href="./">
+    <img src="./logo.png" alt="Connect Logo">
+  </a>
+</div>
 
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
     <div class="nav-links">
@@ -50,8 +55,7 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
       <a href="/connect-mentorship/mentor.html">Become Mentor</a>
       <a href="/connect-mentorship/about.html">About</a>
       <a href="/connect-mentorship/contact.html">Contact</a>
-      <a href="signup.html">Signup</a>
-      <a href="login.html">Login</a>
+     <span id="userArea"></span>
       
     </div>
   </div>
@@ -112,7 +116,9 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
   <!-- Why Trust Us -->
   <section class="light-bg">
     <div class="container page-section">
-      <h2>Why Trust Connect?</h2>
+    <p style="font-size:13px;color:gray;margin-top:20px;">
+⚠️ Guidance provided on Connect is based on personal student experiences and does not constitute professional career or legal advice.
+</p>
 
       <ul style="max-width: 700px; margin: 0 auto; padding-left: 20px; font-size: 1.1rem;">
         <li>Guidance from real seniors, not fake experts</li>
@@ -149,25 +155,7 @@ src="https://www.facebook.com/tr?id=1611562653181636&ev=PageView&noscript=1"
  
 
 <!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
-    authDomain: "connect-mentorship.firebaseapp.com",
-    projectId: "connect-mentorship",
-    storageBucket: "connect-mentorship.firebasestorage.app",
-    messagingSenderId: "229549559214",
-    appId: "1:229549559214:web:254671d221c2aaebc80c3f",
-    measurementId: "G-RJM7CM2LCB"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  window.db = db;
-</script>
 
 
   <script>
@@ -175,6 +163,8 @@ function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }
 </script>
+
+  <script type="module" src="auth.js"></script>
 
 </body>
 </html>
