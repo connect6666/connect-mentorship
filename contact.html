@@ -3,12 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Contact Us | Connect Mentorship</title>
 
+  <!-- SEO -->
+  <title>Contact Connect Mentorship | Get Help & Support</title>
+  <meta name="description" content="Contact Connect Mentorship for support, queries, or feedback. Get help with mentorship, career guidance, and platform issues.">
+  <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/contact.html">
-  <link rel="stylesheet" href="style.css">
 
-  <!-- Favicon fix -->
+  <link rel="stylesheet" href="style.css">
   <link rel="icon" href="/connect-mentorship/icon.png">
 </head>
 
@@ -17,27 +19,46 @@
 <!-- NAV -->
 <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+
+    <!-- ✅ FIXED LOGO -->
+    <div class="logo">
+      <a href="/connect-mentorship/">Connect</a>
+    </div>
 
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask Question</a>
-      <a href="mentor.html">Become Mentor</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="questions.html">Questions</a>
+      <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/ask.html">Ask Question</a>
+      <a href="/connect-mentorship/mentor.html">Become Mentor</a>
+      <a href="/connect-mentorship/about.html">About</a>
+      <a href="/connect-mentorship/contact.html">Contact</a>
+      <a href="/connect-mentorship/questions.html">Questions</a>
+      <a href="/connect-mentorship/view-question.html">View Questions</a>
 
-      <!-- ✅ Dynamic user area -->
       <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
-<!-- CONTACT SECTION -->
+<!-- HEADER CONTENT -->
+<section class="container">
+  <h1>Contact Us</h1>
+
+  <p>
+    Have a question, feedback, or need help? Send us a message and we’ll get back to you.
+  </p>
+
+  <p>
+     You can also <a href="/connect-mentorship/ask.html">ask a question</a> or 
+    <a href="/connect-mentorship/questions.html">browse existing questions</a>.
+  </p>
+</section>
+
+<!-- CONTACT FORM -->
 <section class="page-section">
   <div class="container">
+
     <h2>Send Us a Message</h2>
 
     <form class="question-form" id="contactForm">
@@ -46,9 +67,9 @@
 
       <input type="email" id="contactEmail" placeholder="Your Email" required>
 
-      <textarea id="contactMessage" placeholder="Your Message" required></textarea>
+      <textarea id="contactMessage" placeholder="Write your message here..." required></textarea>
 
-      <!-- ✅ DPDP Consent -->
+      <!-- Consent -->
       <label style="font-size: 0.9rem; display:block; margin-bottom:10px;">
         <input type="checkbox" id="consent" required>
         I agree to the Privacy Policy and allow contact regarding my query.
@@ -59,7 +80,7 @@
       <p id="contactFormMessage"></p>
     </form>
 
-    <!-- ✅ Trust Boost -->
+    <!-- TRUST -->
     <p style="margin-top:15px; font-size:0.9rem;">
       📧 For urgent queries: connectmentorship2026@gmail.com
     </p>
@@ -71,7 +92,14 @@
   <p>© 2026 Connect Mentorship</p>
 </footer>
 
-<!-- 🔐 AUTH NAVBAR -->
+<!-- MENU TOGGLE -->
+<script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+<!-- FIREBASE CONTACT LOGIC -->
 <script type="module">
 import { db } from "./auth.js";
 import { collection, addDoc, serverTimestamp } 
@@ -86,38 +114,28 @@ form.addEventListener("submit", async (e) => {
   const name = document.getElementById("contactName").value.trim();
   const email = document.getElementById("contactEmail").value.trim();
   const msg = document.getElementById("contactMessage").value.trim();
-  const consent = document.getElementById("consent")?.checked;
+  const consent = document.getElementById("consent").checked;
 
   const btn = form.querySelector("button");
 
-  // 🔒 Disable button (prevent multiple clicks)
   btn.disabled = true;
   btn.innerText = "Sending...";
 
-  // ❌ Validation
   if (!name || !email || !msg) {
-    message.innerText = "❌ Fill all fields";
-    message.style.color = "red";
-    btn.disabled = false;
-    btn.innerText = "Send Message";
+    showMessage("❌ Fill all fields", "red");
+    resetBtn(btn);
     return;
   }
 
-  // ❌ Email validation
   if (!email.includes("@")) {
-    message.innerText = "❌ Invalid email";
-    message.style.color = "red";
-    btn.disabled = false;
-    btn.innerText = "Send Message";
+    showMessage("❌ Invalid email", "red");
+    resetBtn(btn);
     return;
   }
 
-  // ❌ Consent check
   if (!consent) {
-    message.innerText = "❌ Please accept privacy policy";
-    message.style.color = "red";
-    btn.disabled = false;
-    btn.innerText = "Send Message";
+    showMessage("❌ Please accept privacy policy", "red");
+    resetBtn(btn);
     return;
   }
 
@@ -129,29 +147,31 @@ form.addEventListener("submit", async (e) => {
       createdAt: serverTimestamp()
     });
 
-    // ✅ Success
-    message.innerText = "✅ Message sent successfully!";
-    message.style.color = "green";
-
+    showMessage("✅ Message sent successfully!", "green");
     form.reset();
 
-    // 🟢 Auto clear message
-    setTimeout(() => {
-      message.innerText = "";
-    }, 4000);
+    setTimeout(() => message.innerText = "", 4000);
 
   } catch (error) {
     console.error(error);
-    message.innerText = "❌ Error sending message";
-    message.style.color = "red";
+    showMessage("❌ Error sending message", "red");
   }
 
-  // 🔓 Re-enable button
+  resetBtn(btn);
+});
+
+function showMessage(text, color) {
+  message.innerText = text;
+  message.style.color = color;
+}
+
+function resetBtn(btn) {
   btn.disabled = false;
   btn.innerText = "Send Message";
-});
+}
 </script>
 
-  <script type="module" src="auth.js"></script>
+<script type="module" src="auth.js"></script>
+
 </body>
 </html>
