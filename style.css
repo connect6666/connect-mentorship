@@ -309,3 +309,21 @@ img {
   height: auto;
   display: block;
 }
+
+/* FIX NAVBAR LOGO SIZE */
+.logo img {
+  height: 45px;   /* perfect navbar size */
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.logo img {
+  height: 42px;
+  border-radius: 6px;
+}
