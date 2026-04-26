@@ -5,10 +5,12 @@
 
 <link rel="manifest" href="/connect-mentorship/manifest.json">
 <meta name="theme-color" content="#4f46e5">
-  <link rel="canonical" href="https://himanshu617.github.io/connect-mentorship/" />
+  
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Connect - Student Mentorship | Real Advice from Seniors</title>
+
+  <meta name="description" content="Connect Mentorship helps Indian students get real career guidance from seniors for exams, college, and skills.">
 <!-- colonical -->
 
   <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/">
@@ -127,7 +129,7 @@ class="btn">
 </a>
 
 
-           <div class="audio-booking">
+    
   
 </div>
 
@@ -183,6 +185,9 @@ class="btn">
         Instead of confusing online information or paid counseling, we focus on real advice
         shared by seniors who have already walked the same path.
       </p>
+      <p style="font-size:13px; color:gray; margin-top:20px;">
+⚠️ Guidance provided on Connect is based on personal student experiences and does not constitute professional career or legal advice.
+</p>
 
       <div class="steps">
         <div class="step-card">
@@ -326,6 +331,12 @@ academic and career decisions with confidence.
       the right path using real-world experiences instead of generic internet information.
       Connect is built by students, for students.
     </p>
+
+    <h3>Meet the Founder</h3>
+<p>
+Built by a student who faced the same confusion during exams and career decisions.
+Connect was created to help students get real guidance from seniors who have already walked the path.
+</p>
   </div>
 </section>
 
@@ -352,10 +363,11 @@ academic and career decisions with confidence.
 
   <!-- Footer -->
   <footer>
-    <p>© 2026 Connect Mentorship. Made for Indian Students.</p>
-    <br>
-
-  </footer>
+  <p>© 2026 Connect Mentorship • India 🇮🇳</p>
+  <p style="font-size:12px; color:gray;">
+    Built for Indian Students • Based in Punjab
+  </p>
+</footer>
 
   <!-- JS -->
 
@@ -382,34 +394,9 @@ const db = getFirestore(app);
 const userArea = document.getElementById("userArea");
 
 // ✅ HIDE INITIALLY (IMPORTANT FIX)
-userArea.style.display = "none";
 
-onAuthStateChanged(auth, async (user) => {
 
-  if (user) {
-    const docRef = doc(db, "users", user.uid);
-    const docSnap = await getDoc(docRef);
 
-    let name = "User";
-    if (docSnap.exists()) {
-      name = docSnap.data().name;
-    }
-
-    userArea.innerHTML = `
-      <span style="color:white;">👤 ${name}</span>
-      <button onclick="logout()" class="btn">Logout</button>
-    `;
-
-  } else {
-    userArea.innerHTML = `
-      <a href="login.html" class="btn">Login</a>
-      <a href="signup.html" class="btn btn-outline">Signup</a>
-    `;
-  }
-
-  // ✅ SHOW ONLY AFTER READY
-  userArea.style.display = "flex";
-});
 
 // 🔐 Logout
 window.logout = async function() {
@@ -467,6 +454,8 @@ window.addEventListener('appinstalled', () => {
   document.getElementById("installBtn").style.display = "inline-block";
 }, 3000);
 </script>
+
+  <script type="module" src="auth.js"></script>
 
 
   
