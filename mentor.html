@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <meta name="description" content="Find experienced student mentors in India or become a mentor. Help students with career guidance, exams, and skills.">
+
+<meta name="robots" content="index, follow">
+
+<title>Find Mentors or Become a Mentor | Student Mentorship India</title>
+
+<link rel="canonical" href="https://connect6666.github.io/connect-mentorship/mentor.html">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mentors | Connect</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -65,18 +72,73 @@
 
 <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+   <div class="logo">
+  <a href="/connect-mentorship/">Connect</a>
+</div>
   </div>
 </nav>
+  <section class="container">
+  <h1>Find Mentors or Become a Mentor</h1>
+
+   <p>
+You can <a href="/connect-mentorship/ask.html">ask questions</a> or 
+<a href="/connect-mentorship/questions.html">browse student questions</a> to learn from others.
+</p>
+
+  <p>
+    Connect with experienced students who can guide you through exams, college life, and career decisions. You can browse mentors or apply to become a mentor and help other students with your knowledge.
+  </p>
+
+  <p>
+    Our mentorship platform is built for students in India who want real guidance from people who have already experienced similar challenges.
+  </p>
+</section>
 
 <!-- 🔥 BROWSE MENTORS -->
 <section class="page-section">
   <div class="container">
+
+    <div class="content-block">
+      <!-- Why mentor content -->
+    </div>
+
     <h2>Browse Mentors</h2>
     <div class="mentor-container" id="mentorList"></div>
+
+    <p id="emptyState" class="empty-state"></p>
+
+  </div>
+</section>
+  <h2>Why Become a Mentor?</h2>
+       <p>
+Mentorship helps students avoid common mistakes and make informed decisions. 
+On Connect, mentors share real-life experiences related to exams, college life, and career paths.
+</p>
+
+  <p>
+    Becoming a mentor allows you to help students who are confused about their future. You can share your real experiences and guide juniors in making better academic and career decisions.
+  </p>
+
+  <p>
+    It also helps you build your profile, gain experience, and contribute to the student community.
+  </p>
+</section>
+    <h2>Browse Mentors</h2>
+    <div class="mentor-container" id="mentorList"></div>
+
+   
     <p id="emptyState" class="empty-state"></p>
   </div>
 </section>
+
+ <section class="container">
+  <h2>Apply to Become a Mentor</h2>
+  <p>
+Share your experience and help students make better career decisions. 
+Your guidance can help others avoid confusion and choose the right path.
+</p>
+</section>
+  
 
 <!-- 👇 APPLY -->
 <section class="page-section">
@@ -109,6 +171,18 @@ Mentors are independent individuals. Connect does not guarantee results or outco
       <p id="mentorMessage"></p>
     </form>
   </div>
+</section>
+  <section class="container">
+  <h2>Frequently Asked Questions</h2>
+
+  <h3>Who can become a mentor?</h3>
+  <p>Any student or graduate with experience in exams, college, or skills can apply.</p>
+
+  <h3>Is mentorship free?</h3>
+  <p>Yes, Connect focuses on free and honest guidance from students.</p>
+
+  <h3>How are mentors verified?</h3>
+  <p>Mentors are reviewed before being marked as verified on the platform.</p>
 </section>
 
 <footer>
@@ -257,7 +331,7 @@ onSnapshot(mentorQuery, (snap) => {
   container.innerHTML = "";
 
   if (snap.empty) {
-    emptyState.innerText = "No verified mentors yet. Be the first to apply 🚀";
+    emptyState.innerText = "No verified mentors yet. You can apply to become the first mentor and help students with career guidance.";
     return;
   }
 
