@@ -158,8 +158,31 @@ btn.onclick = async () => {
 };
 
 /* UPVOTE */
-window.upvote = async id => {
-  await updateDoc(doc(db,"answers",id),{ votes:increment(1) });
+import { arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+window.upvote = async function(answerId) {
+
+  const user = auth.currentUser;
+  if (!user) return alert("Login required ❌");
+
+  const ref = doc(db, "answers", answerId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) return;
+
+  const data = snap.data();
+
+  const alreadyVoted = data.upvotedBy?.includes(user.uid);
+
+  if (alreadyVoted) {
+    alert("You already upvoted 👍");
+    return;
+  }
+
+  await updateDoc(ref, {
+    votes: increment(1),
+    upvotedBy: arrayUnion(user.uid)
+  });
 };
 
 /* 🔥 TOGGLE REPLIES (FIXED) */
