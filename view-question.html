@@ -36,9 +36,15 @@ textarea {
 
 <body>
 
+<!-- NAV -->
 <nav>
   <div class="container">
     <div class="logo">Connect</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="questions.html">Questions</a>
+      <span id="userArea"></span>
+    </div>
   </div>
 </nav>
 
@@ -51,7 +57,7 @@ textarea {
   <div class="card" id="answerBox" style="display:none;">
     <h3>Write Answer</h3>
     <textarea id="answerText" placeholder="Write your answer..."></textarea>
-    <button onclick="submitAnswer()">Submit Answer</button>
+    <button id="answerBtn">Submit Answer</button>
     <p id="msg"></p>
   </div>
 
@@ -62,14 +68,10 @@ textarea {
 
 <script type="module">
 
-import { initializeApp, getApps, getApp } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
-import { getAuth, onAuthStateChanged } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+/* ✅ USE SHARED AUTH + DB */
+import { auth, db } from "./auth.js";
 
 import {
-  getFirestore,
   doc,
   getDoc,
   collection,
@@ -77,20 +79,16 @@ import {
   query,
   where,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* CONFIG */
-const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
-  authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship"
-};
+import { onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
+/* =========================
+   GLOBAL
+========================= */
 const params = new URLSearchParams(window.location.search);
 const qId = params.get("id");
 
@@ -98,8 +96,13 @@ const questionBox = document.getElementById("questionBox");
 const answersList = document.getElementById("answersList");
 const answerBox = document.getElementById("answerBox");
 const msg = document.getElementById("msg");
+const btn = document.getElementById("answerBtn");
 
-/* SAFE HTML */
+let currentUserData = null;
+
+/* =========================
+   SAFE HTML
+========================= */
 function escapeHTML(str) {
   return (str || "").replace(/[&<>"']/g, m => ({
     "&": "&amp;",
@@ -110,7 +113,9 @@ function escapeHTML(str) {
   }[m]));
 }
 
-/* LOAD QUESTION */
+/* =========================
+   LOAD QUESTION
+========================= */
 async function loadQuestion() {
 
   if (!qId) {
@@ -129,16 +134,19 @@ async function loadQuestion() {
 
   questionBox.innerHTML = `
     <h2>${escapeHTML(q.question)}</h2>
-    <p>${escapeHTML(q.name || "User")}</p>
+    <p>${escapeHTML(q.name || "User")} | ${escapeHTML(q.category || "General")}</p>
   `;
 }
 
-/* LOAD ANSWERS */
+/* =========================
+   LOAD ANSWERS (OPTIMIZED)
+========================= */
 function loadAnswers() {
 
   const qRef = query(
     collection(db, "answers"),
-    where("questionId", "==", qId)
+    where("questionId", "==", qId),
+    orderBy("createdAt", "desc")
   );
 
   onSnapshot(qRef, (snap) => {
@@ -170,20 +178,28 @@ function loadAnswers() {
   });
 }
 
-/* SUBMIT ANSWER */
-window.submitAnswer = async function() {
+/* =========================
+   SUBMIT ANSWER
+========================= */
+btn.onclick = async () => {
 
   const text = document.getElementById("answerText").value.trim();
 
   const badWords = ["badword1","badword2"];
 
+  // disable button
+  btn.disabled = true;
+  btn.innerText = "Posting...";
+
   if (!text) {
     msg.innerText = "Write something ❌";
+    resetBtn();
     return;
   }
 
   if (badWords.some(w => text.toLowerCase().includes(w))) {
     msg.innerText = "Keep it respectful ❌";
+    resetBtn();
     return;
   }
 
@@ -194,7 +210,7 @@ window.submitAnswer = async function() {
       text,
       questionId: qId,
       userId: user.uid,
-      name: user.email,
+      name: currentUserData?.name || user.email,
       createdAt: serverTimestamp()
     });
 
@@ -204,14 +220,25 @@ window.submitAnswer = async function() {
   } catch (e) {
     msg.innerText = "Error ❌";
   }
+
+  resetBtn();
 };
 
-/* REPORT */
+function resetBtn() {
+  btn.disabled = false;
+  btn.innerText = "Submit Answer";
+}
+
+/* =========================
+   REPORT
+========================= */
 window.reportAnswer = function(id) {
-  alert("Reported 🚨 (add admin panel later)");
+  alert("Reported 🚨");
 };
 
-/* AUTH CHECK */
+/* =========================
+   AUTH CHECK
+========================= */
 onAuthStateChanged(auth, async (user) => {
 
   if (!user) return;
@@ -221,18 +248,25 @@ onAuthStateChanged(auth, async (user) => {
   if (snap.exists()) {
 
     const data = snap.data();
+    currentUserData = data;
 
+    // 🔥 ONLY VERIFIED MENTOR
     if (data.role === "mentor" && data.verified === true) {
       answerBox.style.display = "block";
     }
   }
 });
 
-/* INIT */
+/* =========================
+   INIT
+========================= */
 loadQuestion();
 loadAnswers();
 
 </script>
+
+<!-- ✅ SHARED AUTH NAVBAR -->
+<script type="module" src="auth.js"></script>
 
 </body>
 </html>
