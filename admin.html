@@ -98,8 +98,16 @@
 
 </div>
 
-<!-- 🔐 LOGIN SCRIPT -->
+<p style="font-size:12px;color:gray;text-align:center;">
+Admin access is restricted. User data is protected under applicable data protection laws.
+</p>
+
+<!-- 🔥 SINGLE FIREBASE SCRIPT (FIXED) -->
 <script type="module">
+
+import { initializeApp, getApps, getApp } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
@@ -107,20 +115,34 @@ import {
   signOut 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+/* 🔐 CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship"
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.appspot.com",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+/* ✅ FIX: no duplicate error */
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* 🔐 ADMIN EMAIL */
 const ADMIN_EMAIL = "connectmentorship2026@gmail.com";
 
-// LOGIN
+/* 🔐 LOGIN */
 window.checkLogin = async function () {
   const password = document.getElementById("adminPass").value;
 
@@ -136,18 +158,18 @@ window.checkLogin = async function () {
     }
 
   } catch (err) {
-    document.getElementById("loginMsg").innerText = "Unauthorized ❌";
+    document.getElementById("loginMsg").innerText = "Wrong password ❌";
   }
 };
 
-// AUTO LOGIN CHECK
+/* AUTO LOGIN */
 onAuthStateChanged(auth, (user) => {
   if (user && user.email === ADMIN_EMAIL) {
     showAdmin();
   }
 });
 
-// SHOW ADMIN
+/* SHOW ADMIN */
 function showAdmin() {
   document.getElementById("loginBox").style.display = "none";
   document.getElementById("adminContent").style.display = "block";
@@ -157,37 +179,17 @@ function showAdmin() {
   loadContacts();
 }
 
-// LOGOUT
+/* LOGOUT */
 window.logout = async function () {
   await signOut(auth);
   location.reload();
 };
-</script>
 
-<!-- 🔥 FIREBASE ADMIN -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  deleteDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+/* =========================
+   🔥 DATA FUNCTIONS
+========================= */
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
-  authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship",
-  storageBucket: "connect-mentorship.firebasestorage.app",
-  messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// 🔹 LOAD QUESTIONS
+// QUESTIONS
 async function loadQuestions() {
   const container = document.getElementById("questionsList");
   const snap = await getDocs(collection(db, "questions"));
@@ -208,7 +210,7 @@ async function loadQuestions() {
   });
 }
 
-// 🔹 LOAD MENTORS
+// MENTORS
 async function loadMentors() {
   const container = document.getElementById("mentorsList");
   const snap = await getDocs(collection(db, "mentorApplications"));
@@ -230,7 +232,7 @@ async function loadMentors() {
   });
 }
 
-// 🔹 LOAD CONTACTS
+// CONTACT
 async function loadContacts() {
   const container = document.getElementById("contactsList");
   const snap = await getDocs(collection(db, "contactMessages"));
@@ -252,7 +254,7 @@ async function loadContacts() {
   });
 }
 
-// 🔥 DELETE
+/* DELETE */
 window.deleteItem = async function(col, id) {
 
   if (!confirm("Are you sure you want to delete this?")) return;
@@ -266,14 +268,7 @@ window.deleteItem = async function(col, id) {
   loadContacts();
 };
 
-// 🚀 INIT
-
-
 </script>
-
-  <p style="font-size:12px;color:gray;text-align:center;">
-Admin access is restricted. User data is protected under applicable data protection laws.
-</p>
 
 </body>
 </html>
