@@ -505,6 +505,166 @@ footer {
 
 
 
+/* ===== GENERAL RESET ===== */
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #f5f7fb;
+  margin: 0;
+  color: #333;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+/* ===== HEADINGS ===== */
+h1 {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+h2 {
+  font-size: 26px;
+  margin-top: 40px;
+  text-align: center;
+}
+
+h3 {
+  margin-top: 20px;
+  font-size: 18px;
+}
+
+/* ===== PARAGRAPH ===== */
+p {
+  line-height: 1.7;
+  margin: 10px 0;
+  text-align: center;
+}
+
+/* ===== BREADCRUMB ===== */
+.container p a {
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+/* ===== FORM CARD ===== */
+.question-form {
+  background: #fff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  margin-top: 30px;
+}
+
+/* INPUTS */
+.question-form input,
+.question-form select,
+.question-form textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+/* TEXTAREA */
+.question-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* BUTTON */
+.btn {
+  display: inline-block;
+  padding: 12px 25px;
+  border-radius: 30px;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  background: #4338ca;
+}
+
+/* CENTER BUTTON */
+.question-form button {
+  display: block;
+  margin: 20px auto;
+}
+
+/* ===== LOGIN TEXT ===== */
+.page-section p {
+  text-align: center;
+  font-size: 14px;
+  color: gray;
+}
+
+/* ===== FAQ SECTION ===== */
+.container section {
+  margin-top: 40px;
+}
+
+.container h2 + h3 {
+  margin-top: 20px;
+}
+
+.container h3 {
+  font-weight: 600;
+}
+
+/* ===== CARD STYLE FOR FAQ ===== */
+.container section:last-of-type {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+/* ===== NAVBAR FIX ===== */
+nav {
+  background: linear-gradient(90deg, #4f46e5, #6366f1);
+  padding: 15px 0;
+}
+
+.nav-links a {
+  color: #fff;
+  margin: 0 10px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+/* ===== LOGO ===== */
+.logo a {
+  color: #fff;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #1e293b;
+  color: #fff;
+  margin-top: 40px;
+}
+
+/* ===== SPACING FIX ===== */
+.page-section {
+  padding-top: 30px;
+}
+
+
+
 
 
 
