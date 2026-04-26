@@ -1,9 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <meta name="description" content="Browse student questions and answers about career, exams, college, and skills. Learn from real experiences and mentorship.">
+
+<meta name="robots" content="index, follow">
+
+<title>Student Questions & Answers | Career Guidance India</title>
+
+<link rel="canonical" href="https://connect6666.github.io/connect-mentorship/questions.html">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>All Questions | Connect</title>
 <link rel="stylesheet" href="style.css">
 
 <style>
@@ -26,17 +33,63 @@
 
 <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+   <div class="logo">
+  <a href="/connect-mentorship/">Connect</a>
+</div>
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask Question</a>
-      <a href="questions.html">Questions</a>
+      <a href="/connect-mentorship/">Home</a>
+<a href="/connect-mentorship/ask.html">Ask Question</a>
+<a href="/connect-mentorship/mentor.html">Become Mentor</a>
+<a href="/connect-mentorship/about.html">About</a>
+<a href="/connect-mentorship/contact.html">Contact</a>
+<a href="/connect-mentorship/questions.html">Questions</a>
+<a href="/connect-mentorship/profile.html">Profile</a>
+  <a href="/connect-mentorship/view-question.html">View Answer</a> 
       <span id="userArea"></span>
     </div>
   </div>
 </nav>
+
+  <section class="container">
+  <h1>Student Questions and Career Guidance</h1>
+
+  <p>
+    Browse real questions asked by students about exams, college, career choices, and skills. Learn from answers shared by experienced students and mentors.
+  </p>
+
+  <p>
+    You can also <a href="/connect-mentorship/ask.html">ask your own question</a> or 
+    <a href="/connect-mentorship/mentor.html">connect with mentors</a>.
+  </p>
+
+</section>
+
+  <section class="container">
+  <h2>Popular Student Questions</h2>
+
+  <p>
+    Students often ask about career options after 10th or 12th, choosing the right college, and developing skills for future jobs. This section helps you explore real problems and solutions shared by others.
+  </p>
+</section>
+
+  
+    <section class="container">
+  <h2>Common Topics</h2>
+ <ul>
+  <li><a href="/connect-mentorship/questions.html">Career after 12th</a></li>
+  <li><a href="/connect-mentorship/questions.html">Best courses after graduation</a></li>
+  <li><a href="/connect-mentorship/questions.html">Skill development for students</a></li>
+</ul>
+</section>
+
+  <section>
+  <h2>Latest Questions</h2>
+  <p>
+    Explore recently asked questions by students and find answers based on real experiences.
+  </p>
+</section>
 
 <div class="questions-container" id="questionsList"></div>
 
@@ -95,7 +148,7 @@ function loadQuestions() {
 
     /* ✅ EMPTY STATE */
     if (questionsSnap.empty) {
-      container.innerHTML = "No questions yet. Be the first to ask 🚀";
+      container.innerHTML = "No questions yet. Ask your first career question and get guidance from experienced students."
       return;
     }
 
@@ -109,7 +162,7 @@ function loadQuestions() {
 
       card.innerHTML = `
         <h3>
-          <a href="view-question.html?id=${qId}" 
+          <a href="/connect-mentorship/view-question.html?id=${qId}"
              style="text-decoration:none;color:black;">
             ${escapeHTML(q.question)}
           </a>
@@ -141,6 +194,14 @@ function toggleMenu() {
 </script>
 
 <script type="module" src="auth.js"></script>
+  <script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "CollectionPage",
+ "name": "Student Questions and Answers",
+ "description": "Browse questions asked by students about career, exams, and college guidance."
+}
+</script>
 
 </body>
 </html>
