@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>View Question | Connect</title>
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+.answer {
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">Connect</div>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- QUESTION -->
+  <div class="card" id="questionBox">Loading...</div>
+
+  <!-- ANSWER BOX -->
+  <div class="card" id="answerBox" style="display:none;">
+    <h3>Write Answer</h3>
+    <textarea id="answerText" placeholder="Write your answer..."></textarea>
+    <button onclick="submitAnswer()">Submit Answer</button>
+    <p id="msg"></p>
+  </div>
+
+  <!-- ANSWERS -->
+  <div id="answersList"></div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp, getApps, getApp } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import { getAuth, onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship"
+};
+
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const params = new URLSearchParams(window.location.search);
+const qId = params.get("id");
+
+const questionBox = document.getElementById("questionBox");
+const answersList = document.getElementById("answersList");
+const answerBox = document.getElementById("answerBox");
+const msg = document.getElementById("msg");
+
+/* SAFE HTML */
+function escapeHTML(str) {
+  return (str || "").replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
+}
+
+/* LOAD QUESTION */
+async function loadQuestion() {
+
+  if (!qId) {
+    questionBox.innerHTML = "Invalid question ❌";
+    return;
+  }
+
+  const snap = await getDoc(doc(db, "questions", qId));
+
+  if (!snap.exists()) {
+    questionBox.innerHTML = "Question not found ❌";
+    return;
+  }
+
+  const q = snap.data();
+
+  questionBox.innerHTML = `
+    <h2>${escapeHTML(q.question)}</h2>
+    <p>${escapeHTML(q.name || "User")}</p>
+  `;
+}
+
+/* LOAD ANSWERS */
+function loadAnswers() {
+
+  const qRef = query(
+    collection(db, "answers"),
+    where("questionId", "==", qId)
+  );
+
+  onSnapshot(qRef, (snap) => {
+
+    answersList.innerHTML = "<h3>Answers</h3>";
+
+    if (snap.empty) {
+      answersList.innerHTML += "<p>No answers yet</p>";
+      return;
+    }
+
+    snap.forEach(docSnap => {
+
+      const data = docSnap.data();
+
+      const div = document.createElement("div");
+      div.className = "card answer";
+
+      div.innerHTML = `
+        <p>${escapeHTML(data.text)}</p>
+        <small>${escapeHTML(data.name || "User")}</small>
+        <br>
+        <button onclick="reportAnswer('${docSnap.id}')">Report</button>
+      `;
+
+      answersList.appendChild(div);
+    });
+
+  });
+}
+
+/* SUBMIT ANSWER */
+window.submitAnswer = async function() {
+
+  const text = document.getElementById("answerText").value.trim();
+
+  const badWords = ["badword1","badword2"];
+
+  if (!text) {
+    msg.innerText = "Write something ❌";
+    return;
+  }
+
+  if (badWords.some(w => text.toLowerCase().includes(w))) {
+    msg.innerText = "Keep it respectful ❌";
+    return;
+  }
+
+  try {
+    const user = auth.currentUser;
+
+    await addDoc(collection(db, "answers"), {
+      text,
+      questionId: qId,
+      userId: user.uid,
+      name: user.email,
+      createdAt: serverTimestamp()
+    });
+
+    msg.innerText = "Answer added ✅";
+    document.getElementById("answerText").value = "";
+
+  } catch (e) {
+    msg.innerText = "Error ❌";
+  }
+};
+
+/* REPORT */
+window.reportAnswer = function(id) {
+  alert("Reported 🚨 (add admin panel later)");
+};
+
+/* AUTH CHECK */
+onAuthStateChanged(auth, async (user) => {
+
+  if (!user) return;
+
+  const snap = await getDoc(doc(db, "users", user.uid));
+
+  if (snap.exists()) {
+
+    const data = snap.data();
+
+    if (data.role === "mentor" && data.verified === true) {
+      answerBox.style.display = "block";
+    }
+  }
+});
+
+/* INIT */
+loadQuestion();
+loadAnswers();
+
+</script>
+
+</body>
+</html>
