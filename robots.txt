@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://himanshu617.github.io/connect-mentorship/sitemap.xml
+Sitemap: https://connect6666.github.io/connect-mentorship/sitemap.xml
