@@ -1,210 +1,288 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ask a Question | Connect Mentorship</title>
-
-  <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/ask.html">
-  <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-
-<!-- NAVBAR -->
-<nav>
-  <div class="container">
-    <div class="logo">Connect</div>
-
-    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
-
-    <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask Question</a>
-      <a href="mentor.html">Become Mentor</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="questions.html">Questions</a>
-
-      <span id="userArea"></span>
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta name="description" content="Ask career questions online and get free mentorship from experienced students in India. Get real guidance for exams, college, and career.">
+  
+  <meta name="robots" content="index, follow">
+  
+  <meta property="og:title" content="Ask Career Questions Online | Free Mentorship for Students">
+  <meta property="og:description" content="Ask your questions and get real advice from seniors. Free mentorship platform for students in India.">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Ask Career Questions Online | Free Student Mentorship India</title>
+  
+    <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/ask.html">
+    <link rel="stylesheet" href="style.css">
+  </head>
+  
+  <body>
+  
+  <!-- NAVBAR -->
+  <nav>
+    <div class="container">
+     <div class="logo">
+    <a href="/connect-mentorship/">Connect</a>
+  </div>
+  
+      <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+  
+      <div class="nav-links">
+       <a href="/connect-mentorship/">Home</a>
+        <a href="/connect-mentorship/ask.html">Ask Question</a>
+  <a href="/connect-mentorship/mentor.html">Become Mentor</a>
+  <a href="/connect-mentorship/about.html">About</a>
+  <a href="/connect-mentorship/contact.html">Contact</a>
+  <a href="/connect-mentorship/questions.html">Questions</a>
+  <a href="/connect-mentorship/profile.html">Profile</a>
+    <a href="/connect-mentorship/view-question.html">View Answer</a>
+        <span id="userArea"></span>
+      </div>
     </div>
-  </div>
-</nav>
-
-<!-- ASK SECTION -->
-<section class="page-section">
-  <div class="container">
-
-    <h2>Ask Your Question</h2>
-
-    <!-- LOGIN PROMPT -->
-    <p style="font-size:14px; color:gray; text-align:center;">
-      Asking as guest. <a href="login.html">Login</a> to track your question.
+  </nav>
+  
+  <!-- ASK SECTION -->
+  <section class="page-section">
+    <div class="container">
+  
+      <h1>Ask Career Questions Online</h1>
+      <!-- LOGIN PROMPT -->
+     <p style="font-size:14px; color:gray; text-align:center;">
+    Asking as guest. <a href="/connect-mentorship/login.html">Login</a> to track your question and get better responses.
+  </p>
+      <p style="font-size:14px;">
+    <a href="/connect-mentorship/">Home</a> > Ask Question
+  </p>
+  
+      <section class="container">
+   <h2>Get Free Guidance from Experienced Students</h2>
+  
+    <p>
+      Confused about your career, exams, college, or skills? You can ask your questions here and get real guidance from experienced students who have already faced similar challenges.
     </p>
+  
+    <p>
+      Our platform helps students in India get honest, experience-based advice instead of generic answers. Whether you are choosing a career after 12th, selecting a college, or learning new skills, you can ask your doubts and get practical help.
+    </p>
+  
+    <p>
+      👉 You can also <a href="/connect-mentorship/mentor.html">connect with mentors</a> or <a href="/connect-mentorship/questions.html">browse existing questions</a>.
+    </p>
+  </section>
+  
+  
+      <p>
+  Students often feel confused about career options after 10th or 12th, choosing the right college, or deciding which skills to learn. On Connect, you can ask your questions and receive answers from students who have already experienced similar situations.
+  </p>
+  
+  <p>
+  Unlike generic advice available online, Connect focuses on real experiences. This helps you make better decisions based on practical insights rather than theory.
+  </p>
+  
+  <p>
+  Whether your question is about entrance exams, career confusion, or skill development, you can ask here and get guidance that actually helps.
+  </p>
+  
+      <h2>Career Guidance for Students in India</h2>
+  
+  <p>
+  This platform is designed for students looking for career guidance after 10th or 12th, choosing the right college, or understanding future career options. You can ask your questions and get free mentorship from students who have already experienced these paths.
+  </p>
 
-    <!-- QUESTION FORM -->
-    <form id="questionForm" class="question-form">
+      <h2>Ask Your Question Now</h2>
 
-      <!-- Honeypot (anti-bot) -->
-      <input type="text" id="website" style="display:none">
-
-      <input type="text" id="name" placeholder="Your Name (optional)">
-      <input type="email" id="email" placeholder="Email (optional)">
-
-      <select id="category" required>
-        <option value="">Select Category</option>
-        <option>Exams</option>
-        <option>College Life</option>
-        <option>Career</option>
-        <option>Skills</option>
-      </select>
-
-      <textarea id="question" maxlength="500" placeholder="Write your question (max 500 chars)..." required></textarea>
-
-      <!-- CONSENT -->
-      <label style="font-size:14px;">
-        <input type="checkbox" id="consent" required>
-        I agree to the Privacy Policy and allow Connect to contact me.
-      </label>
-
-      <button type="submit" class="btn">Submit Question</button>
-
-      <p id="formMessage"></p>
-    </form>
-
-  </div>
-</section>
-
-<footer>
-  <p>© 2026 Connect Mentorship</p>
-</footer>
-
-<!-- FIREBASE + LOGIC -->
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { 
-  getFirestore, 
-  doc, 
-  getDoc, 
-  collection, 
-  addDoc 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
-  authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship",
-  storageBucket: "connect-mentorship.firebasestorage.app",
-  messagingSenderId: "229549559214",
-  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
-const userArea = document.getElementById("userArea");
-
-// NAVBAR AUTH
-userArea.style.display = "none";
-
-onAuthStateChanged(auth, async (user) => {
-
-  if (user) {
-    let name = "User";
-
+<p>
+Describe your problem clearly and get real guidance from experienced students. 
+Better questions get better answers.
+</p>
+      <!-- QUESTION FORM -->
+      <form id="questionForm" class="question-form">
+  
+        <!-- Honeypot (anti-bot) -->
+        <input type="text" id="website" style="display:none">
+  
+        <input type="text" id="name" placeholder="Your Name (optional)">
+        <input type="email" id="email" placeholder="Email (optional)">
+  
+        <select id="category" required>
+          <option value="">Select Category</option>
+          <option>Exams</option>
+          <option>College Life</option>
+          <option>Career</option>
+          <option>Skills</option>
+        </select>
+  
+        <textarea id="question" maxlength="500" placeholder="Write your question (max 500 chars)..." required></textarea>
+  
+        <!-- CONSENT -->
+        <label style="font-size:14px;">
+          <input type="checkbox" id="consent" required>
+          I agree to the Privacy Policy and allow Connect to contact me.
+        </label>
+  
+        <button type="submit" class="btn">Submit Question</button>
+  
+        <p id="formMessage"></p>
+      </form><section class="container">
+        
+        
+    <h2>Frequently Asked Questions</h2>
+          <h3>Is it free to ask questions?</h3>
+  
+        <p>
+  Yes, students can ask questions for free or <a href="/connect-mentorship/questions.html">browse existing questions</a> for guidance.
+  </p>
+  
+    
+    <h3>Who will answer my question?</h3>
+    <p>Your questions are answered by experienced students who share real-life advice.</p>
+  
+    <h3>What type of questions can I ask?</h3>
+    <p>You can ask about exams, college, career choices, and skills.</p>
+  </section>
+      
+  
+    </div>
+  </section>
+  
+  <footer>
+    <p>© 2026 Connect Mentorship</p>
+  </footer>
+  
+  <!-- FIREBASE + LOGIC -->
+  <script type="module">
+  
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { 
+    getFirestore, 
+    doc, 
+    getDoc, 
+    collection, 
+    addDoc 
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+    authDomain: "connect-mentorship.firebaseapp.com",
+    projectId: "connect-mentorship",
+    storageBucket: "connect-mentorship.firebasestorage.app",
+    messagingSenderId: "229549559214",
+    appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+  };
+  
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  
+  const userArea = document.getElementById("userArea");
+  
+  // NAVBAR AUTH
+  userArea.style.display = "none";
+  
+  onAuthStateChanged(auth, async (user) => {
+  
+    if (user) {
+      let name = "User";
+  
+      try {
+        const docSnap = await getDoc(doc(db, "users", user.uid));
+        if (docSnap.exists()) {
+          name = docSnap.data().name || "User";
+        }
+      } catch (error) {}
+  
+      userArea.innerHTML = `
+        <span style="color:white;">👤 ${name}</span>
+        <button onclick="logout()" class="btn">Logout</button>
+      `;
+  
+    } else {
+      userArea.innerHTML = `
+        <a href="login.html" class="btn">Login</a>
+        <a href="signup.html" class="btn btn-outline">Signup</a>
+      `;
+    }
+  
+    userArea.style.display = "flex";
+  });
+  
+  // LOGOUT
+  window.logout = async function() {
+    await signOut(auth);
+    location.reload();
+  };
+  
+  // SUBMIT FORM
+  document.getElementById("questionForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+  
+    const submitBtn = e.target.querySelector("button");
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Submitting...";
+  
+    const botField = document.getElementById("website").value;
+    if (botField) return; // bot detected
+  
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const category = document.getElementById("category").value;
+    let question = document.getElementById("question").value;
+    const msg = document.getElementById("formMessage");
+  
+    // XSS protection
+    question = question.replace(/<[^>]*>?/gm, "");
+  
+    if (!category || !question) {
+      msg.innerText = "Fill required fields ❌";
+      msg.style.color = "red";
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Submit Question";
+      return;
+    }
+  
     try {
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      if (docSnap.exists()) {
-        name = docSnap.data().name || "User";
-      }
-    } catch (error) {}
-
-    userArea.innerHTML = `
-      <span style="color:white;">👤 ${name}</span>
-      <button onclick="logout()" class="btn">Logout</button>
-    `;
-
-  } else {
-    userArea.innerHTML = `
-      <a href="login.html" class="btn">Login</a>
-      <a href="signup.html" class="btn btn-outline">Signup</a>
-    `;
-  }
-
-  userArea.style.display = "flex";
-});
-
-// LOGOUT
-window.logout = async function() {
-  await signOut(auth);
-  location.reload();
-};
-
-// SUBMIT FORM
-document.getElementById("questionForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const submitBtn = e.target.querySelector("button");
-  submitBtn.disabled = true;
-  submitBtn.innerText = "Submitting...";
-
-  const botField = document.getElementById("website").value;
-  if (botField) return; // bot detected
-
-  const name = document.getElementById("name").value;
-  const email = document.getElementById("email").value;
-  const category = document.getElementById("category").value;
-  let question = document.getElementById("question").value;
-  const msg = document.getElementById("formMessage");
-
-  // XSS protection
-  question = question.replace(/<[^>]*>?/gm, "");
-
-  if (!category || !question) {
-    msg.innerText = "Fill required fields ❌";
-    msg.style.color = "red";
+      await addDoc(collection(db, "questions"), {
+        name,
+        email,
+        category,
+        question,
+        createdAt: new Date()
+      });
+  
+      msg.innerText = "Question submitted ✅";
+      msg.style.color = "green";
+  
+      e.target.reset();
+  
+      setTimeout(() => {
+        msg.innerText = "";
+      }, 5000);
+  
+    } catch (error) {
+      msg.innerText = "Error submitting ❌";
+      msg.style.color = "red";
+    }
+  
     submitBtn.disabled = false;
     submitBtn.innerText = "Submit Question";
-    return;
+  });
+  
+  </script>
+  
+  <script>
+  function toggleMenu() {
+    document.querySelector(".nav-links").classList.toggle("active");
   }
-
-  try {
-    await addDoc(collection(db, "questions"), {
-      name,
-      email,
-      category,
-      question,
-      createdAt: new Date()
-    });
-
-    msg.innerText = "Question submitted ✅";
-    msg.style.color = "green";
-
-    e.target.reset();
-
-    setTimeout(() => {
-      msg.innerText = "";
-    }, 5000);
-
-  } catch (error) {
-    msg.innerText = "Error submitting ❌";
-    msg.style.color = "red";
+  </script>
+  
+    <script type="application/ld+json">
+  {
+   "@context": "https://schema.org",
+   "@type": "QAPage",
+   "name": "Ask Career Questions Online",
+   "description": "Students can ask career and academic questions and get answers from experienced mentors."
   }
-
-  submitBtn.disabled = false;
-  submitBtn.innerText = "Submit Question";
-});
-
-</script>
-
-<script>
-function toggleMenu() {
-  document.querySelector(".nav-links").classList.toggle("active");
-}
-</script>
-
-</body>
-</html>
+  </script>
+  
+  </body>
+  </html>
