@@ -6,13 +6,12 @@
 
 <title>Student Question & Answers | Connect Mentorship</title>
 
-<meta name="description" content="Read student questions and answers about career, exams, and college guidance. Learn from real experiences.">
-
-<meta name="robots" content="index, follow">
+<meta name="description" content="Read student questions and answers about career, exams, and college guidance.">
 
 <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/view-question.html">
 
 <link rel="stylesheet" href="style.css">
+<link rel="icon" href="/connect-mentorship/icon.png">
 
 <style>
 .container { max-width:800px; margin:40px auto; }
@@ -26,38 +25,26 @@ textarea { width:100%; padding:10px; margin-top:10px; }
 
 <nav>
   <div class="container">
-
     <div class="logo">
       <a href="/connect-mentorship/">Connect</a>
     </div>
 
     <div class="nav-links">
-     <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/">Home</a>
       <a href="/connect-mentorship/ask.html">Ask Question</a>
       <a href="/connect-mentorship/mentor.html">Become Mentor</a>
       <a href="/connect-mentorship/about.html">About</a>
       <a href="/connect-mentorship/contact.html">Contact</a>
       <a href="questions.html">Questions</a>
-      <a href="view-question.html">View Questions</a>
+      <a href="view-questions.html">View Questions</a>
       <a href="profile.html">Profile</a>
       <span id="userArea"></span>
     </div>
-
   </div>
 </nav>
 
-<!-- SEO CONTENT -->
 <section class="container">
   <h1>Student Question and Answers</h1>
-
-  <p>
-    Explore real questions asked by students and read answers from experienced mentors.
-  </p>
-
-  <p>
-    👉 You can also <a href="/connect-mentorship/ask.html">ask your own question</a> or 
-    <a href="/connect-mentorship/questions.html">browse more questions</a>.
-  </p>
 </section>
 
 <div class="container">
@@ -66,7 +53,7 @@ textarea { width:100%; padding:10px; margin-top:10px; }
 
   <div class="card" id="answerBox" style="display:none;">
     <h3>Write Answer</h3>
-    <textarea id="answerText" placeholder="Write your answer..."></textarea>
+    <textarea id="answerText"></textarea>
     <button id="answerBtn">Submit Answer</button>
     <p id="msg"></p>
   </div>
@@ -78,7 +65,6 @@ textarea { width:100%; padding:10px; margin-top:10px; }
 <script type="module">
 
 import { auth, db } from "./auth.js";
-
 import {
   doc, getDoc, collection, addDoc, query, where,
   onSnapshot, serverTimestamp, orderBy,
@@ -88,7 +74,13 @@ import {
 import { onAuthStateChanged } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+/* SAFE ID */
 const qId = new URLSearchParams(window.location.search).get("id");
+
+if (!qId) {
+  document.getElementById("questionBox").innerHTML = "Invalid question link ❌";
+  throw new Error("No question ID");
+}
 
 const questionBox = document.getElementById("questionBox");
 const answersList = document.getElementById("answersList");
@@ -99,7 +91,7 @@ const btn = document.getElementById("answerBtn");
 let currentUserData = null;
 let replyListeners = {};
 
-/* SAFE */
+/* SAFE HTML */
 function escapeHTML(str) {
   return (str || "").replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",
@@ -152,8 +144,7 @@ function loadAnswers() {
         <p>${escapeHTML(d.text)}</p>
         <small>${escapeHTML(d.name)}</small><br><br>
 
-        <button 
-          onclick="upvote('${id}')"
+        <button onclick="upvote('${id}')"
           style="opacity:${voted ? 0.5 : 1}; pointer-events:${voted ? 'none' : 'auto'};">
           👍 ${d.votes || 0}
         </button>
@@ -161,8 +152,6 @@ function loadAnswers() {
         <button id="btn-${id}" onclick="toggleReplies('${id}')">
           View Replies
         </button>
-
-        <button onclick="reportAnswer('${id}')">Report</button>
 
         <div>
           <textarea id="replyText-${id}" placeholder="Write reply..."></textarea>
@@ -180,7 +169,6 @@ function loadAnswers() {
 
 /* SUBMIT ANSWER */
 btn.onclick = async () => {
-
   const text = document.getElementById("answerText").value.trim();
   if (!text) return msg.innerText="Write something ❌";
 
@@ -202,7 +190,6 @@ btn.onclick = async () => {
 
 /* UPVOTE */
 window.upvote = async function(answerId) {
-
   const user = auth.currentUser;
   if (!user) return alert("Login required ❌");
 
@@ -216,6 +203,72 @@ window.upvote = async function(answerId) {
     votes: increment(1),
     upvotedBy: arrayUnion(user.uid)
   });
+};
+
+/* TOGGLE REPLIES */
+window.toggleReplies = function(answerId){
+
+  const box = document.getElementById(`replies-${answerId}`);
+  const btn = document.getElementById(`btn-${answerId}`);
+
+  const isOpen = box.dataset.open === "true";
+
+  if (isOpen) {
+    box.style.display = "none";
+    box.dataset.open = "false";
+    btn.innerText = "View Replies";
+
+    if (replyListeners[answerId]) {
+      replyListeners[answerId]();
+      delete replyListeners[answerId];
+    }
+    return;
+  }
+
+  box.style.display = "block";
+  box.dataset.open = "true";
+  btn.innerText = "Hide Replies";
+
+  const ref = query(
+    collection(db,"replies"),
+    where("answerId","==",answerId),
+    orderBy("createdAt","asc")
+  );
+
+  const unsubscribe = onSnapshot(ref, snap => {
+    box.innerHTML = "";
+    snap.forEach(docSnap=>{
+      const d = docSnap.data();
+      box.innerHTML += `
+        <p>💬 ${escapeHTML(d.text)}<br>
+        <small>${escapeHTML(d.name)}</small></p>
+      `;
+    });
+  });
+
+  replyListeners[answerId] = unsubscribe;
+};
+
+/* SUBMIT REPLY */
+window.submitReply = async function(answerId){
+
+  const user = auth.currentUser;
+  if (!user) return alert("Login required ❌");
+
+  const el = document.getElementById(`replyText-${answerId}`);
+  const text = el.value.trim();
+
+  if (!text) return alert("Write reply ❌");
+
+  await addDoc(collection(db,"replies"),{
+    text,
+    answerId,
+    userId:user.uid,
+    name: currentUserData?.name || user.email,
+    createdAt:serverTimestamp()
+  });
+
+  el.value="";
 };
 
 /* AUTH */
