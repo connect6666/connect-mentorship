@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-
 .profile-container {
   max-width: 800px;
   margin: 40px auto;
@@ -38,7 +37,6 @@
   display: inline-block;
   margin-top: 5px;
 }
-
 </style>
 
 </head>
@@ -59,30 +57,37 @@
 
 <script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp, getApps, getApp } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   doc,
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+/* 🔐 CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship"
 };
 
-const app = initializeApp(firebaseConfig);
+/* ✅ FIX: Prevent duplicate Firebase init */
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// GET ID FROM URL
+/* =========================
+   GET ID FROM URL
+========================= */
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
 const profile = document.getElementById("profile");
 
-if (!id) {
-  profile.innerHTML = "Mentor not found ❌";
+/* ❌ INVALID ID CHECK */
+if (!id || id.length < 10) {
+  profile.innerHTML = "Invalid mentor link ❌";
 } else {
 
   try {
@@ -94,53 +99,70 @@ if (!id) {
 
       const data = snap.data();
 
+      /* 🔒 SECURITY: ONLY VERIFIED MENTORS */
+      if (data.role !== "mentor" || data.verified !== true) {
+        profile.innerHTML = "Mentor not available ❌";
+        return;
+      }
+
+      /* 🔒 XSS PROTECTION */
+      const safeName = (data.name || "User")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
       profile.innerHTML = `
-        <img src="https://ui-avatars.com/api/?name=${data.name}" class="profile-img">
+        <img src="https://ui-avatars.com/api/?name=${safeName}" class="profile-img">
 
-        <h2 style="margin-bottom:5px;">${data.name}</h2>
+        <h2>${safeName}</h2>
 
-        <p style="color: gray; margin-top:5px;">
-          ${data.role || "Mentor"}
+        <p style="color: gray;">
+          Mentor
         </p>
 
-        ${
-          data.verified
-            ? `<div class="badge">Verified Mentor ✅</div>`
-            : `<div class="badge" style="background:#f59e0b;">Pending Verification ⏳</div>`
-        }
+        <div class="badge">Verified Mentor ✅</div>
 
         <p style="margin-top:15px;">
-         Experience: ${
-  data.experience
-    ? data.experience >= 5
-      ? data.experience + "+ years"
-      : data.experience + " years"
-    : "Not added"
-}
+          Experience: ${
+            data.experience
+              ? data.experience >= 5
+                ? data.experience + "+ years"
+                : data.experience + " years"
+              : "Not added"
+          }
         </p>
 
-        <p>
-          Phone: ${data.phone || "Not provided"}
+        <!-- 🔒 PRIVACY FIX -->
+        <p style="color:gray; font-size:13px;">
+          Contact available after chat request
         </p>
 
         <button class="chat-btn" onclick="startChat('${id}')">
           💬 Chat with Mentor
         </button>
+
+        <!-- ⚖️ LEGAL DISCLAIMER -->
+        <p style="font-size:10px; color:gray; margin-top:15px;">
+          Verification confirms identity only. Connect does not guarantee results or outcomes.
+        </p>
       `;
     }
 
   } catch (error) {
-    console.log("Error:", error);
+    console.error("Error:", error);
     profile.innerHTML = "Error loading profile ❌";
   }
 }
 
-// CHAT BUTTON
+/* =========================
+   CHAT BUTTON (SAFE)
+========================= */
 window.startChat = function(id) {
-  alert("Start chat with mentor: " + id);
+  alert("Chat feature coming soon 🚀");
 };
 
 </script>
+
+<script type="module" src="auth.js"></script>
 
 </body>
 </html>
