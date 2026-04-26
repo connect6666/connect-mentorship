@@ -1,20 +1,25 @@
 {
   "name": "Connect Mentorship",
   "short_name": "Connect",
-  "start_url": "/connect-mentorship/index.html",
+  "description": "Career guidance for Indian students – Get real advice from seniors.",
+  "start_url": "/connect-mentorship/",
+  "scope": "/connect-mentorship/",
   "display": "standalone",
-  "background_color": "#4f46e5",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
   "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "/connect-mentorship/icon.png",
+      "src": "/connect-mentorship/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/connect-mentorship/icon.png",
+      "src": "/connect-mentorship/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
