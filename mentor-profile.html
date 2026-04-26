@@ -73,7 +73,7 @@ const firebaseConfig = {
   projectId: "connect-mentorship"
 };
 
-/* ✅ FIX: Prevent duplicate Firebase init */
+/* ✅ Prevent duplicate Firebase init */
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
@@ -85,7 +85,7 @@ const id = params.get("id");
 
 const profile = document.getElementById("profile");
 
-/* ❌ INVALID ID CHECK */
+/* ❌ INVALID ID */
 if (!id || id.length < 10) {
   profile.innerHTML = "Invalid mentor link ❌";
 } else {
@@ -99,52 +99,50 @@ if (!id || id.length < 10) {
 
       const data = snap.data();
 
-      /* 🔒 SECURITY: ONLY VERIFIED MENTORS */
+      /* 🔒 ONLY VERIFIED MENTORS */
       if (data.role !== "mentor" || data.verified !== true) {
         profile.innerHTML = "Mentor not available ❌";
-        return;
+      } else {
+
+        /* 🔒 XSS PROTECTION */
+        const safeName = (data.name || "User")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+
+        profile.innerHTML = `
+          <img src="https://ui-avatars.com/api/?name=${safeName}" class="profile-img">
+
+          <h2>${safeName}</h2>
+
+          <p style="color: gray;">Mentor</p>
+
+          <div class="badge">Verified Mentor ✅</div>
+
+          <p style="margin-top:15px;">
+            Experience: ${
+              data.experience
+                ? data.experience >= 5
+                  ? data.experience + "+ years"
+                  : data.experience + " years"
+                : "Not added"
+            }
+          </p>
+
+          <!-- 🔒 PRIVACY -->
+          <p style="color:gray; font-size:13px;">
+            Contact available after chat request
+          </p>
+
+          <button class="chat-btn" onclick="startChat('${id}')">
+            💬 Chat with Mentor
+          </button>
+
+          <!-- ⚖️ LEGAL -->
+          <p style="font-size:10px; color:gray; margin-top:15px;">
+            Verification confirms identity only. Connect does not guarantee results or outcomes.
+          </p>
+        `;
       }
-
-      /* 🔒 XSS PROTECTION */
-      const safeName = (data.name || "User")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-
-      profile.innerHTML = `
-        <img src="https://ui-avatars.com/api/?name=${safeName}" class="profile-img">
-
-        <h2>${safeName}</h2>
-
-        <p style="color: gray;">
-          Mentor
-        </p>
-
-        <div class="badge">Verified Mentor ✅</div>
-
-        <p style="margin-top:15px;">
-          Experience: ${
-            data.experience
-              ? data.experience >= 5
-                ? data.experience + "+ years"
-                : data.experience + " years"
-              : "Not added"
-          }
-        </p>
-
-        <!-- 🔒 PRIVACY FIX -->
-        <p style="color:gray; font-size:13px;">
-          Contact available after chat request
-        </p>
-
-        <button class="chat-btn" onclick="startChat('${id}')">
-          💬 Chat with Mentor
-        </button>
-
-        <!-- ⚖️ LEGAL DISCLAIMER -->
-        <p style="font-size:10px; color:gray; margin-top:15px;">
-          Verification confirms identity only. Connect does not guarantee results or outcomes.
-        </p>
-      `;
     }
 
   } catch (error) {
@@ -154,7 +152,7 @@ if (!id || id.length < 10) {
 }
 
 /* =========================
-   CHAT BUTTON (SAFE)
+   CHAT BUTTON
 ========================= */
 window.startChat = function(id) {
   alert("Chat feature coming soon 🚀");
