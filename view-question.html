@@ -49,7 +49,8 @@ import { auth, db } from "./auth.js";
 
 import {
   doc, getDoc, collection, addDoc, query, where,
-  onSnapshot, serverTimestamp, orderBy, updateDoc, increment
+  onSnapshot, serverTimestamp, orderBy,
+  updateDoc, increment, arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import { onAuthStateChanged } 
@@ -64,6 +65,7 @@ const msg = document.getElementById("msg");
 const btn = document.getElementById("answerBtn");
 
 let currentUserData = null;
+let replyListeners = {}; // 🔥 prevent memory leak
 
 /* SAFE */
 function escapeHTML(str) {
@@ -73,7 +75,7 @@ function escapeHTML(str) {
   }[m]));
 }
 
-/* QUESTION */
+/* LOAD QUESTION */
 async function loadQuestion() {
   const snap = await getDoc(doc(db, "questions", qId));
   if (!snap.exists()) return questionBox.innerHTML="Not found ❌";
@@ -85,7 +87,7 @@ async function loadQuestion() {
   `;
 }
 
-/* ANSWERS */
+/* LOAD ANSWERS */
 function loadAnswers() {
 
   const qRef = query(
@@ -103,6 +105,9 @@ function loadAnswers() {
       const d = docSnap.data();
       const id = docSnap.id;
 
+      const upvotedBy = d.upvotedBy || [];
+      const voted = upvotedBy.includes(auth.currentUser?.uid);
+
       const div = document.createElement("div");
       div.className = "card answer";
 
@@ -110,7 +115,9 @@ function loadAnswers() {
         <p>${escapeHTML(d.text)}</p>
         <small>${escapeHTML(d.name)}</small><br><br>
 
-        <button onclick="upvote('${id}')">
+        <button 
+          onclick="upvote('${id}')"
+          style="opacity:${voted ? 0.5 : 1}; pointer-events:${voted ? 'none' : 'auto'};">
           👍 ${d.votes || 0}
         </button>
 
@@ -134,7 +141,7 @@ function loadAnswers() {
   });
 }
 
-/* ANSWER */
+/* SUBMIT ANSWER */
 btn.onclick = async () => {
 
   const text = document.getElementById("answerText").value.trim();
@@ -149,7 +156,9 @@ btn.onclick = async () => {
     questionId:qId,
     userId:user.uid,
     name: currentUserData?.name || user.email,
-    createdAt:serverTimestamp()
+    createdAt:serverTimestamp(),
+    votes: 0,            // ✅ FIX
+    upvotedBy: []        // ✅ FIX
   });
 
   msg.innerText="Answer added ✅";
@@ -158,8 +167,6 @@ btn.onclick = async () => {
 };
 
 /* UPVOTE */
-import { arrayUnion } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 window.upvote = async function(answerId) {
 
   const user = auth.currentUser;
@@ -167,15 +174,13 @@ window.upvote = async function(answerId) {
 
   const ref = doc(db, "answers", answerId);
   const snap = await getDoc(ref);
-
   if (!snap.exists()) return;
 
   const data = snap.data();
+  const upvotedBy = data.upvotedBy || [];
 
-  const alreadyVoted = data.upvotedBy?.includes(user.uid);
-
-  if (alreadyVoted) {
-    alert("You already upvoted 👍");
+  if (upvotedBy.includes(user.uid)) {
+    alert("Already upvoted 👍");
     return;
   }
 
@@ -185,20 +190,23 @@ window.upvote = async function(answerId) {
   });
 };
 
-/* 🔥 TOGGLE REPLIES (FIXED) */
+/* TOGGLE REPLIES */
 window.toggleReplies = function(answerId){
 
   const box = document.getElementById(`replies-${answerId}`);
   const btn = document.getElementById(`btn-${answerId}`);
 
-  // CLOSE
   if (box.style.display === "block") {
     box.style.display = "none";
     btn.innerText = "View Replies";
+
+    if (replyListeners[answerId]) {
+      replyListeners[answerId]();
+      delete replyListeners[answerId];
+    }
     return;
   }
 
-  // OPEN
   box.style.display = "block";
   btn.innerText = "Hide Replies";
 
@@ -208,20 +216,18 @@ window.toggleReplies = function(answerId){
     orderBy("createdAt","asc")
   );
 
-  onSnapshot(ref, snap => {
-
+  const unsubscribe = onSnapshot(ref, snap => {
     box.innerHTML = "";
-
     snap.forEach(docSnap=>{
       const d = docSnap.data();
-
       box.innerHTML += `
         <p>💬 ${escapeHTML(d.text)}<br>
         <small>${escapeHTML(d.name)}</small></p>
       `;
     });
-
   });
+
+  replyListeners[answerId] = unsubscribe;
 };
 
 /* REPLY */
