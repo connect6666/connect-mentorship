@@ -53,6 +53,7 @@
   padding: 10px;
   border-radius: 8px;
   margin-bottom: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
 }
 </style>
 </head>
@@ -61,18 +62,28 @@
 
 <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+    <div class="logo">
+      <a href="/connect-mentorship/">Connect</a>
+    </div>
     <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="ask.html">Ask</a>
-      <a href="questions.html">Questions</a>
-      <a href="profile.html">Profile</a>
+      <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/ask.html">Ask Question</a>
+      <a href="/connect-mentorship/mentor.html">Become Mentor</a>
+      <a href="/connect-mentorship/questions.html">Questions</a>
+      <a href="/connect-mentorship/profile.html">Profile</a>
       <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
-<section>
+<section class="container">
+  <h1>Your Profile</h1>
+  <p>
+    You can also <a href="/connect-mentorship/ask.html">ask questions</a> or 
+    <a href="/connect-mentorship/questions.html">browse all questions</a>.
+  </p>
+  <p>Manage your profile, questions, and answers.</p>
+</section>
 
 <div class="profile-card" id="profileCard">Loading...</div>
 
@@ -85,8 +96,6 @@
   <h3>💬 My Answers</h3>
   <div id="myAnswers"></div>
 </div>
-
-</section>
 
 <script type="module">
 
@@ -103,7 +112,7 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔐 CONFIG */
+/* CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
@@ -120,26 +129,34 @@ const myAnswers = document.getElementById("myAnswers");
 
 let currentUser;
 
-/* =========================
-   AUTH
-========================= */
+/* SAFE HTML */
+function escapeHTML(str) {
+  if (!str) return "";
+  return str.replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
+}
+
+/* AUTH */
 onAuthStateChanged(auth, async (user) => {
 
-  if (!user) return window.location.href = "login.html";
+  if (!user) {
+    window.location.href = "/connect-mentorship/login.html";
+    return;
+  }
 
   currentUser = user;
 
-  /* =========================
-     PROFILE LIVE UPDATE
-  ========================= */
+  /* PROFILE */
   onSnapshot(doc(db, "users", user.uid), (snap) => {
 
     const data = snap.exists() ? snap.data() : {};
 
-    const name = (data.name || "User")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-
+    const name = escapeHTML(data.name || "User");
     const role = data.role || "user";
     const verified = data.verified || false;
     const phone = data.phone || "";
@@ -152,11 +169,7 @@ onAuthStateChanged(auth, async (user) => {
 
       ${
         role === "mentor"
-          ? `
-            <div class="badge">
-              Mentor ${verified ? "✅ Verified" : "⏳ Pending"}
-            </div>
-          `
+          ? `<div class="badge">Mentor ${verified ? "✅ Verified" : "⏳ Pending"}</div>`
           : `<button class="btn" onclick="applyVerification()">Become Mentor</button>`
       }
 
@@ -174,11 +187,26 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("saveBtn").onclick = saveProfile;
   });
 
-  /* =========================
-     LOAD ANSWERS (FIX DUPLICATE)
-  ========================= */
-  myAnswers.innerHTML = "";
+  /* LOAD QUESTIONS */
+  myQuestions.innerHTML = "";
+  const qSnap = await getDocs(
+    query(collection(db, "questions"), where("userId", "==", user.uid))
+  );
 
+  qSnap.forEach(doc => {
+    myQuestions.innerHTML += `
+      <div class="step-card">
+        ${escapeHTML(doc.data().question)}
+      </div>
+    `;
+  });
+
+  if (!qSnap.size) {
+    myQuestions.innerHTML = "No questions yet.";
+  }
+
+  /* LOAD ANSWERS */
+  myAnswers.innerHTML = "";
   const aSnap = await getDocs(
     query(collection(db, "answers"), where("userId", "==", user.uid))
   );
@@ -186,72 +214,39 @@ onAuthStateChanged(auth, async (user) => {
   aSnap.forEach(doc => {
     myAnswers.innerHTML += `
       <div class="step-card">
-        ${doc.data().text}
+        ${escapeHTML(doc.data().text)}
       </div>
     `;
   });
 
+  if (!aSnap.size) {
+    myAnswers.innerHTML = "No answers yet.";
+  }
+
 });
 
-/* =========================
-   SAVE PROFILE (NO RELOAD)
-========================= */
+/* SAVE */
 async function saveProfile() {
-
   const name = document.getElementById("editName").value.trim();
   const phone = document.getElementById("editPhone").value.trim();
-  const btn = document.getElementById("saveBtn");
 
-  btn.disabled = true;
-  btn.innerText = "Saving...";
-
-  try {
-    await updateDoc(doc(db, "users", currentUser.uid), {
-      name,
-      phone
-    });
-
-    alert("Profile updated ✅");
-
-  } catch (e) {
-    alert("Error saving profile");
-  }
-
-  btn.disabled = false;
-  btn.innerText = "Save";
+  await updateDoc(doc(db, "users", currentUser.uid), { name, phone });
+  alert("Profile updated ✅");
 }
 
-/* =========================
-   APPLY MENTOR
-========================= */
+/* APPLY */
 window.applyVerification = async function() {
-
-  const btn = event.target;
-  btn.disabled = true;
-  btn.innerText = "Applying...";
-
-  try {
-    await updateDoc(doc(db, "users", currentUser.uid), {
-      role: "mentor",
-      verified: false
-    });
-
-    alert("Applied for mentor ✅");
-
-  } catch (e) {
-    alert("Error applying");
-  }
-
-  btn.disabled = false;
-  btn.innerText = "Become Mentor";
+  await updateDoc(doc(db, "users", currentUser.uid), {
+    role: "mentor",
+    verified: false
+  });
+  alert("Applied for mentor ✅");
 };
 
-/* =========================
-   LOGOUT
-========================= */
+/* LOGOUT */
 window.logout = async function() {
   await signOut(auth);
-  window.location.href = "index.html";
+  window.location.href = "/connect-mentorship/";
 };
 
 </script>
