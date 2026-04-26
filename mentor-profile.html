@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="description" content="View mentor profile and get career guidance from experienced students. Connect with verified mentors for real advice.">
+
+<meta name="robots" content="index, follow">
+
+<link rel="canonical" href="https://connect6666.github.io/connect-mentorship/mentor-profile.html">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mentor Profile | Connect</title>
+<title>Verified Mentor Profile | Student Career Guidance</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -45,9 +50,26 @@
 
 <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+   <div class="logo">
+  <a href="/connect-mentorship/">Connect</a>
+</div>
   </div>
 </nav>
+
+  <section class="container">
+  <h1>Mentor Profile</h1>
+
+  <p>
+    View details of experienced mentors and connect with them for career guidance, exam preparation, and skill development.
+  </p>
+</section>
+
+ <section class="container">
+  <p>
+    👉 You can also <a href="/connect-mentorship/ask.html">ask your questions</a> or 
+    <a href="/connect-mentorship/questions.html">browse student questions</a>.
+  </p>
+</section>
 
 <div class="profile-container">
   <div class="profile-card" id="profile">
@@ -110,38 +132,36 @@ if (!id || id.length < 10) {
           .replace(/>/g, "&gt;");
 
         profile.innerHTML = `
-          <img src="https://ui-avatars.com/api/?name=${safeName}" class="profile-img">
+  <img src="https://ui-avatars.com/api/?name=${safeName}" class="profile-img">
 
-          <h2>${safeName}</h2>
+  <h2>${safeName}</h2>
 
-          <p style="color: gray;">Mentor</p>
+  <p style="color: gray;">Verified Mentor</p>
 
-          <div class="badge">Verified Mentor ✅</div>
+  <div class="badge">Verified Mentor ✅</div>
 
-          <p style="margin-top:15px;">
-            Experience: ${
-              data.experience
-                ? data.experience >= 5
-                  ? data.experience + "+ years"
-                  : data.experience + " years"
-                : "Not added"
-            }
-          </p>
+  <p style="margin-top:15px;">
+    Experience: ${
+      data.experience
+        ? data.experience >= 5
+          ? data.experience + "+ years"
+          : data.experience + " years"
+        : "Not added"
+    }
+  </p>
 
-          <!-- 🔒 PRIVACY -->
-          <p style="color:gray; font-size:13px;">
-            Contact available after chat request
-          </p>
+  <p>
+    This mentor provides guidance related to career choices, college decisions, and skill development based on real experience.
+  </p>
 
-          <button class="chat-btn" onclick="startChat('${id}')">
-            💬 Chat with Mentor
-          </button>
+  <button class="chat-btn" onclick="startChat('${id}')">
+    💬 Chat with Mentor
+  </button>
 
-          <!-- ⚖️ LEGAL -->
-          <p style="font-size:10px; color:gray; margin-top:15px;">
-            Verification confirms identity only. Connect does not guarantee results or outcomes.
-          </p>
-        `;
+  <p style="font-size:10px; color:gray; margin-top:15px;">
+    Verification confirms identity only. Connect does not guarantee results or outcomes.
+  </p>
+`;
       }
     }
 
@@ -161,6 +181,16 @@ window.startChat = function(id) {
 </script>
 
 <script type="module" src="auth.js"></script>
+
+  <script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "Person",
+ "name": "Mentor Profile",
+ "jobTitle": "Student Mentor",
+ "description": "Provides career guidance and mentorship for students"
+}
+</script>
 
 </body>
 </html>
