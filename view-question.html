@@ -68,7 +68,7 @@ textarea {
 
 <script type="module">
 
-/* ✅ USE SHARED AUTH + DB */
+/* ✅ SHARED AUTH */
 import { auth, db } from "./auth.js";
 
 import {
@@ -80,15 +80,15 @@ import {
   where,
   onSnapshot,
   serverTimestamp,
-  orderBy
+  orderBy,
+  updateDoc,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import { onAuthStateChanged } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* =========================
-   GLOBAL
-========================= */
+/* GLOBAL */
 const params = new URLSearchParams(window.location.search);
 const qId = params.get("id");
 
@@ -100,9 +100,7 @@ const btn = document.getElementById("answerBtn");
 
 let currentUserData = null;
 
-/* =========================
-   SAFE HTML
-========================= */
+/* SAFE HTML */
 function escapeHTML(str) {
   return (str || "").replace(/[&<>"']/g, m => ({
     "&": "&amp;",
@@ -113,9 +111,7 @@ function escapeHTML(str) {
   }[m]));
 }
 
-/* =========================
-   LOAD QUESTION
-========================= */
+/* LOAD QUESTION */
 async function loadQuestion() {
 
   if (!qId) {
@@ -138,9 +134,7 @@ async function loadQuestion() {
   `;
 }
 
-/* =========================
-   LOAD ANSWERS (OPTIMIZED)
-========================= */
+/* LOAD ANSWERS */
 function loadAnswers() {
 
   const qRef = query(
@@ -168,8 +162,30 @@ function loadAnswers() {
       div.innerHTML = `
         <p>${escapeHTML(data.text)}</p>
         <small>${escapeHTML(data.name || "User")}</small>
-        <br>
+
+        <br><br>
+
+        <!-- 👍 UPVOTE -->
+        <button onclick="upvote('${docSnap.id}')">
+          👍 ${data.votes || 0}
+        </button>
+
+        <!-- 💬 LOAD REPLIES -->
+        <button onclick="loadReplies('${docSnap.id}')">
+          View Replies
+        </button>
+
+        <!-- 🚨 REPORT -->
         <button onclick="reportAnswer('${docSnap.id}')">Report</button>
+
+        <!-- REPLY BOX -->
+        <div>
+          <textarea id="replyText-${docSnap.id}" placeholder="Write reply..."></textarea>
+          <button onclick="submitReply('${docSnap.id}')">Reply</button>
+        </div>
+
+        <!-- REPLIES -->
+        <div id="replies-${docSnap.id}"></div>
       `;
 
       answersList.appendChild(div);
@@ -178,27 +194,16 @@ function loadAnswers() {
   });
 }
 
-/* =========================
-   SUBMIT ANSWER
-========================= */
+/* SUBMIT ANSWER */
 btn.onclick = async () => {
 
   const text = document.getElementById("answerText").value.trim();
 
-  const badWords = ["badword1","badword2"];
-
-  // disable button
   btn.disabled = true;
   btn.innerText = "Posting...";
 
   if (!text) {
     msg.innerText = "Write something ❌";
-    resetBtn();
-    return;
-  }
-
-  if (badWords.some(w => text.toLowerCase().includes(w))) {
-    msg.innerText = "Keep it respectful ❌";
     resetBtn();
     return;
   }
@@ -229,16 +234,66 @@ function resetBtn() {
   btn.innerText = "Submit Answer";
 }
 
-/* =========================
-   REPORT
-========================= */
+/* UPVOTE */
+window.upvote = async function(id) {
+  await updateDoc(doc(db, "answers", id), {
+    votes: increment(1)
+  });
+};
+
+/* LOAD REPLIES */
+window.loadReplies = function(answerId) {
+
+  const ref = query(
+    collection(db, "replies"),
+    where("answerId", "==", answerId),
+    orderBy("createdAt", "asc")
+  );
+
+  onSnapshot(ref, (snap) => {
+
+    const container = document.getElementById(`replies-${answerId}`);
+    container.innerHTML = "";
+
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+
+      container.innerHTML += `
+        <p>💬 ${escapeHTML(d.text)} <br>
+        <small>${escapeHTML(d.name || "User")}</small></p>
+      `;
+    });
+
+  });
+};
+
+/* SUBMIT REPLY */
+window.submitReply = async function(answerId) {
+
+  const textEl = document.getElementById(`replyText-${answerId}`);
+  const text = textEl.value.trim();
+
+  if (!text) return alert("Write reply ❌");
+
+  const user = auth.currentUser;
+
+  await addDoc(collection(db, "replies"), {
+    text,
+    answerId,
+    userId: user.uid,
+    name: currentUserData?.name || user.email,
+    createdAt: serverTimestamp()
+  });
+
+  textEl.value = "";
+};
+
+/* REPORT */
 window.reportAnswer = function(id) {
   alert("Reported 🚨");
 };
 
-/* =========================
-   AUTH CHECK
-========================= */
+/* AUTH */
 onAuthStateChanged(auth, async (user) => {
 
   if (!user) return;
@@ -250,22 +305,18 @@ onAuthStateChanged(auth, async (user) => {
     const data = snap.data();
     currentUserData = data;
 
-    // 🔥 ONLY VERIFIED MENTOR
     if (data.role === "mentor" && data.verified === true) {
       answerBox.style.display = "block";
     }
   }
 });
 
-/* =========================
-   INIT
-========================= */
+/* INIT */
 loadQuestion();
 loadAnswers();
 
 </script>
 
-<!-- ✅ SHARED AUTH NAVBAR -->
 <script type="module" src="auth.js"></script>
 
 </body>
