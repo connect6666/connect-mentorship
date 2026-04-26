@@ -37,8 +37,16 @@
 
     <h2>Ask Your Question</h2>
 
+    <!-- LOGIN PROMPT -->
+    <p style="font-size:14px; color:gray; text-align:center;">
+      Asking as guest. <a href="login.html">Login</a> to track your question.
+    </p>
+
     <!-- QUESTION FORM -->
     <form id="questionForm" class="question-form">
+
+      <!-- Honeypot (anti-bot) -->
+      <input type="text" id="website" style="display:none">
 
       <input type="text" id="name" placeholder="Your Name (optional)">
       <input type="email" id="email" placeholder="Email (optional)">
@@ -51,7 +59,13 @@
         <option>Skills</option>
       </select>
 
-      <textarea id="question" placeholder="Write your question..." required></textarea>
+      <textarea id="question" maxlength="500" placeholder="Write your question (max 500 chars)..." required></textarea>
+
+      <!-- CONSENT -->
+      <label style="font-size:14px;">
+        <input type="checkbox" id="consent" required>
+        I agree to the Privacy Policy and allow Connect to contact me.
+      </label>
 
       <button type="submit" class="btn">Submit Question</button>
 
@@ -65,7 +79,7 @@
   <p>© 2026 Connect Mentorship</p>
 </footer>
 
-<!-- FIREBASE -->
+<!-- FIREBASE + LOGIC -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -93,7 +107,7 @@ const db = getFirestore(app);
 
 const userArea = document.getElementById("userArea");
 
-// 🔥 NAVBAR LOGIN SYSTEM
+// NAVBAR AUTH
 userArea.style.display = "none";
 
 onAuthStateChanged(auth, async (user) => {
@@ -103,14 +117,10 @@ onAuthStateChanged(auth, async (user) => {
 
     try {
       const docSnap = await getDoc(doc(db, "users", user.uid));
-
       if (docSnap.exists()) {
         name = docSnap.data().name || "User";
       }
-
-    } catch (error) {
-      console.log("User fetch error");
-    }
+    } catch (error) {}
 
     userArea.innerHTML = `
       <span style="color:white;">👤 ${name}</span>
@@ -127,25 +137,37 @@ onAuthStateChanged(auth, async (user) => {
   userArea.style.display = "flex";
 });
 
-// 🔐 LOGOUT
+// LOGOUT
 window.logout = async function() {
   await signOut(auth);
   location.reload();
 };
 
-// ✅ SAVE QUESTION
+// SUBMIT FORM
 document.getElementById("questionForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+
+  const submitBtn = e.target.querySelector("button");
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Submitting...";
+
+  const botField = document.getElementById("website").value;
+  if (botField) return; // bot detected
 
   const name = document.getElementById("name").value;
   const email = document.getElementById("email").value;
   const category = document.getElementById("category").value;
-  const question = document.getElementById("question").value;
+  let question = document.getElementById("question").value;
   const msg = document.getElementById("formMessage");
+
+  // XSS protection
+  question = question.replace(/<[^>]*>?/gm, "");
 
   if (!category || !question) {
     msg.innerText = "Fill required fields ❌";
     msg.style.color = "red";
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Submit Question";
     return;
   }
 
@@ -163,15 +185,22 @@ document.getElementById("questionForm").addEventListener("submit", async (e) => 
 
     e.target.reset();
 
+    setTimeout(() => {
+      msg.innerText = "";
+    }, 5000);
+
   } catch (error) {
     msg.innerText = "Error submitting ❌";
     msg.style.color = "red";
   }
+
+  submitBtn.disabled = false;
+  submitBtn.innerText = "Submit Question";
 });
 
 </script>
 
-  <script>
+<script>
 function toggleMenu() {
   document.querySelector(".nav-links").classList.toggle("active");
 }
