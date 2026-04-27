@@ -876,4 +876,23 @@ section p {
   margin-bottom: 15px;
 }
 
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.change-dp-btn {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
 
