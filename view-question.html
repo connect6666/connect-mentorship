@@ -5,14 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Student Question & Answers | Connect Mentorship</title>
-
-<meta name="description" content="Read student questions and answers about career, exams, and college guidance.">
-
+<meta name="description" content="Read student questions and mentor answers about career, exams, college and student guidance.">
 <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/view-question.html">
-
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="/connect-mentorship/icon.png">
-
 </head>
 
 <body>
@@ -23,58 +19,98 @@
       <a href="/connect-mentorship/">Connect</a>
     </div>
 
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
     <div class="nav-links">
-     <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/">Home</a>
       <a href="/connect-mentorship/questions.html">Questions</a>
-      <a href="/connect-mentorship/view-question.html">View Answer</a>
       <a href="/connect-mentorship/ask.html">Ask Question</a>
       <a href="/connect-mentorship/mentor.html">Become Mentor</a>
       <a href="/connect-mentorship/about.html">About</a>
       <a href="/connect-mentorship/contact.html">Contact</a>
-      
       <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
-<section class="container">
-  <h1>Student Question and Answers</h1>
+<section class="page-section">
+  <div class="container">
+    <h1>Student Question & Answers</h1>
+    <p class="center-text">
+      Read real guidance from mentors and experienced students.
+    </p>
+  </div>
 </section>
 
-<div class="container">
+<main class="container view-layout">
 
-  <div class="card" id="questionBox">Loading...</div>
+  <section class="main-thread">
+    <div class="thread-card" id="questionBox">Loading question...</div>
 
-  <div class="card" id="answerBox" style="display:none;">
-    <h3>Write Answer</h3>
-    <textarea id="answerText"></textarea>
-    <button id="answerBtn">Submit Answer</button>
-    <p id="msg"></p>
-  </div>
+    <div class="thread-card answer-write-box" id="answerBox" style="display:none;">
+      <h2>Write an Answer</h2>
+      <p>Share clear, honest, experience-based guidance.</p>
 
-  <div id="answersList"></div>
+      <textarea id="answerText" placeholder="Write your answer here..."></textarea>
 
-</div>
+      <button id="answerBtn" class="btn">Submit Answer</button>
+      <p id="msg"></p>
+    </div>
+
+    <div class="answers-header">
+      <h2>Mentor Answers</h2>
+      <p>Best answers appear with upvotes and replies.</p>
+    </div>
+
+    <div id="answersList"></div>
+  </section>
+
+  <aside class="thread-sidebar">
+    <div class="thread-card">
+      <h3>Need more help?</h3>
+      <p>Ask your own question and get guidance from mentors.</p>
+      <a class="btn" href="/connect-mentorship/ask.html">Ask Question</a>
+    </div>
+
+    <div class="thread-card">
+      <h3>Explore</h3>
+      <div class="tag-list">
+        <a href="/connect-mentorship/questions.html">All Questions</a>
+        <a href="/connect-mentorship/mentor.html">Find Mentors</a>
+        <a href="/connect-mentorship/profile.html">My Profile</a>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<footer>
+  <p>© 2026 Connect Mentorship</p>
+</footer>
 
 <script type="module">
-
 import { auth, db } from "./auth.js";
+
 import {
-  doc, getDoc, collection, addDoc, query, where,
-  onSnapshot, serverTimestamp, orderBy,
-  updateDoc, increment, arrayUnion
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  onSnapshot,
+  serverTimestamp,
+  orderBy,
+  updateDoc,
+  increment,
+  arrayUnion
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import { onAuthStateChanged } 
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* SAFE ID */
 const qId = new URLSearchParams(window.location.search).get("id");
-
-if (!qId) {
-  document.getElementById("questionBox").innerHTML = "Invalid question link ❌";
-  throw new Error("No question ID");
-}
 
 const questionBox = document.getElementById("questionBox");
 const answersList = document.getElementById("answersList");
@@ -85,46 +121,75 @@ const btn = document.getElementById("answerBtn");
 let currentUserData = null;
 let replyListeners = {};
 
-/* SAFE HTML */
 function escapeHTML(str) {
-  return (str || "").replace(/[&<>"']/g, m => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",
-    '"':"&quot;","'":"&#039;"
+  return String(str || "").replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
   }[m]));
 }
 
-/* LOAD QUESTION */
+if (!qId) {
+  questionBox.innerHTML = `
+    <div class="empty-state-box">
+      <h2>Question link is missing ❌</h2>
+      <p>This page opens only when you select a question from the questions page.</p>
+      <a href="/connect-mentorship/questions.html" class="btn">Browse Questions</a>
+    </div>
+  `;
+} else {
+  loadQuestion();
+  loadAnswers();
+}
+
 async function loadQuestion() {
   const snap = await getDoc(doc(db, "questions", qId));
 
   if (!snap.exists()) {
-    questionBox.innerHTML = "Question not found ❌";
+    questionBox.innerHTML = `
+      <div class="empty-state-box">
+        <h2>Question not found ❌</h2>
+        <p>This question may have been removed or the link is wrong.</p>
+        <a href="/connect-mentorship/questions.html" class="btn">Browse Questions</a>
+      </div>
+    `;
     return;
   }
 
   const q = snap.data();
 
   questionBox.innerHTML = `
+    <span class="question-badge">${escapeHTML(q.category || "General")}</span>
     <h2>${escapeHTML(q.question)}</h2>
-    <p>${escapeHTML(q.name)}</p>
+    <div class="question-meta">
+      <span>Asked by ${escapeHTML(q.name || "Student")}</span>
+    </div>
   `;
 }
 
-/* LOAD ANSWERS */
 function loadAnswers() {
-
   const qRef = query(
     collection(db, "answers"),
-    where("questionId","==",qId),
-    orderBy("createdAt","desc")
+    where("questionId", "==", qId),
+    orderBy("createdAt", "desc")
   );
 
   onSnapshot(qRef, snap => {
+    answersList.innerHTML = "";
 
-    answersList.innerHTML = "<h3>Answers</h3>";
+    if (snap.empty) {
+      answersList.innerHTML = `
+        <div class="thread-card empty-state-box">
+          <h3>No answers yet</h3>
+          <p>Verified mentors can answer this question soon.</p>
+        </div>
+      `;
+      return;
+    }
 
     snap.forEach(docSnap => {
-
       const d = docSnap.data();
       const id = docSnap.id;
 
@@ -132,65 +197,95 @@ function loadAnswers() {
       const voted = upvotedBy.includes(auth.currentUser?.uid);
 
       const div = document.createElement("div");
-      div.className = "card answer";
+      div.className = "thread-card answer-card";
 
       div.innerHTML = `
-        <p>${escapeHTML(d.text)}</p>
-        <small>${escapeHTML(d.name)}</small><br><br>
+        <div class="mentor-line">
+          <div class="avatar">${escapeHTML((d.name || "M").charAt(0).toUpperCase())}</div>
+          <div>
+            <strong>${escapeHTML(d.name || "Mentor")}</strong>
+            <span>Mentor answer</span>
+          </div>
+        </div>
 
-        <button onclick="upvote('${id}')"
-          style="opacity:${voted ? 0.5 : 1}; pointer-events:${voted ? 'none' : 'auto'};">
-          👍 ${d.votes || 0}
-        </button>
+        <p class="answer-text">${escapeHTML(d.text)}</p>
 
-        <button id="btn-${id}" onclick="toggleReplies('${id}')">
-          View Replies
-        </button>
+        <div class="answer-actions">
+          <button onclick="upvote('${id}')" ${voted ? "disabled" : ""}>
+            👍 ${d.votes || 0}
+          </button>
 
-        <div>
-          <textarea id="replyText-${id}" placeholder="Write reply..."></textarea>
+          <button id="btn-${id}" onclick="toggleReplies('${id}')">
+            💬 View Replies
+          </button>
+        </div>
+
+        <div class="reply-box">
+          <textarea id="replyText-${id}" placeholder="Write a reply..."></textarea>
           <button onclick="submitReply('${id}')">Reply</button>
         </div>
 
-        <div id="replies-${id}" style="display:none;"></div>
+        <div class="replies-list" id="replies-${id}" style="display:none;"></div>
       `;
 
       answersList.appendChild(div);
     });
-
   });
 }
 
-/* SUBMIT ANSWER */
 btn.onclick = async () => {
   const text = document.getElementById("answerText").value.trim();
-  if (!text) return msg.innerText="Write something ❌";
+
+  if (!text) {
+    msg.innerText = "Write something first ❌";
+    msg.style.color = "#ef4444";
+    return;
+  }
 
   const user = auth.currentUser;
 
-  await addDoc(collection(db,"answers"),{
+  if (!user) {
+    msg.innerText = "Login required ❌";
+    msg.style.color = "#ef4444";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Submitting...";
+
+  await addDoc(collection(db, "answers"), {
     text,
-    questionId:qId,
-    userId:user.uid,
+    questionId: qId,
+    userId: user.uid,
     name: currentUserData?.name || user.email,
-    createdAt:serverTimestamp(),
+    createdAt: serverTimestamp(),
     votes: 0,
     upvotedBy: []
   });
 
-  msg.innerText="Answer added ✅";
-  document.getElementById("answerText").value="";
+  msg.innerText = "Answer added ✅";
+  msg.style.color = "#22c55e";
+  document.getElementById("answerText").value = "";
+
+  btn.disabled = false;
+  btn.innerText = "Submit Answer";
 };
 
-/* UPVOTE */
 window.upvote = async function(answerId) {
   const user = auth.currentUser;
-  if (!user) return alert("Login required ❌");
+
+  if (!user) {
+    alert("Login required ❌");
+    return;
+  }
 
   const ref = doc(db, "answers", answerId);
   const snap = await getDoc(ref);
 
+  if (!snap.exists()) return;
+
   const data = snap.data();
+
   if ((data.upvotedBy || []).includes(user.uid)) return;
 
   await updateDoc(ref, {
@@ -199,9 +294,7 @@ window.upvote = async function(answerId) {
   });
 };
 
-/* TOGGLE REPLIES */
-window.toggleReplies = function(answerId){
-
+window.toggleReplies = function(answerId) {
   const box = document.getElementById(`replies-${answerId}`);
   const btn = document.getElementById(`btn-${answerId}`);
 
@@ -210,12 +303,13 @@ window.toggleReplies = function(answerId){
   if (isOpen) {
     box.style.display = "none";
     box.dataset.open = "false";
-    btn.innerText = "View Replies";
+    btn.innerText = "💬 View Replies";
 
     if (replyListeners[answerId]) {
       replyListeners[answerId]();
       delete replyListeners[answerId];
     }
+
     return;
   }
 
@@ -224,18 +318,27 @@ window.toggleReplies = function(answerId){
   btn.innerText = "Hide Replies";
 
   const ref = query(
-    collection(db,"replies"),
-    where("answerId","==",answerId),
-    orderBy("createdAt","asc")
+    collection(db, "replies"),
+    where("answerId", "==", answerId),
+    orderBy("createdAt", "asc")
   );
 
   const unsubscribe = onSnapshot(ref, snap => {
     box.innerHTML = "";
-    snap.forEach(docSnap=>{
+
+    if (snap.empty) {
+      box.innerHTML = `<p class="muted">No replies yet.</p>`;
+      return;
+    }
+
+    snap.forEach(docSnap => {
       const d = docSnap.data();
+
       box.innerHTML += `
-        <p>💬 ${escapeHTML(d.text)}<br>
-        <small>${escapeHTML(d.name)}</small></p>
+        <div class="reply-item">
+          <strong>${escapeHTML(d.name || "User")}</strong>
+          <p>${escapeHTML(d.text)}</p>
+        </div>
       `;
     });
   });
@@ -243,50 +346,55 @@ window.toggleReplies = function(answerId){
   replyListeners[answerId] = unsubscribe;
 };
 
-/* SUBMIT REPLY */
-window.submitReply = async function(answerId){
-
+window.submitReply = async function(answerId) {
   const user = auth.currentUser;
-  if (!user) return alert("Login required ❌");
+
+  if (!user) {
+    alert("Login required ❌");
+    return;
+  }
 
   const el = document.getElementById(`replyText-${answerId}`);
   const text = el.value.trim();
 
-  if (!text) return alert("Write reply ❌");
+  if (!text) {
+    alert("Write reply ❌");
+    return;
+  }
 
-  await addDoc(collection(db,"replies"),{
+  await addDoc(collection(db, "replies"), {
     text,
     answerId,
-    userId:user.uid,
+    userId: user.uid,
     name: currentUserData?.name || user.email,
-    createdAt:serverTimestamp()
+    createdAt: serverTimestamp()
   });
 
-  el.value="";
+  el.value = "";
 };
 
-/* AUTH */
-onAuthStateChanged(auth, async user=>{
-  if(!user) return;
+onAuthStateChanged(auth, async user => {
+  if (!user) return;
 
-  const snap = await getDoc(doc(db,"users",user.uid));
+  const snap = await getDoc(doc(db, "users", user.uid));
 
-  if(snap.exists()){
+  if (snap.exists()) {
     currentUserData = snap.data();
 
-    if(currentUserData.role==="mentor" && currentUserData.verified){
-      answerBox.style.display="block";
+    if (currentUserData.role === "mentor" && currentUserData.verified === true) {
+      answerBox.style.display = "block";
     }
   }
 });
-
-/* INIT */
-loadQuestion();
-loadAnswers();
-
 </script>
 
 <script type="module" src="auth.js"></script>
+
+<script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
 
 </body>
 </html>
