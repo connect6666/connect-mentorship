@@ -895,3 +895,20 @@ li {
     grid-template-columns: 1fr;
   }
 }
+
+/* Center Explore Platform list */
+#explore ul,
+.explore ul {
+  list-style-position: inside;
+  text-align: center;
+  padding-left: 0;
+  margin: 25px auto 0;
+  width: fit-content;
+}
+
+#explore li,
+.explore li {
+  text-align: left;
+  margin: 14px 0;
+  font-size: 18px;
+}
