@@ -27,7 +27,7 @@
     <div class="nav-links">
      <a href="/connect-mentorship/">Home</a>
       <a href="/connect-mentorship/questions.html">Questions</a>
-      <a href="/connect-mentorship/view-question.html">View Answer</a>
+     
       <a href="/connect-mentorship/ask.html">Ask Question</a>
       <a href="/connect-mentorship/mentor.html">Become Mentor</a>
       <a href="/connect-mentorship/about.html">About</a>
@@ -91,7 +91,15 @@ const profile = document.getElementById("profile");
 
 /* ❌ INVALID ID */
 if (!id || id.length < 10) {
-  profile.innerHTML = "Invalid mentor link ❌";
+  profile.innerHTML = `
+  <div class="empty-state">
+    <h2>Invalid mentor link ❌</h2>
+    <p>This profile does not exist or the link is incorrect.</p>
+    <a href="/connect-mentorship/mentor.html" class="btn">
+      Browse Mentors
+    </a>
+  </div>
+`;
 } else {
 
   try {
@@ -114,13 +122,16 @@ if (!id || id.length < 10) {
           .replace(/>/g, "&gt;");
 
         profile.innerHTML = `
-  <img src="https://ui-avatars.com/api/?name=${safeName}" class="profile-img">
+  <div class="mentor-header">
 
-  <h2>${safeName}</h2>
+    <img src="${data.photoURL || `https://ui-avatars.com/api/?name=${safeName}&background=6366f1&color=fff&size=200`}" class="profile-img">
 
-  <p style="color: gray;">Verified Mentor</p>
+    <div class="mentor-info">
+      <h2>${safeName}</h2>
+      <span class="verified-badge">✔ Verified Mentor</span>
+    </div>
 
-  <div class="badge">Verified Mentor ✅</div>
+  </div>
 
   <p style="margin-top:15px;">
     Experience: ${
@@ -164,13 +175,14 @@ window.startChat = function(id) {
 
 <script type="module" src="auth.js"></script>
 
-  <script type="application/ld+json">
+ <script type="application/ld+json">
 {
  "@context": "https://schema.org",
  "@type": "Person",
- "name": "Mentor Profile",
+ "name": "${safeName}",
  "jobTitle": "Student Mentor",
- "description": "Provides career guidance and mentorship for students"
+ "description": "Verified mentor providing career guidance",
+ "url": window.location.href
 }
 </script>
 
