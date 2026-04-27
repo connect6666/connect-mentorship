@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
+  <!-- Homepage -->
   <url>
     <loc>https://connect6666.github.io/connect-mentorship/</loc>
     <lastmod>2026-04-27</lastmod>
@@ -8,6 +9,7 @@
     <priority>1.0</priority>
   </url>
 
+  <!-- Questions Listing Page -->
   <url>
     <loc>https://connect6666.github.io/connect-mentorship/questions.html</loc>
     <lastmod>2026-04-27</lastmod>
@@ -15,13 +17,7 @@
     <priority>0.95</priority>
   </url>
 
-  <url>
-    <loc>https://connect6666.github.io/connect-mentorship/view-question.html</loc>
-    <lastmod>2026-04-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-
+  <!-- Ask Question Page -->
   <url>
     <loc>https://connect6666.github.io/connect-mentorship/ask.html</loc>
     <lastmod>2026-04-27</lastmod>
@@ -29,13 +25,23 @@
     <priority>0.85</priority>
   </url>
 
+  <!-- Become Mentor -->
   <url>
     <loc>https://connect6666.github.io/connect-mentorship/mentor.html</loc>
     <lastmod>2026-04-27</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.75</priority>
+    <priority>0.8</priority>
   </url>
 
+  <!-- Profile (Optional but fine) -->
+  <url>
+    <loc>https://connect6666.github.io/connect-mentorship/profile.html</loc>
+    <lastmod>2026-04-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- About -->
   <url>
     <loc>https://connect6666.github.io/connect-mentorship/about.html</loc>
     <lastmod>2026-04-27</lastmod>
@@ -43,6 +49,7 @@
     <priority>0.6</priority>
   </url>
 
+  <!-- Contact -->
   <url>
     <loc>https://connect6666.github.io/connect-mentorship/contact.html</loc>
     <lastmod>2026-04-27</lastmod>
