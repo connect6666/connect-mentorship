@@ -606,3 +606,46 @@ html {
 .page-section .container {
   text-align: center;
 }
+
+
+.explore-section {
+  text-align: center;
+}
+
+.explore-list {
+  list-style: none;        /* remove bullets */
+  padding: 0;
+  margin-top: 24px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;     /* THIS centers items */
+  gap: 12px;
+}
+
+.explore-list li {
+  text-align: center;
+}
+
+.explore-list a {
+  display: inline-block;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 10px 18px;
+  border-radius: 999px;
+  color: #cbd5e1;
+  font-weight: 700;
+  transition: 0.25s ease;
+}
+
+.explore-list a:hover {
+  background: rgba(99,102,241,0.2);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.explore-list {
+  flex-direction: row;
+  justify-content: center;
+  flex-wrap: wrap;
+}
