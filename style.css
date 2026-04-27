@@ -589,3 +589,20 @@ html {
 ::selection {
   background: rgba(99,102,241,0.35);
 }
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 28px;
+  width: 100%;
+}
+
+.center .btn {
+  min-width: 220px;
+  text-align: center;
+}
+
+.page-section .container {
+  text-align: center;
+}
