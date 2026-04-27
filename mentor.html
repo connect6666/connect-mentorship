@@ -1,154 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <title>Find Mentors or Become a Mentor | Student Mentorship India</title>
   <meta name="description" content="Find experienced student mentors in India or become a mentor. Help students with career guidance, exams, and skills.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/mentor.html">
 
-<meta name="robots" content="index, follow">
+  <link rel="stylesheet" href="style.css">
 
-<title>Find Mentors or Become a Mentor | Student Mentorship India</title>
+  <style>
+    .mentor-container {
+      max-width: 1100px;
+      margin: 40px auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px,1fr));
+      gap: 20px;
+    }
 
-<link rel="canonical" href="https://connect6666.github.io/connect-mentorship/mentor.html">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    .mentor-card {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      transition: 0.3s;
+    }
 
-<link rel="stylesheet" href="style.css">
+    .mentor-card:hover {
+      transform: translateY(-5px);
+    }
 
-<style>
-.mentor-container {
-  max-width: 1100px;
-  margin: 40px auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px,1fr));
-  gap: 20px;
-}
+    .mentor-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+    }
 
-.mentor-card {
-  background: white;
-  border-radius: 14px;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-  transition: 0.3s;
-}
+    .mentor-info {
+      padding: 15px;
+    }
 
-.mentor-card:hover {
-  transform: translateY(-5px);
-}
+    .badge {
+      background: #16a34a;
+      color: white;
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
 
-.mentor-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-}
+    .empty-state {
+      text-align: center;
+      color: gray;
+      margin-top: 30px;
+    }
 
-.mentor-info {
-  padding: 15px;
-}
-
-.badge {
-  background: #16a34a;
-  color: white;
-  font-size: 12px;
-  padding: 5px 10px;
-  border-radius: 20px;
-  display: inline-block;
-  margin-bottom: 8px;
-}
-
-.page-section {
-  margin-top: 40px;
-}
-
-.empty-state {
-  text-align: center;
-  color: gray;
-  margin-top: 30px;
-}
-</style>
-
+    .content-section {
+      padding: 60px 0;
+    }
+  </style>
 </head>
 
 <body>
 
 <nav>
   <div class="container">
-   <div class="logo">
-  <a href="/connect-mentorship/">Connect</a>
-</div>
-  </div>
-</nav>
-  <section class="container">
-  <h1>Find Mentors or Become a Mentor</h1>
-
-   <p>
-You can <a href="/connect-mentorship/ask.html">ask questions</a> or 
-<a href="/connect-mentorship/questions.html">browse student questions</a> to learn from others.
-</p>
-
-  <p>
-    Connect with experienced students who can guide you through exams, college life, and career decisions. You can browse mentors or apply to become a mentor and help other students with your knowledge.
-  </p>
-
-  <p>
-    Our mentorship platform is built for students in India who want real guidance from people who have already experienced similar challenges.
-  </p>
-</section>
-
-  </section>
-  <h2>Why Become a Mentor?</h2>
-       <p>
-Mentorship helps students avoid common mistakes and make informed decisions. 
-On Connect, mentors share real-life experiences related to exams, college life, and career paths.
-</p>
-
-  <p>
-    Becoming a mentor allows you to help students who are confused about their future. You can share your real experiences and guide juniors in making better academic and career decisions.
-  </p>
-
-  <p>
-    It also helps you build your profile, gain experience, and contribute to the student community.
-  </p>
-</section>
-
-
-  
-  <h2>Browse Mentors</h2>
-<!-- 🔥 BROWSE MENTORS -->
-<section class="page-section">
-  <div class="container">
-
-    <div class="content-block">
-      <!-- Why mentor content -->
+    <div class="logo">
+      <a href="/connect-mentorship/" style="color:white;text-decoration:none;">Connect</a>
     </div>
 
-    
-    <div class="mentor-container" id="mentorList"></div>
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
-    <p id="emptyState" class="empty-state"></p>
-
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="ask.html">Ask Question</a>
+      <a href="questions.html">Questions</a>
+      <a href="mentor.html">Mentors</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <span id="userArea"></span>
+    </div>
   </div>
+</nav>
 
-  
-    <div class="mentor-container" id="mentorList"></div>
-
-   
-    <p id="emptyState" class="empty-state"></p>
-  </div>
-</section>
-
- <section class="container">
-  <h2>Apply to Become a Mentor</h2>
-  <p>
-Share your experience and help students make better career decisions. 
-Your guidance can help others avoid confusion and choose the right path.
-</p>
-</section>
-  
-
-<!-- 👇 APPLY -->
-<section class="page-section">
+<section class="content-section">
   <div class="container">
-    <h2>Become a Mentor</h2>
+    <h1 style="text-align:center;">Find Mentors or Become a Mentor</h1>
+
+    <p class="center-text">
+      Connect with experienced students who can guide you through exams, college life,
+      skills, and career decisions. Browse verified mentors or apply to help juniors.
+    </p>
+  </div>
+</section>
+
+<section class="light-bg content-section">
+  <div class="container">
+    <h2>Browse Verified Mentors</h2>
+
+    <div class="mentor-container" id="mentorList"></div>
+
+    <p id="emptyState" class="empty-state"></p>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="container">
+    <h2>Why Become a Mentor?</h2>
+
+    <p class="center-text">
+      Share your real experience, help students avoid common mistakes, and build your
+      own trusted mentor profile on Connect.
+    </p>
+  </div>
+</section>
+
+<section class="light-bg content-section">
+  <div class="container">
+    <h2>Apply to Become a Mentor</h2>
 
     <form id="mentorForm" class="question-form">
       <input type="text" id="mentorName" placeholder="Your Name" required>
@@ -159,35 +131,47 @@ Your guidance can help others avoid confusion and choose the right path.
         <option value="">Select Level</option>
         <option>College Student</option>
         <option>Graduate</option>
+        <option>Working Professional</option>
       </select>
 
-      <p style="text-align:center; font-size:12px; color:gray;">
-Mentors are independent individuals. Connect does not guarantee results or outcomes.
-</p>
+      <textarea id="mentorReason" placeholder="Why do you want to mentor students?" required></textarea>
 
-      <textarea id="mentorReason" placeholder="Why mentor?" required></textarea>
+      <label style="font-size:12px;display:block;margin-top:10px;">
+        <input type="checkbox" id="agree" required>
+        I agree to help students honestly and follow mentor guidelines.
+      </label>
 
-      <label style="font-size:12px;">
-  <input type="checkbox" id="agree" required>
-  I agree to help students honestly and follow mentor guidelines.
-</label>
+      <p style="text-align:center;font-size:12px;color:gray;margin-top:10px;">
+        Mentors are independent individuals. Connect does not guarantee results or outcomes.
+      </p>
 
       <button type="submit" class="btn">Apply</button>
       <p id="mentorMessage"></p>
     </form>
   </div>
 </section>
-  <section class="container">
-  <h2>Frequently Asked Questions</h2>
 
-  <h3>Who can become a mentor?</h3>
-  <p>Any student or graduate with experience in exams, college, or skills can apply.</p>
+<section class="content-section">
+  <div class="container">
+    <h2>Frequently Asked Questions</h2>
 
-  <h3>Is mentorship free?</h3>
-  <p>Yes, Connect focuses on free and honest guidance from students.</p>
+    <div class="steps">
+      <div class="step-card">
+        <h3>Who can become a mentor?</h3>
+        <p>Any student, graduate, or experienced person who can guide juniors honestly.</p>
+      </div>
 
-  <h3>How are mentors verified?</h3>
-  <p>Mentors are reviewed before being marked as verified on the platform.</p>
+      <div class="step-card">
+        <h3>Is mentorship free?</h3>
+        <p>Currently, Connect focuses on free and honest student guidance.</p>
+      </div>
+
+      <div class="step-card">
+        <h3>How are mentors verified?</h3>
+        <p>Mentor applications are reviewed before they appear as verified mentors.</p>
+      </div>
+    </div>
+  </div>
 </section>
 
 <footer>
@@ -195,15 +179,13 @@ Mentors are independent individuals. Connect does not guarantee results or outco
 </footer>
 
 <script type="module">
-
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
   collection,
+  addDoc,
   onSnapshot,
-  doc,
-  setDoc,
   query,
   where
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -213,159 +195,154 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-/* 🔐 CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship"
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-/* =========================
-   AUTH
-========================= */
 let currentUser = null;
 
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
 });
 
-/* =========================
-   APPLY FORM (FIXED)
-========================= */
+function escapeHTML(text) {
+  return String(text || "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
+}
+
 const form = document.getElementById("mentorForm");
 const msg = document.getElementById("mentorMessage");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const name = document.getElementById("mentorName").value.trim();
-  const email = document.getElementById("mentorEmail").value.trim();
-  const experience = document.getElementById("mentorExperience").value;
-  const agree = document.getElementById("agree").checked;
-
-if (!agree) {
-  msg.innerText = "Please accept guidelines ❌";
-  msg.style.color = "red";
-  btn.disabled = false;
-  btn.innerText = "Apply";
-  return;
-}
-  const reason = document.getElementById("mentorReason").value.trim();
-
   const btn = form.querySelector("button");
 
-  btn.disabled = true;
-  btn.innerText = "Submitting...";
+  const name = document.getElementById("mentorName").value.trim();
+  const email = document.getElementById("mentorEmail").value.trim();
+  const experience = Number(document.getElementById("mentorExperience").value);
+  const level = document.getElementById("mentorLevel").value;
+  const reason = document.getElementById("mentorReason").value.trim();
+  const agree = document.getElementById("agree").checked;
 
-  // ✅ VALIDATION
-  if (!name || name.length < 2) {
-    return error("Enter valid name");
-  }
-
-  if (!email.includes("@") || !email.includes(".")) {
-    return error("Invalid email");
-  }
-
-  if (experience < 0 || experience > 50) {
-    return error("Experience must be between 0–50");
-  }
-
-  if (!currentUser) {
-    return error("Please login first");
-  }
-
-  try {
-    /* ✅ MERGE TRUE FIX (IMPORTANT) */
-    await setDoc(doc(db, "users", currentUser.uid), {
-      name,
-      email,
-      role: "mentor",
-      experience: Number(experience),
-      reason,
-      verified: false,
-      updatedAt: new Date()
-    }, { merge: true });
-
-    msg.innerText = "Application submitted ✅ Wait for approval";
-    msg.style.color = "green";
-
-    form.reset();
-
-    setTimeout(() => msg.innerText = "", 4000);
-
-  } catch (err) {
-    console.error(err);
-    error("Something went wrong");
-  }
-
-  resetBtn();
-
-  function error(text) {
+  function showError(text) {
     msg.innerText = "❌ " + text;
     msg.style.color = "red";
-    resetBtn();
-  }
-
-  function resetBtn() {
     btn.disabled = false;
     btn.innerText = "Apply";
   }
 
+  btn.disabled = true;
+  btn.innerText = "Submitting...";
+
+  if (!currentUser) {
+    showError("Please login before applying");
+    return;
+  }
+
+  if (!name || name.length < 2) {
+    showError("Enter valid name");
+    return;
+  }
+
+  if (!email.includes("@") || !email.includes(".")) {
+    showError("Enter valid email");
+    return;
+  }
+
+  if (!level) {
+    showError("Select your level");
+    return;
+  }
+
+  if (experience < 0 || experience > 50) {
+    showError("Experience must be between 0 and 50 years");
+    return;
+  }
+
+  if (!reason || reason.length < 10) {
+    showError("Write a better reason");
+    return;
+  }
+
+  if (!agree) {
+    showError("Please accept mentor guidelines");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "mentorApplications"), {
+      userId: currentUser.uid,
+      name,
+      email,
+      level,
+      experience,
+      reason,
+      status: "pending",
+      createdAt: new Date()
+    });
+
+    msg.innerText = "Application submitted ✅ Wait for admin approval";
+    msg.style.color = "green";
+    form.reset();
+
+  } catch (error) {
+    console.error(error);
+    showError("Something went wrong");
+  }
+
+  btn.disabled = false;
+  btn.innerText = "Apply";
 });
 
-/* =========================
-   LOAD MENTORS (SECURE QUERY)
-========================= */
-const container = document.getElementById("mentorList");
+const mentorList = document.getElementById("mentorList");
 const emptyState = document.getElementById("emptyState");
 
-/* 🔥 IMPORTANT FIX */
 const mentorQuery = query(
   collection(db, "users"),
   where("role", "==", "mentor"),
   where("verified", "==", true)
 );
 
-/* 🔄 REAL-TIME */
 onSnapshot(mentorQuery, (snap) => {
-
-  container.innerHTML = "";
+  mentorList.innerHTML = "";
 
   if (snap.empty) {
-    emptyState.innerText = "No verified mentors yet. You can apply to become the first mentor and help students with career guidance.";
+    emptyState.innerText = "No verified mentors yet. Apply to become the first mentor.";
     return;
   }
 
-  snap.forEach(docSnap => {
+  snap.forEach((docSnap) => {
     const data = docSnap.data();
 
-    const safeName = (data.name || "User")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+    const name = escapeHTML(data.name || "Mentor");
+    const experience = Number(data.experience || 0);
 
-    container.innerHTML += `
+    mentorList.innerHTML += `
       <div class="mentor-card">
-        <img src="https://ui-avatars.com/api/?name=${safeName}">
-        
+        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}" alt="${name}">
         <div class="mentor-info">
-
           <div class="badge">Verified Mentor</div>
-
-          <h3>${safeName}</h3>
-          <p>${data.experience || 0} years experience</p>
-
-          <button onclick="viewProfile('${docSnap.id}')">
-            View Profile
-          </button>
-
-          <p style="font-size:10px; color:gray;">
-            Verification confirms identity only.
+          <h3>${name}</h3>
+          <p>${experience} years experience</p>
+          <button onclick="viewProfile('${docSnap.id}')">View Profile</button>
+          <p style="font-size:10px;color:gray;margin-top:8px;">
+            Verification confirms mentor approval only.
           </p>
-
         </div>
       </div>
     `;
@@ -373,21 +350,23 @@ onSnapshot(mentorQuery, (snap) => {
 
   emptyState.innerText = "";
 
-}, (err) => {
-  console.error(err);
+}, (error) => {
+  console.error(error);
   emptyState.innerText = "Error loading mentors ❌";
 });
 
-/* =========================
-   PROFILE REDIRECT
-========================= */
 window.viewProfile = function(id) {
   window.location.href = "mentor-profile.html?id=" + id;
 };
-
 </script>
 
 <script type="module" src="auth.js"></script>
+
+<script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
 
 </body>
 </html>
