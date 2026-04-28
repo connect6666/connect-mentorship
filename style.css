@@ -939,3 +939,23 @@ section p {
   color: #475569 !important;
 }
 
+/* FIX FILTER BUTTON VISIBILITY */
+.filter-btn {
+  color: #1e293b !important; /* dark text */
+}
+
+.filter-btn:hover {
+  background: #2563eb !important;
+  color: #ffffff !important; /* white text */
+}
+
+.filter-btn.active {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff;
+}
+
+/* FIX DISABLED LOOKING BUTTONS */
+.filter-btn[data-category] {
+  opacity: 1 !important;
+}
