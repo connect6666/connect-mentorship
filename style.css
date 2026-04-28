@@ -1097,3 +1097,18 @@ input {
   margin-left: auto !important;
   margin-right: auto !important;
 }
+
+/* CENTER HERO BUTTONS PERFECTLY */
+.hero-buttons {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 16px !important;
+  flex-wrap: wrap !important;
+  text-align: center !important;
+}
+
+/* REMOVE EMPTY CHAT SPACE EFFECT */
+.hero-buttons .chat-section {
+  display: none !important;
+}
