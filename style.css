@@ -927,3 +927,15 @@ section p {
 }
 
 
+.question-title-link,
+.question-title-link:hover,
+.question-title-link:visited,
+.question-title-link:active {
+  color: #0f172a !important;
+  text-decoration: none;
+}
+
+.question-meta {
+  color: #475569 !important;
+}
+
