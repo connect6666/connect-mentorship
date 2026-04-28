@@ -997,3 +997,56 @@ input {
   color: black !important;
   border: 1px solid #ccc;
 }
+
+
+/* 🔥 FORCE FIX ADMIN BUTTON VISIBILITY */
+.btn-outline,
+button.btn-outline {
+  background: #ffffff !important;
+  border: 2px solid #4f46e5 !important;
+  color: #4f46e5 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 5px 15px rgba(79,70,229,0.2) !important;
+}
+
+/* HOVER */
+.btn-outline:hover {
+  background: #4f46e5 !important;
+  color: #ffffff !important;
+}
+
+/* FIX SMALL ROUND BUTTONS (TOP RIGHT) */
+.admin-header button,
+.admin-card button,
+button {
+  border: 2px solid #4f46e5 !important;
+  background: #ffffff !important;
+  color: #4f46e5 !important;
+}
+
+/* ACTIVE / PRIMARY BUTTON */
+.btn,
+button.primary {
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* FIX INPUT FIELD (SEARCH BAR LOOK) */
+input {
+  background: #ffffff !important;
+  color: #000 !important;
+  border: 1px solid #ccc !important;
+}
+
+/* FIX TAB BUTTONS (Questions / Mentor / Users etc) */
+.tabs button {
+  background: #e5e7eb !important;
+  color: #374151 !important;
+  border: none !important;
+}
+
+.tabs button.active {
+  background: #4f46e5 !important;
+  color: #fff !important;
+}
