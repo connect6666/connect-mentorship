@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback | Connect Mentorship</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">Connect</div>
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="ask.html">Ask Question</a>
+      <a href="questions.html">Questions</a>
+      <a href="mentor.html">Become Mentor</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <span id="userArea"></span>
+    </div>
+  </div>
+</nav>
+
+<section class="page-section">
+  <div class="container">
+    <h2>Share Your Feedback</h2>
+    <p class="center-text">
+      Tell us what is working, what is confusing, and what we should improve.
+    </p>
+
+    <form id="feedbackForm" class="question-form">
+      <input type="text" id="feedbackName" placeholder="Your Name (optional)">
+      <input type="email" id="feedbackEmail" placeholder="Email (optional)">
+
+      <select id="feedbackType" required>
+        <option value="">Select Feedback Type</option>
+        <option>Website Issue</option>
+        <option>Feature Request</option>
+        <option>Mentor Experience</option>
+        <option>Question/Answer Experience</option>
+        <option>Other</option>
+      </select>
+
+      <select id="rating" required>
+        <option value="">Rate your experience</option>
+        <option value="5">⭐⭐⭐⭐⭐ Excellent</option>
+        <option value="4">⭐⭐⭐⭐ Good</option>
+        <option value="3">⭐⭐⭐ Average</option>
+        <option value="2">⭐⭐ Poor</option>
+        <option value="1">⭐ Bad</option>
+      </select>
+
+      <textarea id="feedbackMessage" placeholder="Write your feedback..." required></textarea>
+
+      <button type="submit" class="btn">Submit Feedback</button>
+      <p id="feedbackMsg"></p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 Connect Mentorship</p>
+  <div style="margin-top:10px;">
+    <a href="privacy.html">Privacy</a> |
+    <a href="terms.html">Terms</a> |
+    <a href="cookie.html">Cookies</a> |
+    <a href="disclaimer.html">Disclaimer</a>
+  </div>
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const form = document.getElementById("feedbackForm");
+const feedbackMsg = document.getElementById("feedbackMsg");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById("feedbackName").value.trim();
+  const email = document.getElementById("feedbackEmail").value.trim();
+  const type = document.getElementById("feedbackType").value;
+  const rating = document.getElementById("rating").value;
+  const message = document.getElementById("feedbackMessage").value.trim();
+
+  if (!type || !rating || !message) {
+    feedbackMsg.innerText = "Please fill required fields ❌";
+    feedbackMsg.style.color = "red";
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "feedback"), {
+      name: name || "Anonymous",
+      email: email || "",
+      type,
+      rating: Number(rating),
+      message,
+      createdAt: new Date().toISOString()
+    });
+
+    feedbackMsg.innerText = "Thank you for your feedback ✅";
+    feedbackMsg.style.color = "green";
+    form.reset();
+
+  } catch (error) {
+    console.error(error);
+    feedbackMsg.innerText = "Error submitting feedback ❌";
+    feedbackMsg.style.color = "red";
+  }
+});
+</script>
+
+<script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+<script type="module" src="auth.js"></script>
+
+</body>
+</html>
