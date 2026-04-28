@@ -9,7 +9,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Verified Mentor Profile | Student Career Guidance</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -63,46 +62,22 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   doc,
-  getDoc,
-  updateDoc
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-import {
-  getAuth,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
-
-/* 🔐 CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
-  projectId: "connect-mentorship",
-  storageBucket: "connect-mentorship.firebasestorage.app"
+  projectId: "connect-mentorship"
 };
 
-/* ✅ Prevent duplicate Firebase init */
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
 
-/* =========================
-   GET ID FROM URL
-========================= */
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
 const profile = document.getElementById("profile");
-
-let currentUser = null;
-let mentorData = null;
 
 function escapeHTML(str) {
   return String(str || "").replace(/[&<>"']/g, (m) => ({
@@ -119,76 +94,12 @@ function showError(title, text) {
     <div class="empty-state">
       <h2>${escapeHTML(title)}</h2>
       <p>${escapeHTML(text)}</p>
-      <a href="/connect-mentorship/mentor.html" class="btn">
-        Browse Mentors
-      </a>
+      <a href="/connect-mentorship/mentor.html" class="btn">Browse Mentors</a>
     </div>
   `;
 }
 
-function renderProfile(data) {
-  const safeName = escapeHTML(data.name || "User");
-
-  const photoURL = data.photoURL ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=6366f1&color=fff&size=200`;
-
-  const isOwner = currentUser && currentUser.uid === id;
-
-  profile.innerHTML = `
-    <div class="mentor-header">
-
-      <div class="avatar-wrapper">
-        <img src="${photoURL}" class="profile-img" alt="${safeName}">
-
-        ${
-          isOwner
-            ? `
-              <input type="file" id="uploadDP" accept="image/*" hidden>
-
-              <button class="change-dp-btn" onclick="document.getElementById('uploadDP').click()">
-                Change Photo
-              </button>
-            `
-            : ``
-        }
-      </div>
-
-      <div class="mentor-info">
-        <h2>${safeName}</h2>
-        <span class="verified-badge">✔ Verified Mentor</span>
-        <p class="mentor-skill">Career Guidance • College Advice • Skill Development</p>
-      </div>
-
-    </div>
-
-    <p style="margin-top:15px;">
-      Experience: ${
-        data.experience
-          ? data.experience >= 5
-            ? escapeHTML(data.experience) + "+ years"
-            : escapeHTML(data.experience) + " years"
-          : "Not added"
-      }
-    </p>
-
-    <p>
-      This mentor provides guidance related to career choices, college decisions,
-      and skill development based on real experience.
-    </p>
-
-    <button class="chat-btn btn" onclick="startChat('${id}')">
-      💬 Chat with Mentor
-    </button>
-
-    <p style="font-size:10px; color:gray; margin-top:15px;">
-      Verification confirms identity only. Connect does not guarantee results or outcomes.
-    </p>
-  `;
-
-  addPersonSchema(data.name || "User");
-}
-
-function addPersonSchema(name) {
+function addPersonSchema(name, bio) {
   document.querySelectorAll('script[data-dynamic-schema="mentor"]').forEach(el => el.remove());
 
   const schema = {
@@ -196,7 +107,7 @@ function addPersonSchema(name) {
     "@type": "Person",
     "name": name,
     "jobTitle": "Student Mentor",
-    "description": "Verified mentor providing career guidance and mentorship for students.",
+    "description": bio,
     "url": window.location.href
   };
 
@@ -209,10 +120,7 @@ function addPersonSchema(name) {
 
 async function loadMentorProfile() {
   if (!id || id.length < 10) {
-    showError(
-      "Invalid mentor link ❌",
-      "This profile does not exist or the link is incorrect."
-    );
+    showError("Invalid mentor link ❌", "This profile does not exist or the link is incorrect.");
     return;
   }
 
@@ -220,90 +128,89 @@ async function loadMentorProfile() {
     const snap = await getDoc(doc(db, "users", id));
 
     if (!snap.exists()) {
-      showError(
-        "Mentor not found ❌",
-        "This mentor profile may not exist or was removed."
-      );
+      showError("Mentor not found ❌", "This mentor profile may not exist or was removed.");
       return;
     }
 
     const data = snap.data();
 
     if (data.role !== "mentor" || data.verified !== true) {
-      showError(
-        "Mentor not available ❌",
-        "This mentor is not verified or available right now."
-      );
+      showError("Mentor not available ❌", "This mentor is not verified or available right now.");
       return;
     }
 
-    mentorData = data;
-    renderProfile(mentorData);
+    const safeName = escapeHTML(data.name || "Mentor");
+    const experience = Number(data.experience || 0);
+    const rating = Number(data.rating || 4.5);
+    const bio = escapeHTML(data.bio || "This mentor helps students with career decisions, college guidance, exams, and skill development.");
+    const skills = Array.isArray(data.skills) && data.skills.length
+      ? data.skills.slice(0, 6).map(skill => escapeHTML(skill))
+      : ["Career Guidance", "College Advice", "Skill Development"];
+
+    const photoURL = data.photoURL ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Mentor")}&background=6366f1&color=fff&size=200`;
+
+    profile.innerHTML = `
+      <div class="mentor-header">
+        <div class="avatar-wrapper">
+          <img src="${photoURL}" class="profile-img" alt="${safeName}">
+        </div>
+
+        <div class="mentor-info">
+          <h2>${safeName}</h2>
+          <span class="verified-badge">✔ Verified Mentor</span>
+          <p class="mentor-skill">⭐ ${rating.toFixed(1)} Rating • ${experience} yrs experience</p>
+        </div>
+      </div>
+
+      <div style="margin-top:22px;">
+        <h3>About Mentor</h3>
+        <p>${bio}</p>
+      </div>
+
+      <div style="margin-top:22px;">
+        <h3>Skills & Guidance Areas</h3>
+        <div style="margin-top:12px;">
+          ${skills.map(skill => `
+            <span style="
+              display:inline-block;
+              margin:5px;
+              padding:7px 13px;
+              border-radius:999px;
+              background:rgba(99,102,241,0.2);
+              border:1px solid rgba(165,180,252,0.22);
+              color:#c7d2fe;
+              font-size:13px;
+              font-weight:700;
+            ">${skill}</span>
+          `).join("")}
+        </div>
+      </div>
+
+      <div style="margin-top:22px;">
+        <h3>Experience</h3>
+        <p>${experience ? experience + (experience >= 5 ? "+ years" : " years") : "Not added"}</p>
+      </div>
+
+      <button class="chat-btn btn" onclick="startChat('${id}')" style="margin-top:20px;">
+        💬 Chat with Mentor
+      </button>
+
+      <p style="font-size:10px; color:gray; margin-top:15px;">
+        Verification confirms identity only. Connect does not guarantee results or outcomes.
+      </p>
+    `;
+
+    addPersonSchema(data.name || "Mentor", data.bio || "Verified mentor providing career guidance and mentorship for students.");
 
   } catch (error) {
     console.error("Error:", error);
-    showError(
-      "Error loading profile ❌",
-      "Something went wrong while loading this mentor profile."
-    );
+    showError("Error loading profile ❌", "Something went wrong while loading this mentor profile.");
   }
 }
 
-/* =========================
-   AUTH CHECK
-========================= */
-onAuthStateChanged(auth, async (user) => {
-  currentUser = user || null;
-  await loadMentorProfile();
-});
+loadMentorProfile();
 
-/* =========================
-   CHANGE PROFILE PHOTO
-========================= */
-document.addEventListener("change", async (e) => {
-  if (e.target.id !== "uploadDP") return;
-
-  if (!currentUser || currentUser.uid !== id) {
-    alert("You are not allowed to change this profile photo ❌");
-    return;
-  }
-
-  const file = e.target.files[0];
-  if (!file) return;
-
-  if (!file.type.startsWith("image/")) {
-    alert("Please upload an image file ❌");
-    return;
-  }
-
-  if (file.size > 2 * 1024 * 1024) {
-    alert("Image must be under 2MB ❌");
-    return;
-  }
-
-  try {
-    const storageRef = ref(storage, `profileImages/${id}`);
-
-    await uploadBytes(storageRef, file);
-
-    const url = await getDownloadURL(storageRef);
-
-    await updateDoc(doc(db, "users", id), {
-      photoURL: url
-    });
-
-    alert("Profile photo updated ✅");
-    location.reload();
-
-  } catch (error) {
-    console.error(error);
-    alert("Photo upload failed ❌");
-  }
-});
-
-/* =========================
-   CHAT BUTTON
-========================= */
 window.startChat = function(id) {
   alert("Chat feature coming soon 🚀");
 };
