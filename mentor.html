@@ -10,8 +10,6 @@
   <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/mentor.html">
 
   <link rel="stylesheet" href="style.css">
-
- 
 </head>
 
 <body>
@@ -25,14 +23,12 @@
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
-     <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/">Home</a>
       <a href="/connect-mentorship/questions.html">Questions</a>
-      <a href="/connect-mentorship/view-question.html">View Answer</a>
       <a href="/connect-mentorship/ask.html">Ask Question</a>
       <a href="/connect-mentorship/mentor.html">Become Mentor</a>
       <a href="/connect-mentorship/about.html">About</a>
       <a href="/connect-mentorship/contact.html">Contact</a>
-      
       <span id="userArea"></span>
     </div>
   </div>
@@ -41,7 +37,6 @@
 <section class="content-section">
   <div class="container">
     <h1 style="text-align:center;">Find Mentors or Become a Mentor</h1>
-
     <p class="center-text">
       Connect with experienced students who can guide you through exams, college life,
       skills, and career decisions. Browse verified mentors or apply to help juniors.
@@ -52,9 +47,7 @@
 <section class="light-bg content-section">
   <div class="container">
     <h2>Browse Verified Mentors</h2>
-
     <div class="mentor-container" id="mentorList"></div>
-
     <p id="emptyState" class="empty-state"></p>
   </div>
 </section>
@@ -62,7 +55,6 @@
 <section class="content-section">
   <div class="container">
     <h2>Why Become a Mentor?</h2>
-
     <p class="center-text">
       Share your real experience, help students avoid common mistakes, and build your
       own trusted mentor profile on Connect.
@@ -176,6 +168,17 @@ function escapeHTML(text) {
   }[m]));
 }
 
+function safeSkills(skills) {
+  if (!Array.isArray(skills) || skills.length === 0) {
+    return ["Career", "Guidance"];
+  }
+
+  return skills
+    .filter(Boolean)
+    .map(skill => escapeHTML(skill))
+    .slice(0, 3);
+}
+
 const form = document.getElementById("mentorForm");
 const msg = document.getElementById("mentorMessage");
 
@@ -283,15 +286,50 @@ onSnapshot(mentorQuery, (snap) => {
 
     const name = escapeHTML(data.name || "Mentor");
     const experience = Number(data.experience || 0);
+    const rating = Number(data.rating || 4.5);
+    const bio = escapeHTML(data.bio || "Helping students make better career and academic decisions.");
+    const skills = safeSkills(data.skills);
+
+    const photoURL = data.photoURL ||
+      `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Mentor")}&background=6366f1&color=fff&size=200`;
 
     mentorList.innerHTML += `
       <div class="mentor-card">
-        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(name)}" alt="${name}">
+        <img src="${photoURL}" alt="${name}">
+
         <div class="mentor-info">
           <div class="badge">Verified Mentor</div>
+
           <h3>${name}</h3>
-          <p>${experience} years experience</p>
-          <button onclick="viewProfile('${docSnap.id}')">View Profile</button>
+
+          <p style="font-size:13px;color:#94a3b8;margin-bottom:8px;">
+            ⭐ ${rating.toFixed(1)} • ${experience} yrs exp
+          </p>
+
+          <p style="font-size:13px;margin:8px 0;color:#cbd5e1;">
+            ${bio.length > 72 ? bio.slice(0, 72) + "..." : bio}
+          </p>
+
+          <div style="margin:12px 0;">
+            ${skills.map(s => `
+              <span style="
+                background: rgba(99,102,241,0.2);
+                border: 1px solid rgba(165,180,252,0.22);
+                padding:4px 10px;
+                border-radius:999px;
+                font-size:11px;
+                margin-right:5px;
+                display:inline-block;
+                margin-bottom:5px;
+                color:#c7d2fe;
+              ">${s}</span>
+            `).join("")}
+          </div>
+
+          <button onclick="viewProfile('${docSnap.id}')" class="btn">
+            View Profile
+          </button>
+
           <p style="font-size:10px;color:gray;margin-top:8px;">
             Verification confirms mentor approval only.
           </p>
