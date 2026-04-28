@@ -62,8 +62,14 @@ from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   doc,
-  getDoc
+  getDoc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -73,11 +79,15 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
 const profile = document.getElementById("profile");
+
+let currentUser = null;
+let mentorData = null;
 
 function escapeHTML(str) {
   return String(str || "").replace(/[&<>"']/g, (m) => ({
@@ -99,6 +109,17 @@ function showError(title, text) {
   `;
 }
 
+function getCleanSkills(skills) {
+  if (Array.isArray(skills) && skills.length) {
+    return skills
+      .map(skill => String(skill).trim())
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+
+  return ["Career Guidance", "College Advice", "Skill Development"];
+}
+
 function addPersonSchema(name, bio) {
   document.querySelectorAll('script[data-dynamic-schema="mentor"]').forEach(el => el.remove());
 
@@ -116,6 +137,234 @@ function addPersonSchema(name, bio) {
   schemaScript.dataset.dynamicSchema = "mentor";
   schemaScript.textContent = JSON.stringify(schema);
   document.head.appendChild(schemaScript);
+}
+
+function renderProfile(data) {
+  const isOwner = currentUser && currentUser.uid === id;
+
+  const safeName = escapeHTML(data.name || "Mentor");
+  const experience = Number(data.experience || 0);
+  const rating = Number(data.rating || 4.5);
+  const bioRaw = data.bio || "This mentor helps students with career decisions, college guidance, exams, and skill development.";
+  const bio = escapeHTML(bioRaw);
+  const skillsRaw = getCleanSkills(data.skills);
+  const skills = skillsRaw.map(skill => escapeHTML(skill));
+
+  const photoURL = data.photoURL ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Mentor")}&background=6366f1&color=fff&size=200`;
+
+  profile.innerHTML = `
+    <div class="mentor-header">
+      <div class="avatar-wrapper">
+        <img src="${photoURL}" class="profile-img" alt="${safeName}">
+      </div>
+
+      <div class="mentor-info">
+        <h2>${safeName}</h2>
+        <span class="verified-badge">✔ Verified Mentor</span>
+        <p class="mentor-skill">⭐ ${rating.toFixed(1)} Rating • ${experience} yrs experience</p>
+      </div>
+    </div>
+
+    ${
+      isOwner
+        ? `
+          <div style="margin-top:18px;">
+            <button class="btn" onclick="showEditProfileForm()">Edit Profile</button>
+          </div>
+        `
+        : ``
+    }
+
+    <div style="margin-top:22px;">
+      <h3>About Mentor</h3>
+      <p>${bio}</p>
+    </div>
+
+    <div style="margin-top:22px;">
+      <h3>Skills & Guidance Areas</h3>
+      <div style="margin-top:12px;">
+        ${skills.map(skill => `
+          <span style="
+            display:inline-block;
+            margin:5px;
+            padding:7px 13px;
+            border-radius:999px;
+            background:rgba(99,102,241,0.2);
+            border:1px solid rgba(165,180,252,0.22);
+            color:#c7d2fe;
+            font-size:13px;
+            font-weight:700;
+          ">${skill}</span>
+        `).join("")}
+      </div>
+    </div>
+
+    <div style="margin-top:22px;">
+      <h3>Experience</h3>
+      <p>${experience ? experience + (experience >= 5 ? "+ years" : " years") : "Not added"}</p>
+    </div>
+
+    <button class="chat-btn btn" onclick="startChat('${id}')" style="margin-top:20px;">
+      💬 Chat with Mentor
+    </button>
+
+    <p style="font-size:10px; color:gray; margin-top:15px;">
+      Verification confirms identity only. Connect does not guarantee results or outcomes.
+    </p>
+  `;
+
+  addPersonSchema(data.name || "Mentor", bioRaw);
+}
+
+window.showEditProfileForm = function() {
+  if (!currentUser || currentUser.uid !== id) {
+    alert("You are not allowed to edit this profile ❌");
+    return;
+  }
+
+  const data = mentorData || {};
+
+  const currentBio = escapeHTML(data.bio || "");
+  const currentExperience = Number(data.experience || 0);
+  const currentRating = Number(data.rating || 4.5);
+  const currentSkills = getCleanSkills(data.skills).join(", ");
+
+  profile.innerHTML = `
+    <h2>Edit Mentor Profile</h2>
+    <p style="max-width:620px;margin:0 auto 20px;">
+      Update your mentor bio, skills, experience, and rating. These details help students trust your profile.
+    </p>
+
+    <form id="editProfileForm" class="question-form" style="margin-top:20px;">
+
+      <label style="display:block;text-align:left;margin-bottom:6px;">Bio</label>
+      <textarea id="editBio" maxlength="500" placeholder="Write a short mentor bio..." required>${currentBio}</textarea>
+
+      <label style="display:block;text-align:left;margin-bottom:6px;">Skills / Guidance Areas</label>
+      <input 
+        type="text" 
+        id="editSkills" 
+        value="${escapeHTML(currentSkills)}" 
+        placeholder="Career Guidance, Exams, College Advice"
+        required
+      >
+
+      <label style="display:block;text-align:left;margin-bottom:6px;">Experience</label>
+      <input 
+        type="number" 
+        id="editExperience" 
+        value="${currentExperience}" 
+        min="0" 
+        max="50" 
+        required
+      >
+
+      <label style="display:block;text-align:left;margin-bottom:6px;">Rating</label>
+      <input 
+        type="number" 
+        id="editRating" 
+        value="${currentRating}" 
+        min="1" 
+        max="5" 
+        step="0.1"
+        required
+      >
+
+      <button type="submit" class="btn">Save Changes</button>
+      <button type="button" class="btn btn-outline" onclick="renderProfile(mentorData)" style="margin-top:10px;">
+        Cancel
+      </button>
+
+      <p id="editMessage"></p>
+    </form>
+  `;
+
+  document.getElementById("editProfileForm").addEventListener("submit", saveProfileChanges);
+};
+
+async function saveProfileChanges(e) {
+  e.preventDefault();
+
+  if (!currentUser || currentUser.uid !== id) {
+    alert("You are not allowed to edit this profile ❌");
+    return;
+  }
+
+  const msg = document.getElementById("editMessage");
+  const btn = e.target.querySelector("button[type='submit']");
+
+  const bio = document.getElementById("editBio").value.trim().replace(/<[^>]*>?/gm, "");
+  const skillsText = document.getElementById("editSkills").value.trim();
+  const experience = Number(document.getElementById("editExperience").value);
+  const rating = Number(document.getElementById("editRating").value);
+
+  const skills = skillsText
+    .split(",")
+    .map(skill => skill.trim())
+    .filter(Boolean)
+    .slice(0, 8);
+
+  function showEditError(text) {
+    msg.innerText = "❌ " + text;
+    msg.style.color = "red";
+    btn.disabled = false;
+    btn.innerText = "Save Changes";
+  }
+
+  btn.disabled = true;
+  btn.innerText = "Saving...";
+
+  if (bio.length < 20) {
+    showEditError("Bio must be at least 20 characters");
+    return;
+  }
+
+  if (skills.length < 1) {
+    showEditError("Add at least one skill");
+    return;
+  }
+
+  if (experience < 0 || experience > 50) {
+    showEditError("Experience must be between 0 and 50 years");
+    return;
+  }
+
+  if (rating < 1 || rating > 5) {
+    showEditError("Rating must be between 1 and 5");
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "users", id), {
+      bio,
+      skills,
+      experience,
+      rating
+    });
+
+    mentorData = {
+      ...mentorData,
+      bio,
+      skills,
+      experience,
+      rating
+    };
+
+    msg.innerText = "Profile updated successfully ✅";
+    msg.style.color = "green";
+
+    setTimeout(() => {
+      renderProfile(mentorData);
+    }, 800);
+
+  } catch (error) {
+    console.error(error);
+    showEditError("Something went wrong while saving");
+  }
+
+  btn.disabled = false;
+  btn.innerText = "Save Changes";
 }
 
 async function loadMentorProfile() {
@@ -139,69 +388,8 @@ async function loadMentorProfile() {
       return;
     }
 
-    const safeName = escapeHTML(data.name || "Mentor");
-    const experience = Number(data.experience || 0);
-    const rating = Number(data.rating || 4.5);
-    const bio = escapeHTML(data.bio || "This mentor helps students with career decisions, college guidance, exams, and skill development.");
-    const skills = Array.isArray(data.skills) && data.skills.length
-      ? data.skills.slice(0, 6).map(skill => escapeHTML(skill))
-      : ["Career Guidance", "College Advice", "Skill Development"];
-
-    const photoURL = data.photoURL ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Mentor")}&background=6366f1&color=fff&size=200`;
-
-    profile.innerHTML = `
-      <div class="mentor-header">
-        <div class="avatar-wrapper">
-          <img src="${photoURL}" class="profile-img" alt="${safeName}">
-        </div>
-
-        <div class="mentor-info">
-          <h2>${safeName}</h2>
-          <span class="verified-badge">✔ Verified Mentor</span>
-          <p class="mentor-skill">⭐ ${rating.toFixed(1)} Rating • ${experience} yrs experience</p>
-        </div>
-      </div>
-
-      <div style="margin-top:22px;">
-        <h3>About Mentor</h3>
-        <p>${bio}</p>
-      </div>
-
-      <div style="margin-top:22px;">
-        <h3>Skills & Guidance Areas</h3>
-        <div style="margin-top:12px;">
-          ${skills.map(skill => `
-            <span style="
-              display:inline-block;
-              margin:5px;
-              padding:7px 13px;
-              border-radius:999px;
-              background:rgba(99,102,241,0.2);
-              border:1px solid rgba(165,180,252,0.22);
-              color:#c7d2fe;
-              font-size:13px;
-              font-weight:700;
-            ">${skill}</span>
-          `).join("")}
-        </div>
-      </div>
-
-      <div style="margin-top:22px;">
-        <h3>Experience</h3>
-        <p>${experience ? experience + (experience >= 5 ? "+ years" : " years") : "Not added"}</p>
-      </div>
-
-      <button class="chat-btn btn" onclick="startChat('${id}')" style="margin-top:20px;">
-        💬 Chat with Mentor
-      </button>
-
-      <p style="font-size:10px; color:gray; margin-top:15px;">
-        Verification confirms identity only. Connect does not guarantee results or outcomes.
-      </p>
-    `;
-
-    addPersonSchema(data.name || "Mentor", data.bio || "Verified mentor providing career guidance and mentorship for students.");
+    mentorData = data;
+    renderProfile(mentorData);
 
   } catch (error) {
     console.error("Error:", error);
@@ -209,7 +397,10 @@ async function loadMentorProfile() {
   }
 }
 
-loadMentorProfile();
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user || null;
+  await loadMentorProfile();
+});
 
 window.startChat = function(id) {
   alert("Chat feature coming soon 🚀");
