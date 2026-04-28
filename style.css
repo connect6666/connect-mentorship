@@ -895,4 +895,35 @@ section p {
   cursor: pointer;
 }
 
+/* FIX QUESTION CARD TEXT VISIBILITY */
+.question-card,
+.question-card:hover {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.question-card h3,
+.question-card h3 a,
+.question-card:hover h3,
+.question-card:hover h3 a {
+  color: #0f172a !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.question-card small,
+.question-card:hover small {
+  color: #475569 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.question-card a {
+  text-decoration: none;
+}
+
+.question-card:hover {
+  transform: translateY(-5px);
+}
+
 
