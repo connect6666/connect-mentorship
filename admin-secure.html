@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Admin Panel | Connect Mentorship</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    body { background:#f8fafc; }
+    .admin-wrap { max-width:1180px; margin:35px auto; padding:0 16px; }
+    .admin-header { display:flex; justify-content:space-between; align-items:center; gap:15px; flex-wrap:wrap; margin-bottom:25px; }
+    .admin-title h1 { margin:0; color:#111827; }
+    .admin-title p { color:#6b7280; margin:6px 0 0; }
+    .login-card, .admin-card { background:white; border-radius:16px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.08); }
+    .login-card { max-width:430px; margin:90px auto; text-align:center; }
+    .login-card input, .admin-card input, .admin-card textarea, .admin-card select { width:100%; padding:11px; margin:8px 0; border:1px solid #d1d5db; border-radius:10px; box-sizing:border-box; }
+    .admin-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; margin-bottom:25px; }
+    .stat-card { background:white; border-radius:16px; padding:20px; box-shadow:0 8px 20px rgba(0,0,0,0.06); }
+    .stat-card h3 { margin:0; color:#4f46e5; font-size:30px; }
+    .stat-card p { margin:6px 0 0; color:#6b7280; }
+    .tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .tab-btn { border:none; background:#e5e7eb; padding:10px 16px; border-radius:999px; cursor:pointer; font-weight:600; }
+    .tab-btn.active { background:#4f46e5; color:white; }
+    .data-card { background:white; padding:20px; border-radius:14px; margin-bottom:15px; box-shadow:0 6px 18px rgba(0,0,0,0.07); }
+    .data-card h3, .data-card h4 { margin-top:0; }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .btn { padding:10px 18px; border-radius:999px; border:none; background:#4f46e5; color:white; cursor:pointer; display:inline-block; text-decoration:none; margin:4px 4px 4px 0; }
+    .btn-outline { background:white; color:#4f46e5; border:1px solid #4f46e5; }
+    .danger-btn { background:#ef4444; }
+    .success-btn { background:#16a34a; }
+    .warning-btn { background:#f59e0b; }
+    .small { font-size:13px; color:#6b7280; }
+    .hidden { display:none !important; }
+    .badge { display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; color:white; background:#64748b; }
+    .badge.green { background:#16a34a; }
+    .badge.red { background:#ef4444; }
+    .badge.yellow { background:#f59e0b; }
+    .toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:15px; }
+    #adminEmail { color:#4f46e5; font-weight:700; }
+    @media(max-width:700px){ .row{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+
+<!-- SECURE LOGIN -->
+<div id="loginView" class="login-card">
+  <h2>🔐 Admin Login</h2>
+  <p class="small">Login with Firebase admin account. No password is stored in this HTML file.</p>
+
+  <input type="email" id="adminEmailInput" placeholder="Admin email" autocomplete="email" />
+  <input type="password" id="adminPasswordInput" placeholder="Admin password" autocomplete="current-password" />
+
+  <button class="btn" id="loginBtn">Login</button>
+  <button class="btn btn-outline" id="forgotBtn">Forgot Password</button>
+
+  <p id="loginMsg"></p>
+  <p class="small">Recovery help: WhatsApp/Phone <strong>6284644053</strong></p>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminView" class="hidden">
+  <nav>
+    <div class="container">
+      <div class="logo">Connect Admin</div>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <span id="adminEmail"></span>
+        <button class="btn" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="admin-wrap">
+    <div class="admin-header">
+      <div class="admin-title">
+        <h1>Full Control Admin Panel</h1>
+        <p>Manage questions, answers, mentors, users, and contact messages.</p>
+      </div>
+      <button class="btn btn-outline" id="refreshBtn">Refresh Data</button>
+    </div>
+
+    <section class="admin-grid">
+      <div class="stat-card"><h3 id="questionCount">0</h3><p>Questions</p></div>
+      <div class="stat-card"><h3 id="mentorAppCount">0</h3><p>Mentor Applications</p></div>
+      <div class="stat-card"><h3 id="userCount">0</h3><p>Users</p></div>
+      <div class="stat-card"><h3 id="contactCount">0</h3><p>Contact Messages</p></div>
+    </section>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="questions">Questions</button>
+      <button class="tab-btn" data-tab="mentorApps">Mentor Applications</button>
+      <button class="tab-btn" data-tab="users">Users / Verify Mentors</button>
+      <button class="tab-btn" data-tab="contacts">Contact Messages</button>
+    </div>
+
+    <section id="questionsTab" class="admin-card">
+      <div class="toolbar">
+        <h2>Questions Control</h2>
+        <button class="btn btn-outline" id="exportQuestionsBtn">Export CSV</button>
+      </div>
+      <input id="questionSearch" placeholder="Search questions by name, category, question..." />
+      <div id="questionsList"></div>
+    </section>
+
+    <section id="mentorAppsTab" class="admin-card hidden">
+      <div class="toolbar">
+        <h2>Mentor Applications</h2>
+        <button class="btn btn-outline" id="exportMentorsBtn">Export CSV</button>
+      </div>
+      <div id="mentorApplicationsList"></div>
+    </section>
+
+    <section id="usersTab" class="admin-card hidden">
+      <div class="toolbar">
+        <h2>Users / Mentor Verification</h2>
+        <button class="btn btn-outline" id="exportUsersBtn">Export CSV</button>
+      </div>
+      <input id="userSearch" placeholder="Search users by name, email, phone, role..." />
+      <div id="usersList"></div>
+    </section>
+
+    <section id="contactsTab" class="admin-card hidden">
+      <div class="toolbar">
+        <h2>Contact Messages</h2>
+        <button class="btn btn-outline" id="exportContactsBtn">Export CSV</button>
+      </div>
+      <div id="contactsList"></div>
+    </section>
+  </main>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const loginView = document.getElementById("loginView");
+const adminView = document.getElementById("adminView");
+const loginMsg = document.getElementById("loginMsg");
+
+let allQuestions = [];
+let allMentorApps = [];
+let allUsers = [];
+let allContacts = [];
+let currentAdmin = null;
+
+function safe(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatDate(value) {
+  if (!value) return "Not available";
+  if (value.toDate) return value.toDate().toLocaleString();
+  return String(value);
+}
+
+function showMsg(el, text, color = "red") {
+  el.innerText = text;
+  el.style.color = color;
+}
+
+async function checkAdmin(user) {
+  if (!user) return false;
+  const snap = await getDoc(doc(db, "users", user.uid));
+  if (!snap.exists()) return false;
+  const data = snap.data();
+  return data.isAdmin === true;
+}
+
+async function loginAdmin() {
+  const email = document.getElementById("adminEmailInput").value.trim();
+  const password = document.getElementById("adminPasswordInput").value;
+
+  if (!email || !password) return showMsg(loginMsg, "Enter admin email and password ❌");
+
+  try {
+    showMsg(loginMsg, "Checking admin access...", "#4f46e5");
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (error) {
+    showMsg(loginMsg, "Wrong email/password or admin access denied ❌");
+  }
+}
+
+async function forgotPassword() {
+  const email = document.getElementById("adminEmailInput").value.trim();
+  if (!email) return showMsg(loginMsg, "Enter admin email first, then click Forgot Password.");
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showMsg(loginMsg, "Password reset link sent to admin email ✅. For help call/WhatsApp 6284644053", "green");
+  } catch (error) {
+    showMsg(loginMsg, "Could not send reset email ❌. Check email or contact 6284644053.");
+  }
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    currentAdmin = null;
+    adminView.classList.add("hidden");
+    loginView.classList.remove("hidden");
+    return;
+  }
+
+  const allowed = await checkAdmin(user);
+  if (!allowed) {
+    await signOut(auth);
+    showMsg(loginMsg, "This account is not admin ❌");
+    return;
+  }
+
+  currentAdmin = user;
+  document.getElementById("adminEmail").innerText = user.email;
+  loginView.classList.add("hidden");
+  adminView.classList.remove("hidden");
+  await loadAllData();
+});
+
+async function loadAllData() {
+  await Promise.all([loadQuestions(), loadMentorApplications(), loadUsers(), loadContacts()]);
+  updateStats();
+}
+
+async function loadQuestions() {
+  const snap = await getDocs(collection(db, "questions"));
+  allQuestions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  allQuestions.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  renderQuestions();
+}
+
+function renderQuestions() {
+  const search = document.getElementById("questionSearch").value.toLowerCase();
+  const list = document.getElementById("questionsList");
+  const filtered = allQuestions.filter(q => JSON.stringify(q).toLowerCase().includes(search));
+
+  if (!filtered.length) {
+    list.innerHTML = "<p class='small'>No questions found.</p>";
+    return;
+  }
+
+  list.innerHTML = filtered.map(q => `
+    <div class="data-card">
+      <h3>${safe(q.question)}</h3>
+      <p><strong>Name:</strong> ${safe(q.name || "Anonymous")}</p>
+      <p><strong>Email:</strong> ${safe(q.email || "Not provided")}</p>
+      <p><strong>Category:</strong> <span class="badge">${safe(q.category || "No category")}</span></p>
+      <p class="small"><strong>Date:</strong> ${safe(formatDate(q.createdAt || q.askedAt))}</p>
+      <textarea id="answer-${q.id}" rows="4" placeholder="Write official answer...">${safe(q.answer || "")}</textarea>
+      <button class="btn success-btn" onclick="saveAnswer('${q.id}')">Save / Update Answer</button>
+      <button class="btn danger-btn" onclick="deleteRecord('questions','${q.id}')">Delete Question</button>
+      ${q.answeredAt ? `<p class="small" style="color:green;">Answered: ${safe(formatDate(q.answeredAt))}</p>` : `<p class="small" style="color:red;">Not answered yet</p>`}
+    </div>
+  `).join("");
+}
+
+window.saveAnswer = async function(id) {
+  const text = document.getElementById(`answer-${id}`).value.trim();
+  if (!text) return alert("Answer cannot be empty");
+
+  await updateDoc(doc(db, "questions", id), {
+    answer: text,
+    answeredAt: serverTimestamp(),
+    answeredBy: currentAdmin.uid
+  });
+
+  alert("Answer saved ✅");
+  await loadQuestions();
+};
+
+async function loadMentorApplications() {
+  const snap = await getDocs(collection(db, "mentorApplications"));
+  allMentorApps = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  allMentorApps.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  renderMentorApplications();
+}
+
+function renderMentorApplications() {
+  const list = document.getElementById("mentorApplicationsList");
+  if (!allMentorApps.length) {
+    list.innerHTML = "<p class='small'>No mentor applications found.</p>";
+    return;
+  }
+
+  list.innerHTML = allMentorApps.map(m => `
+    <div class="data-card">
+      <h3>${safe(m.name || "No name")}</h3>
+      <p><strong>Email:</strong> ${safe(m.email || "Not available")}</p>
+      <p><strong>Level:</strong> ${safe(m.level || "Not available")}</p>
+      <p><strong>Experience:</strong> ${safe(m.experience || "Not available")}</p>
+      <p><strong>Reason:</strong> ${safe(m.reason || "Not available")}</p>
+      <p class="small"><strong>Date:</strong> ${safe(formatDate(m.createdAt || m.appliedAt))}</p>
+      <button class="btn success-btn" onclick="approveMentorApplication('${m.id}', '${safe(m.email || "")}')">Approve</button>
+      <button class="btn warning-btn" onclick="rejectMentorApplication('${m.id}')">Reject</button>
+      <button class="btn danger-btn" onclick="deleteRecord('mentorApplications','${m.id}')">Delete</button>
+    </div>
+  `).join("");
+}
+
+window.approveMentorApplication = async function(appId, email) {
+  if (!email) return alert("Application has no email. Verify user manually from Users tab.");
+  const user = allUsers.find(u => (u.email || "").toLowerCase() === email.toLowerCase());
+
+  if (!user) return alert("No registered user found with this email. Ask mentor to signup with same email first.");
+
+  await updateDoc(doc(db, "users", user.id), {
+    role: "mentor",
+    verified: true,
+    verifiedAt: serverTimestamp(),
+    verifiedBy: currentAdmin.uid
+  });
+
+  await updateDoc(doc(db, "mentorApplications", appId), {
+    status: "approved",
+    approvedAt: serverTimestamp(),
+    approvedBy: currentAdmin.uid
+  });
+
+  alert("Mentor approved ✅");
+  await loadAllData();
+};
+
+window.rejectMentorApplication = async function(appId) {
+  await updateDoc(doc(db, "mentorApplications", appId), {
+    status: "rejected",
+    rejectedAt: serverTimestamp(),
+    rejectedBy: currentAdmin.uid
+  });
+  alert("Application rejected");
+  await loadMentorApplications();
+};
+
+async function loadUsers() {
+  const snap = await getDocs(collection(db, "users"));
+  allUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderUsers();
+}
+
+function renderUsers() {
+  const search = document.getElementById("userSearch").value.toLowerCase();
+  const list = document.getElementById("usersList");
+  const filtered = allUsers.filter(u => JSON.stringify(u).toLowerCase().includes(search));
+
+  if (!filtered.length) {
+    list.innerHTML = "<p class='small'>No users found.</p>";
+    return;
+  }
+
+  list.innerHTML = filtered.map(u => `
+    <div class="data-card">
+      <h3>${safe(u.name || "User")}</h3>
+      <p><strong>Email:</strong> ${safe(u.email || "Not saved")}</p>
+      <p><strong>Phone:</strong> ${safe(u.phone || "Not saved")}</p>
+      <p><strong>Role:</strong> <span class="badge">${safe(u.role || "user")}</span></p>
+      <p><strong>Mentor Verified:</strong> ${u.verified ? '<span class="badge green">Verified</span>' : '<span class="badge yellow">Pending/No</span>'}</p>
+      <p><strong>Admin:</strong> ${u.isAdmin ? '<span class="badge red">Admin</span>' : '<span class="badge">No</span>'}</p>
+      <div class="row">
+        <input id="name-${u.id}" value="${safe(u.name || "")}" placeholder="Name" />
+        <input id="phone-${u.id}" value="${safe(u.phone || "")}" placeholder="Phone" />
+      </div>
+      <select id="role-${u.id}">
+        <option value="user" ${u.role === "user" ? "selected" : ""}>Student/User</option>
+        <option value="mentor" ${u.role === "mentor" ? "selected" : ""}>Mentor</option>
+      </select>
+      <button class="btn" onclick="updateUser('${u.id}')">Save User</button>
+      <button class="btn success-btn" onclick="verifyMentor('${u.id}', true)">Verify Mentor</button>
+      <button class="btn warning-btn" onclick="verifyMentor('${u.id}', false)">Unverify Mentor</button>
+      ${u.id !== currentAdmin.uid ? `<button class="btn danger-btn" onclick="deleteRecord('users','${u.id}')">Delete User Data</button>` : ""}
+    </div>
+  `).join("");
+}
+
+window.updateUser = async function(id) {
+  await updateDoc(doc(db, "users", id), {
+    name: document.getElementById(`name-${id}`).value.trim(),
+    phone: document.getElementById(`phone-${id}`).value.trim(),
+    role: document.getElementById(`role-${id}`).value
+  });
+  alert("User updated ✅");
+  await loadUsers();
+};
+
+window.verifyMentor = async function(id, value) {
+  await updateDoc(doc(db, "users", id), {
+    role: "mentor",
+    verified: value,
+    verifiedAt: value ? serverTimestamp() : null,
+    verifiedBy: value ? currentAdmin.uid : null
+  });
+  alert(value ? "Mentor verified ✅" : "Mentor unverified");
+  await loadUsers();
+};
+
+async function loadContacts() {
+  const snap = await getDocs(collection(db, "contactMessages"));
+  allContacts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  allContacts.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  renderContacts();
+}
+
+function renderContacts() {
+  const list = document.getElementById("contactsList");
+  if (!allContacts.length) {
+    list.innerHTML = "<p class='small'>No contact messages found.</p>";
+    return;
+  }
+
+  list.innerHTML = allContacts.map(c => `
+    <div class="data-card">
+      <h3>${safe(c.name || "No name")}</h3>
+      <p><strong>Email:</strong> ${safe(c.email || "Not available")}</p>
+      <p><strong>Message:</strong> ${safe(c.message || "")}</p>
+      <p class="small"><strong>Date:</strong> ${safe(formatDate(c.createdAt || c.date))}</p>
+      <button class="btn danger-btn" onclick="deleteRecord('contactMessages','${c.id}')">Delete Message</button>
+    </div>
+  `).join("");
+}
+
+window.deleteRecord = async function(collectionName, id) {
+  if (!confirm("Are you sure you want to delete this record?")) return;
+  await deleteDoc(doc(db, collectionName, id));
+  alert("Deleted ✅");
+  await loadAllData();
+};
+
+function updateStats() {
+  document.getElementById("questionCount").innerText = allQuestions.length;
+  document.getElementById("mentorAppCount").innerText = allMentorApps.length;
+  document.getElementById("userCount").innerText = allUsers.length;
+  document.getElementById("contactCount").innerText = allContacts.length;
+}
+
+function toCSV(rows) {
+  return rows.map(row => row.map(item => `"${String(item ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
+}
+
+function downloadCSV(filename, rows) {
+  const blob = new Blob([toCSV(rows)], { type:"text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("exportQuestionsBtn").onclick = () => downloadCSV("questions.csv", [["Name","Email","Category","Question","Answer","Date"], ...allQuestions.map(q => [q.name,q.email,q.category,q.question,q.answer,formatDate(q.createdAt || q.askedAt)])]);
+document.getElementById("exportMentorsBtn").onclick = () => downloadCSV("mentor-applications.csv", [["Name","Email","Level","Experience","Reason","Status","Date"], ...allMentorApps.map(m => [m.name,m.email,m.level,m.experience,m.reason,m.status,formatDate(m.createdAt || m.appliedAt)])]);
+document.getElementById("exportUsersBtn").onclick = () => downloadCSV("users.csv", [["Name","Email","Phone","Role","Verified","Admin"], ...allUsers.map(u => [u.name,u.email,u.phone,u.role,u.verified,u.isAdmin])]);
+document.getElementById("exportContactsBtn").onclick = () => downloadCSV("contacts.csv", [["Name","Email","Message","Date"], ...allContacts.map(c => [c.name,c.email,c.message,formatDate(c.createdAt || c.date)])]);
+
+document.getElementById("questionSearch").addEventListener("input", renderQuestions);
+document.getElementById("userSearch").addEventListener("input", renderUsers);
+document.getElementById("loginBtn").onclick = loginAdmin;
+document.getElementById("forgotBtn").onclick = forgotPassword;
+document.getElementById("logoutBtn").onclick = async () => signOut(auth);
+document.getElementById("refreshBtn").onclick = loadAllData;
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    ["questions", "mentorApps", "users", "contacts"].forEach(tab => {
+      document.getElementById(`${tab}Tab`).classList.add("hidden");
+    });
+    document.getElementById(`${btn.dataset.tab}Tab`).classList.remove("hidden");
+  });
+});
+</script>
+</body>
+</html>
