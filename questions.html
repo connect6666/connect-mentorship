@@ -196,14 +196,14 @@ function renderQuestions() {
       const card = document.createElement("div");
       card.className = "question-card";
 
-      card.innerHTML = `
-        <h3>
-          <a href="/connect-mentorship/view-question.html?id=${q.id}">
-            ${q.question}
-          </a>
-        </h3>
-        <small>${q.name} | ${q.category}</small>
-      `;
+     card.innerHTML = `
+  <h3>
+    <a href="/connect-mentorship/view-question.html?id=${q.id}" class="question-title-link">
+      ${q.question}
+    </a>
+  </h3>
+  <small class="question-meta">${q.name} | ${q.category}</small>
+`;
 
       container.appendChild(card);
     }
