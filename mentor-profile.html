@@ -205,10 +205,14 @@ function renderProfile(data) {
       <p>${experience ? experience + (experience >= 5 ? "+ years" : " years") : "Not added"}</p>
     </div>
 
-    <button class="chat-btn btn" onclick="startChat('${id}')" style="margin-top:20px;">
-      💬 Chat with Mentor
-    </button>
-
+   <a 
+  href="https://wa.me/916284644053?text=Hi%20Connect%2C%20I%20want%20to%20book%20a%20mentor%20session%20with%20${encodeURIComponent(data.name || "Mentor")}.%20Please%20help%20me."
+  target="_blank"
+  class="chat-btn btn"
+  style="margin-top:20px;"
+>
+  📞 Book Mentor Session
+</a>
     <p style="font-size:10px; color:gray; margin-top:15px;">
       Verification confirms identity only. Connect does not guarantee results or outcomes.
     </p>
@@ -402,9 +406,7 @@ onAuthStateChanged(auth, async (user) => {
   await loadMentorProfile();
 });
 
-window.startChat = function(id) {
-  alert("Chat feature coming soon 🚀");
-};
+
 </script>
 
 <script type="module" src="auth.js"></script>
