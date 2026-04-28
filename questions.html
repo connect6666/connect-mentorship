@@ -2,88 +2,128 @@
 <html lang="en">
 <head>
 
-  <meta name="description" content="Browse student questions and answers about career, exams, college, and skills. Learn from real experiences and mentorship.">
-
+<meta name="description" content="Browse student questions and answers about career, exams, college, and skills. Learn from real experiences and mentorship.">
 <meta name="robots" content="index, follow">
-
 <title>Student Questions & Answers | Career Guidance India</title>
-
 <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/questions.html">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <link rel="stylesheet" href="style.css">
 
+<style>
+/* PRO UI STYLING */
+.question-search-box input {
+  width: 100%;
+  max-width: 500px;
+  padding: 14px;
+  border-radius: 30px;
+  border: 1px solid #ddd;
+  margin: 20px auto;
+  display: block;
+}
+
+.question-filters {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.filter-btn {
+  padding: 10px 18px;
+  margin: 5px;
+  border-radius: 20px;
+  border: none;
+  background: #f1f5f9;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+  background: #2563eb;
+  color: white;
+}
+
+.questions-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.question-card {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  transition: 0.3s;
+  animation: fadeIn 0.3s ease;
+}
+
+.question-card:hover {
+  transform: translateY(-5px);
+}
+
+.no-result {
+  text-align: center;
+  color: red;
+  display: none;
+}
+
+@keyframes fadeIn {
+  from {opacity: 0; transform: scale(0.95);}
+  to {opacity: 1; transform: scale(1);}
+}
+</style>
 
 </head>
 
 <body>
 
+<!-- NAV SAME -->
 <nav>
   <div class="container">
-   <div class="logo">
-  <a href="/connect-mentorship/">Connect</a>
-</div>
+    <div class="logo">
+      <a href="/connect-mentorship/">Connect</a>
+    </div>
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
-     <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/">Home</a>
       <a href="/connect-mentorship/questions.html">Questions</a>
       <a href="/connect-mentorship/view-question.html">View Answer</a>
       <a href="/connect-mentorship/ask.html">Ask Question</a>
       <a href="/connect-mentorship/mentor.html">Become Mentor</a>
       <a href="/connect-mentorship/about.html">About</a>
       <a href="/connect-mentorship/contact.html">Contact</a>
-      
-
       <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
-  <section class="container">
+<section class="container">
   <h1>Student Questions and Career Guidance</h1>
-
-  <p>
-    Browse real questions asked by students about exams, college, career choices, and skills. Learn from answers shared by experienced students and mentors.
-  </p>
-
-  <p>
-    You can also <a href="/connect-mentorship/ask.html">ask your own question</a> or 
-    <a href="/connect-mentorship/mentor.html">connect with mentors</a>.
-  </p>
-
+  <p>Browse real questions asked by students.</p>
 </section>
 
-   <section>
-  <h2>Latest Questions</h2>
-  <p>
-    Explore recently asked questions by students and find answers based on real experiences.
-  </p>
+<!-- 🔥 NEW PRO FILTER + SEARCH -->
+<section class="container">
+  <input type="text" id="searchInput" placeholder="Search questions..." class="question-search-box">
+
+  <div class="question-filters">
+    <button class="filter-btn active" data-category="all">All</button>
+    <button class="filter-btn" data-category="career">Career</button>
+    <button class="filter-btn" data-category="skills">Skills</button>
+    <button class="filter-btn" data-category="college">College</button>
+  </div>
 </section>
 
+<!-- QUESTIONS -->
 <div class="questions-container" id="questionsList"></div>
 
-  <section class="container">
-  <h2>Popular Student Questions</h2>
+<p id="noResult" class="no-result">No questions found</p>
 
-  <p>
-    Students often ask about career options after 10th or 12th, choosing the right college, and developing skills for future jobs. This section helps you explore real problems and solutions shared by others.
-  </p>
-</section>
-
-  
-    <section class="container">
-  <h2>Common Topics</h2>
- <ul>
-  <li><a href="/connect-mentorship/questions.html">Career after 12th</a></li>
-  <li><a href="/connect-mentorship/questions.html">Best courses after graduation</a></li>
-  <li><a href="/connect-mentorship/questions.html">Skill development for students</a></li>
-</ul>
-</section>
-  
-
- 
-
+<!-- FIREBASE LOGIC -->
 <script type="module">
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -94,14 +134,11 @@ import {
   query,
   orderBy,
   limit,
-  doc,
-  getDoc,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* CONFIG */
 const firebaseConfig = {
-  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  apiKey: "AIzaSy...",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship"
 };
@@ -111,70 +148,86 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const container = document.getElementById("questionsList");
+const searchInput = document.getElementById("searchInput");
+const noResult = document.getElementById("noResult");
 
-/* SAFE HTML */
-function escapeHTML(str) {
-  if (!str) return "";
-  return str.replace(/[&<>"']/g, m => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  }[m]));
-}
+let allQuestions = [];
+let selectedCategory = "all";
 
-/* LOAD QUESTIONS ONLY (OPTIMIZED) */
+/* LOAD QUESTIONS */
 function loadQuestions() {
 
-  const qRef = query(
-    collection(db, "questions"),
-    orderBy("createdAt", "desc"),
-    limit(20)
-  );
+  const qRef = query(collection(db, "questions"), orderBy("createdAt", "desc"), limit(50));
 
-  onSnapshot(qRef, (questionsSnap) => {
+  onSnapshot(qRef, (snap) => {
+    allQuestions = [];
 
-    container.innerHTML = "";
+    snap.forEach(doc => {
+      const data = doc.data();
+      allQuestions.push({
+        id: doc.id,
+        question: data.question,
+        name: data.name || "User",
+        category: (data.category || "general").toLowerCase()
+      });
+    });
 
-    /* ✅ EMPTY STATE */
-    if (questionsSnap.empty) {
-      container.innerHTML = "No questions yet. Ask your first career question and get guidance from experienced students."
-      return;
-    }
+    renderQuestions();
+  });
+}
 
-    questionsSnap.forEach(qDoc => {
+/* RENDER */
+function renderQuestions() {
 
-      const q = qDoc.data();
-      const qId = qDoc.id;
+  container.innerHTML = "";
+  let visible = 0;
+
+  const searchText = searchInput.value.toLowerCase();
+
+  allQuestions.forEach(q => {
+
+    const matchCategory = selectedCategory === "all" || q.category === selectedCategory;
+    const matchSearch = q.question.toLowerCase().includes(searchText);
+
+    if (matchCategory && matchSearch) {
+
+      visible++;
 
       const card = document.createElement("div");
       card.className = "question-card";
 
       card.innerHTML = `
         <h3>
-          <a href="/connect-mentorship/view-question.html?id=${qId}"
-             style="text-decoration:none;color:black;">
-            ${escapeHTML(q.question)}
+          <a href="/connect-mentorship/view-question.html?id=${q.id}">
+            ${q.question}
           </a>
         </h3>
-
-        <small>
-          ${escapeHTML(q.name || "User")} | 
-          ${escapeHTML(q.category || "General")}
-        </small>
+        <small>${q.name} | ${q.category}</small>
       `;
 
       container.appendChild(card);
-    });
-
+    }
   });
+
+  noResult.style.display = visible === 0 ? "block" : "none";
 }
 
-/* INIT */
-onAuthStateChanged(auth, () => {
-  loadQuestions();
+/* FILTER BUTTON */
+document.querySelectorAll(".filter-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    selectedCategory = btn.dataset.category;
+    renderQuestions();
+  });
 });
+
+/* SEARCH */
+searchInput.addEventListener("input", renderQuestions);
+
+/* INIT */
+onAuthStateChanged(auth, () => loadQuestions());
 
 </script>
 
@@ -185,14 +238,6 @@ function toggleMenu() {
 </script>
 
 <script type="module" src="auth.js"></script>
-  <script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "CollectionPage",
- "name": "Student Questions and Answers",
- "description": "Browse questions asked by students about career, exams, and college guidance."
-}
-</script>
 
 </body>
 </html>
