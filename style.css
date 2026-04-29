@@ -1197,3 +1197,24 @@ input {
   color: #cbd5e1;
   font-weight: 700;
 }
+.question-detail-attachment {
+  margin: 20px auto;
+  max-width: 700px;
+}
+
+.question-detail-attachment img {
+  width: 100%;
+  border-radius: 15px;
+  max-height: 400px;
+  object-fit: contain;
+  background: rgba(255,255,255,0.08);
+}
+
+.question-detail-attachment a {
+  display: inline-block;
+  padding: 10px 16px;
+  background: #6366f1;
+  color: white;
+  border-radius: 20px;
+  font-weight: 600;
+}
