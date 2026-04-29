@@ -179,12 +179,14 @@ function loadQuestions() {
     snap.forEach(doc => {
       const data = doc.data();
       allQuestions.push({
-        id: doc.id,
-        question: data.question,
-        name: data.name || "User",
-        category: (data.category || "general").toLowerCase()
-      });
-    });
+  id: doc.id,
+  question: data.question,
+  name: data.name || "User",
+  category: (data.category || "general").toLowerCase(),
+  attachmentURL: data.attachmentURL || "",
+  attachmentName: data.attachmentName || "",
+  attachmentType: data.attachmentType || ""
+});
 
     renderQuestions();
   });
@@ -210,12 +212,23 @@ function renderQuestions() {
       const card = document.createElement("div");
       card.className = "question-card";
 
-     card.innerHTML = `
+    card.innerHTML = `
   <h3>
     <a href="/connect-mentorship/view-question.html?id=${q.id}" class="question-title-link">
       ${q.question}
     </a>
   </h3>
+
+  ${q.attachmentURL ? `
+    <div class="question-attachment">
+      ${
+        q.attachmentType && q.attachmentType.startsWith("image/")
+          ? `<img src="${q.attachmentURL}" alt="Question attachment">`
+          : `<a href="${q.attachmentURL}" target="_blank">📎 View Attachment</a>`
+      }
+    </div>
+  ` : ""}
+
   <small class="question-meta">${q.name} | ${q.category}</small>
 `;
 
