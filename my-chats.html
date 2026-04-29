@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Chats | Connect</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.chat-list {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 0 15px;
+}
+
+.chat-card {
+  background: white;
+  padding: 18px;
+  margin-bottom: 15px;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+.chat-card h3 {
+  margin-bottom: 8px;
+}
+
+.chat-card p {
+  color: gray;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">
+      <a href="/connect-mentorship/" style="color:white;text-decoration:none;">Connect</a>
+    </div>
+
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
+    <div class="nav-links">
+      <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/questions.html">Questions</a>
+      <a href="/connect-mentorship/ask.html">Ask Question</a>
+      <a href="/connect-mentorship/mentor.html">Mentors</a>
+      <a href="/connect-mentorship/profile.html">Profile</a>
+      <a href="/connect-mentorship/my-chats.html">My Chats</a>
+      <span id="userArea"></span>
+    </div>
+  </div>
+</nav>
+
+<div class="chat-list">
+  <h2>💬 My Chats</h2>
+  <div id="chatList">Loading chats...</div>
+</div>
+
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+};
+
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const chatList = document.getElementById("chatList");
+
+function escapeHTML(text) {
+  return String(text || "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
+}
+
+async function getUserName(uid) {
+  if (!uid) return "User";
+
+  try {
+    const snap = await getDoc(doc(db, "users", uid));
+
+    if (snap.exists()) {
+      const data = snap.data();
+      return data.name || data.email || "User";
+    }
+
+    return "User";
+
+  } catch (error) {
+    console.error("User name fetch error:", error);
+    return "User";
+  }
+}
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    alert("Please login first ❌");
+    window.location.href = "/connect-mentorship/login.html";
+    return;
+  }
+
+  const q = query(
+    collection(db, "chats"),
+    where("participants", "array-contains", user.uid)
+  );
+
+  onSnapshot(q, async (snap) => {
+    chatList.innerHTML = "";
+
+    if (snap.empty) {
+      chatList.innerHTML = "<p>No chats yet.</p>";
+      return;
+    }
+
+    for (const docSnap of snap.docs) {
+      const chat = docSnap.data();
+      const chatId = docSnap.id;
+
+      if (!chat.participants || !Array.isArray(chat.participants)) {
+        continue;
+      }
+
+      const otherUserId = chat.participants.find(id => id !== user.uid);
+      const otherName = await getUserName(otherUserId);
+
+      const card = document.createElement("div");
+      card.className = "chat-card";
+
+      card.innerHTML = `
+        <h3>${escapeHTML(otherName)}</h3>
+        <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
+
+        <a class="btn" href="/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(chat.mentorId || otherUserId)}">
+          Open Chat
+        </a>
+      `;
+
+      chatList.appendChild(card);
+    }
+
+  }, (error) => {
+    console.error(error);
+    chatList.innerHTML = "<p style='color:red;'>Error loading chats ❌ Check Firestore rules.</p>";
+  });
+});
+</script>
+
+<script type="module" src="auth.js"></script>
+
+<script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
+</script>
+
+</body>
+</html>
