@@ -51,8 +51,7 @@ import {
   doc,
   getDoc,
   updateDoc,
-  collection,
-  addDoc,
+  setDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -140,9 +139,11 @@ function renderProfile(data) {
     <p><strong>Experience:</strong> ${data.experience ? escapeHTML(data.experience) + " years" : "Not added"}</p>
     <p>${safeBio}</p>
 
-    <button class="chat-btn btn" onclick="startChat('${id}')">
-      💬 Chat with Mentor
-    </button>
+    ${!isOwner ? `
+      <button class="chat-btn btn" onclick="startChat('${id}')">
+        💬 Chat with Mentor
+      </button>
+    ` : ""}
 
     <p style="font-size:10px; color:gray; margin-top:15px;">
       Verification confirms identity only. Connect does not guarantee results or outcomes.
@@ -294,7 +295,7 @@ window.startChat = async function(mentorId) {
 
   if (!user) {
     alert("Please login to chat with mentor ❌");
-    location.href = "/connect-mentorship/login.html";
+    window.location.href = "/connect-mentorship/login.html";
     return;
   }
 
@@ -304,14 +305,19 @@ window.startChat = async function(mentorId) {
   }
 
   try {
-    await addDoc(collection(db, "chats"), {
-      studentId: user.uid,
-      mentorId,
-      createdAt: serverTimestamp(),
-      status: "active"
-    });
+    const chatId = [user.uid, mentorId].sort().join("_");
 
-    alert("Chat request created ✅ Messaging page coming soon.");
+    await setDoc(doc(db, "chats", chatId), {
+      studentId: user.uid,
+      mentorId: mentorId,
+      participants: [user.uid, mentorId],
+      status: "active",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    window.location.href = `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}`;
+
   } catch (error) {
     console.error(error);
     alert("Chat failed ❌ Check Firestore rules.");
