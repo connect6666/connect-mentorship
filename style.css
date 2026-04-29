@@ -1131,3 +1131,53 @@ input {
   border-radius: 20px;
   cursor: pointer;
 }
+
+
+.upload-box {
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px dashed rgba(255,255,255,0.25);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.06);
+  text-align: center;
+}
+
+.upload-box label {
+  display: block;
+  font-weight: 800;
+  color: #e2e8f0;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.upload-box input {
+  width: 100%;
+  background: rgba(15,23,42,0.85);
+  color: white;
+  padding: 12px;
+  border-radius: 14px;
+}
+
+.upload-box small {
+  display: block;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+#filePreview {
+  margin-top: 12px;
+}
+
+.question-file-preview-img {
+  max-width: 190px;
+  max-height: 190px;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+.file-preview-name {
+  margin-top: 10px;
+  color: #cbd5e1;
+  font-weight: 700;
+}
