@@ -167,13 +167,29 @@ async function loadQuestion() {
 
   const q = snap.data();
 
-  questionBox.innerHTML = `
-    <span class="question-badge">${escapeHTML(q.category || "General")}</span>
-    <h2>${escapeHTML(q.question)}</h2>
-    <div class="question-meta">
-      <span>Asked by ${escapeHTML(q.name || "Student")}</span>
-    </div>
-  `;
+ questionBox.innerHTML = `
+  <span class="question-badge">${escapeHTML(q.category || "General")}</span>
+
+  <h2>${escapeHTML(q.question)}</h2>
+
+  ${
+    q.attachmentURL
+      ? `
+        <div class="question-detail-attachment">
+          ${
+            q.attachmentType && q.attachmentType.startsWith("image/")
+              ? `<img src="${q.attachmentURL}" alt="Question Image">`
+              : `<a href="${q.attachmentURL}" target="_blank">📎 View Attachment</a>`
+          }
+        </div>
+      `
+      : ""
+  }
+
+  <div class="question-meta">
+    <span>Asked by ${escapeHTML(q.name || "Student")}</span>
+  </div>
+`;
 }
 
 function loadAnswers() {
