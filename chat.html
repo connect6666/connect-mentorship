@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Private Chat | Connect</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+
+<style>
+.chat-box {
+  max-width: 800px;
+  margin: 30px auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.chat-header {
+  background: #4f46e5;
+  color: white;
+  padding: 15px;
+  font-weight: bold;
+}
+
+.messages {
+  height: 420px;
+  overflow-y: auto;
+  padding: 15px;
+  background: #f8fafc;
+}
+
+.msg {
+  max-width: 70%;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+.me {
+  background: #4f46e5;
+  color: white;
+  margin-left: auto;
+}
+
+.other {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+}
+
+.warning {
+  color: red;
+  text-align: center;
+  font-size: 14px;
+  margin: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">Connect</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="mentor.html">Mentors</a>
+      <a href="profile.html">Profile</a>
+    </div>
+  </div>
+</nav>
+
+<div class="chat-box">
+  <div class="chat-header" id="chatTitle">Private Chat</div>
+  <div class="messages" id="messages"></div>
+
+  <p class="warning" id="warning"></p>
+
+  <div class="chat-input">
+    <input id="messageInput" placeholder="Type message...">
+    <button class="btn" onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  addDoc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const params = new URLSearchParams(window.location.search);
+const mentorId = params.get("mentorId");
+
+const messagesBox = document.getElementById("messages");
+const input = document.getElementById("messageInput");
+const warning = document.getElementById("warning");
+
+let currentUser;
+let chatId;
+
+// Contact detail detector
+function containsContact(text) {
+  const patterns = [
+    /\b\d{10,15}\b/g,
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/gi,
+    /whatsapp|telegram|instagram|insta|gmail|email|phone|mobile|call me|dm me|upi/gi
+  ];
+
+  return patterns.some(pattern => pattern.test(text));
+}
+
+function escapeHTML(str) {
+  return str.replace(/[&<>"']/g, m => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  if (!mentorId) {
+    alert("Mentor not found");
+    window.location.href = "mentor.html";
+    return;
+  }
+
+  currentUser = user;
+
+  const ids = [currentUser.uid, mentorId].sort();
+  chatId = ids.join("_");
+
+  const chatRef = doc(db, "chats", chatId);
+  const chatSnap = await getDoc(chatRef);
+
+  if (!chatSnap.exists()) {
+    const expires = new Date();
+    expires.setDate(expires.getDate() + 7);
+
+    await setDoc(chatRef, {
+      participants: ids,
+      studentId: currentUser.uid,
+      mentorId: mentorId,
+      createdAt: serverTimestamp(),
+      expiresAt: expires,
+      status: "active"
+    });
+  }
+
+  loadMessages();
+});
+
+function loadMessages() {
+  const q = query(
+    collection(db, "chats", chatId, "messages"),
+    orderBy("createdAt", "asc")
+  );
+
+  onSnapshot(q, (snap) => {
+    messagesBox.innerHTML = "";
+
+    snap.forEach(docSnap => {
+      const msg = docSnap.data();
+
+      const div = document.createElement("div");
+      div.className = "msg " + (msg.senderId === currentUser.uid ? "me" : "other");
+      div.innerHTML = escapeHTML(msg.text);
+
+      messagesBox.appendChild(div);
+    });
+
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+  });
+}
+
+window.sendMessage = async function() {
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  if (containsContact(text)) {
+    warning.innerText = "⚠️ Sharing phone, email, WhatsApp, Instagram or payment details is not allowed.";
+    return;
+  }
+
+  warning.innerText = "";
+
+  await addDoc(collection(db, "chats", chatId, "messages"), {
+    text,
+    senderId: currentUser.uid,
+    createdAt: serverTimestamp(),
+    flagged: false
+  });
+
+  input.value = "";
+};
+</script>
+
+</body>
+</html>
