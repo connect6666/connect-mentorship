@@ -897,9 +897,25 @@ section p {
 
 /* FIX QUESTION CARD TEXT VISIBILITY */
 .question-card,
-.question-card:hover {
-  background: #ffffff;
-  color: #0f172a;
+.question-attachment {
+  margin: 14px 0;
+}
+
+.question-attachment img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.question-attachment a {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+  font-weight: 800;
 }
 
 .question-card h3,
