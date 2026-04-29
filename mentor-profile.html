@@ -4,10 +4,8 @@
   <meta name="description" content="View mentor profile and get career guidance from experienced students. Connect with verified mentors for real advice.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://connect6666.github.io/connect-mentorship/mentor-profile.html">
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Verified Mentor Profile | Student Career Guidance</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -16,10 +14,7 @@
 
 <nav>
   <div class="container">
-    <div class="logo">
-      <a href="/connect-mentorship/">Connect</a>
-    </div>
-
+    <div class="logo"><a href="/connect-mentorship/">Connect</a></div>
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
@@ -36,35 +31,29 @@
 
 <section class="container">
   <h1>Mentor Profile</h1>
-  <p>
-    View details of experienced mentors and connect with them for career guidance,
-    exam preparation, and skill development.
-  </p>
+  <p>View details of experienced mentors and connect with them for career guidance.</p>
 </section>
 
 <section class="container">
-  <p>
-    You can also <a href="/connect-mentorship/ask.html">ask your questions</a> or
-    <a href="/connect-mentorship/questions.html">browse student questions</a>.
-  </p>
+  <p>You can also <a href="/connect-mentorship/ask.html">ask your questions</a> or
+  <a href="/connect-mentorship/questions.html">browse student questions</a>.</p>
 </section>
 
 <div class="profile-container">
-  <div class="profile-card" id="profile">
-    Loading...
-  </div>
+  <div class="profile-card" id="profile">Loading...</div>
 </div>
 
-
 <script type="module">
-import { initializeApp, getApps, getApp }
-from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
   doc,
   getDoc,
-  updateDoc
+  updateDoc,
+  collection,
+  addDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -79,7 +68,6 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-/* CONFIG */
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
@@ -92,16 +80,12 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-/* GET ID */
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
-
+const id = new URLSearchParams(window.location.search).get("id");
 const profile = document.getElementById("profile");
 
 let currentUser = null;
 let mentorData = null;
 
-/* ESCAPE */
 function escapeHTML(str) {
   return String(str || "").replace(/[&<>"']/g, (m) => ({
     "&": "&amp;",
@@ -112,73 +96,134 @@ function escapeHTML(str) {
   }[m]));
 }
 
-/* ERROR */
 function showError(title, text) {
   profile.innerHTML = `
     <div class="empty-state">
       <h2>${escapeHTML(title)}</h2>
       <p>${escapeHTML(text)}</p>
+      <a href="/connect-mentorship/mentor.html" class="btn">Browse Mentors</a>
     </div>
   `;
 }
 
-/* RENDER PROFILE */
 function renderProfile(data) {
   const isOwner = currentUser && currentUser.uid === id;
-
   const safeName = escapeHTML(data.name || "Mentor");
+  const safeBio = escapeHTML(data.bio || "This mentor provides guidance related to career choices, college decisions, and skill development.");
+  const safeSkills = escapeHTML(data.skills || "Career Guidance • College Advice • Skill Development");
+
   const photoURL = data.photoURL ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Mentor")}`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "Mentor")}&background=6366f1&color=fff&size=200`;
 
   profile.innerHTML = `
     <div class="mentor-header">
-
       <div class="avatar-wrapper">
+        <img src="${photoURL}" class="profile-img" alt="${safeName}">
 
-        <img src="${photoURL}" class="profile-img">
-
-        ${
-          isOwner
-            ? `
-              <input type="file" id="uploadDP" accept="image/*" hidden>
-
-              <button class="change-dp-btn"
-                onclick="document.getElementById('uploadDP').click()">
-                Change Photo
-              </button>
-            `
-            : ``
-        }
-
+        ${isOwner ? `
+          <input type="file" id="uploadDP" accept="image/*" hidden>
+          <button class="change-dp-btn" onclick="document.getElementById('uploadDP').click()">
+            Change Photo
+          </button>
+        ` : ""}
       </div>
 
       <div class="mentor-info">
         <h2>${safeName}</h2>
         <span class="verified-badge">✔ Verified Mentor</span>
+        <p class="mentor-skill">${safeSkills}</p>
       </div>
-
     </div>
 
-    ${
-      isOwner
-        ? `<button class="btn" onclick="showEditProfileForm()">Edit Profile</button>`
-        : ``
-    }
+    ${isOwner ? `<button class="btn" onclick="showEditProfileForm()">Edit Profile</button>` : ""}
 
-    <p>Experience: ${data.experience || "Not added"}</p>
+    <p><strong>Experience:</strong> ${data.experience ? escapeHTML(data.experience) + " years" : "Not added"}</p>
+    <p>${safeBio}</p>
 
-    <button class="chat-btn">Chat with Mentor</button>
+    <button class="chat-btn btn" onclick="startChat('${id}')">
+      💬 Chat with Mentor
+    </button>
+
+    <p style="font-size:10px; color:gray; margin-top:15px;">
+      Verification confirms identity only. Connect does not guarantee results or outcomes.
+    </p>
   `;
 
   attachUploadListener();
 }
 
-/* 🔥 IMAGE UPLOAD */
+function renderEditForm(data) {
+  profile.innerHTML = `
+    <h2>Edit Mentor Profile</h2>
+
+    <input type="text" id="editName" placeholder="Your name" value="${escapeHTML(data.name || "")}">
+    <input type="number" id="editExperience" placeholder="Experience in years" value="${escapeHTML(data.experience || "")}">
+    <input type="text" id="editSkills" placeholder="Skills e.g. Career, Coding, Exams" value="${escapeHTML(data.skills || "")}">
+    <textarea id="editBio" placeholder="Write short mentor bio...">${escapeHTML(data.bio || "")}</textarea>
+
+    <button class="btn" onclick="saveProfileChanges()">Save Changes</button>
+    <button class="btn btn-outline" onclick="renderProfile(mentorData)">Cancel</button>
+
+    <p id="editMsg"></p>
+  `;
+}
+
+window.showEditProfileForm = function() {
+  if (!currentUser || currentUser.uid !== id) {
+    alert("You can edit only your own profile ❌");
+    return;
+  }
+  renderEditForm(mentorData || {});
+};
+
+window.saveProfileChanges = async function() {
+  if (!currentUser || currentUser.uid !== id) {
+    alert("Unauthorized ❌");
+    return;
+  }
+
+  const name = document.getElementById("editName").value.trim();
+  const experience = document.getElementById("editExperience").value.trim();
+  const skills = document.getElementById("editSkills").value.trim();
+  const bio = document.getElementById("editBio").value.trim();
+  const editMsg = document.getElementById("editMsg");
+
+  if (!name) {
+    editMsg.innerText = "Name required ❌";
+    editMsg.style.color = "red";
+    return;
+  }
+
+  await updateDoc(doc(db, "users", id), {
+    name,
+    experience,
+    skills,
+    bio
+  });
+
+  mentorData = {
+    ...mentorData,
+    name,
+    experience,
+    skills,
+    bio
+  };
+
+  editMsg.innerText = "Profile updated ✅";
+  editMsg.style.color = "green";
+
+  setTimeout(() => renderProfile(mentorData), 800);
+};
+
 function attachUploadListener() {
   const input = document.getElementById("uploadDP");
   if (!input) return;
 
   input.addEventListener("change", async (e) => {
+    if (!currentUser || currentUser.uid !== id) {
+      alert("You can change only your own photo ❌");
+      return;
+    }
 
     const file = e.target.files[0];
     if (!file) return;
@@ -189,13 +234,12 @@ function attachUploadListener() {
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Max 2MB ❌");
+      alert("Max 2MB allowed ❌");
       return;
     }
 
     try {
-      const storageRef = ref(storage, `profileImages/${id}`);
-
+      const storageRef = ref(storage, `profileImages/${id}/profile.jpg`);
       await uploadBytes(storageRef, file);
 
       const url = await getDownloadURL(storageRef);
@@ -204,22 +248,20 @@ function attachUploadListener() {
         photoURL: url
       });
 
-      alert("Updated ✅");
-      location.reload();
+      mentorData.photoURL = url;
+      alert("Profile photo updated ✅");
+      renderProfile(mentorData);
 
     } catch (err) {
       console.error(err);
-      alert("Upload failed ❌");
+      alert("Upload failed ❌ Check Storage Rules");
     }
-
   });
 }
 
-/* LOAD PROFILE */
 async function loadMentorProfile() {
-
   if (!id) {
-    showError("Invalid link", "No ID found");
+    showError("Invalid mentor link ❌", "No mentor ID found in URL.");
     return;
   }
 
@@ -227,35 +269,59 @@ async function loadMentorProfile() {
     const snap = await getDoc(doc(db, "users", id));
 
     if (!snap.exists()) {
-      showError("Not found", "Mentor not found");
+      showError("Mentor not found ❌", "This mentor profile does not exist.");
       return;
     }
 
     const data = snap.data();
 
     if (data.role !== "mentor" || data.verified !== true) {
-      showError("Unavailable", "Not verified mentor");
+      showError("Mentor not available ❌", "This mentor is not verified yet.");
       return;
     }
 
     mentorData = data;
     renderProfile(data);
 
-  } catch (e) {
-    showError("Error", "Failed to load");
+  } catch (error) {
+    console.error(error);
+    showError("Error loading profile ❌", "Please try again later.");
   }
 }
 
-/* AUTH */
+window.startChat = async function(mentorId) {
+  const user = auth.currentUser;
+
+  if (!user) {
+    alert("Please login to chat with mentor ❌");
+    location.href = "/connect-mentorship/login.html";
+    return;
+  }
+
+  if (user.uid === mentorId) {
+    alert("You cannot chat with yourself ❌");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "chats"), {
+      studentId: user.uid,
+      mentorId,
+      createdAt: serverTimestamp(),
+      status: "active"
+    });
+
+    alert("Chat request created ✅ Messaging page coming soon.");
+  } catch (error) {
+    console.error(error);
+    alert("Chat failed ❌ Check Firestore rules.");
+  }
+};
+
 onAuthStateChanged(auth, (user) => {
-  currentUser = user;
+  currentUser = user || null;
   loadMentorProfile();
 });
-
-/* EDIT (unchanged logic) */
-window.showEditProfileForm = function() {
-  alert("Edit working already ✅");
-};
 </script>
 
 <script type="module" src="auth.js"></script>
