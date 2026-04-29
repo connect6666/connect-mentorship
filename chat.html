@@ -33,6 +33,14 @@
   color: #e0e7ff;
 }
 
+.warning {
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 10px 15px;
+  font-size: 13px;
+  text-align: center;
+}
+
 .chat-box {
   height: 450px;
   overflow-y: auto;
@@ -46,14 +54,12 @@
   margin-bottom: 12px;
   border-radius: 14px;
   font-size: 14px;
-  line-height: 1.4;
 }
 
 .mine {
   background: #4f46e5;
   color: white;
   margin-left: auto;
-  border-bottom-right-radius: 4px;
 }
 
 .other {
@@ -61,7 +67,6 @@
   color: #111827;
   border: 1px solid #e5e7eb;
   margin-right: auto;
-  border-bottom-left-radius: 4px;
 }
 
 .chat-input-area {
@@ -69,7 +74,6 @@
   gap: 10px;
   padding: 15px;
   border-top: 1px solid #e5e7eb;
-  background: white;
 }
 
 .chat-input-area input {
@@ -77,20 +81,6 @@
   padding: 13px;
   border-radius: 30px;
   border: 1px solid #ccc;
-  outline: none;
-}
-
-.chat-input-area button {
-  border: none;
-  cursor: pointer;
-}
-
-.warning {
-  background: #fff7ed;
-  color: #9a3412;
-  padding: 10px 15px;
-  font-size: 13px;
-  text-align: center;
 }
 
 #chatMsg {
@@ -117,13 +107,13 @@
       <a href="/connect-mentorship/ask.html">Ask Question</a>
       <a href="/connect-mentorship/mentor.html">Mentors</a>
       <a href="/connect-mentorship/profile.html">Profile</a>
+      <a href="/connect-mentorship/my-chats.html">My Chats</a>
       <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
 <div class="chat-page">
-
   <div class="chat-header">
     <h2>💬 Private Connect Chat</h2>
     <p id="chatTitle">Loading chat...</p>
@@ -133,9 +123,7 @@
     For privacy, phone numbers, emails, links, WhatsApp, Instagram, Telegram, UPI and direct contact details are blocked.
   </div>
 
-  <div class="chat-box" id="chatBox">
-    Loading messages...
-  </div>
+  <div class="chat-box" id="chatBox">Loading messages...</div>
 
   <p id="chatMsg"></p>
 
@@ -143,7 +131,6 @@
     <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
     <button class="btn" onclick="sendMessage()">Send</button>
   </div>
-
 </div>
 
 <script type="module">
@@ -176,18 +163,13 @@ const firebaseConfig = {
   appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
-/* IMPORTANT:
-   Replace YOUR_API_KEY with your same apiKey from mentor-profile.html:
-   AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg
-*/
-
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
 const params = new URLSearchParams(window.location.search);
-const mentorId = params.get("mentorId");
 let chatId = params.get("chatId");
+let mentorId = params.get("mentorId");
 
 const chatBox = document.getElementById("chatBox");
 const chatMsg = document.getElementById("chatMsg");
@@ -195,6 +177,7 @@ const chatTitle = document.getElementById("chatTitle");
 const messageInput = document.getElementById("messageInput");
 
 let currentUser = null;
+let otherUserId = null;
 let unsubscribeMessages = null;
 
 function escapeHTML(text) {
@@ -208,8 +191,6 @@ function escapeHTML(text) {
 }
 
 function containsPrivateInfo(text) {
-  const lower = text.toLowerCase();
-
   const patterns = [
     /\b\d{10,15}\b/,
     /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/,
@@ -223,10 +204,46 @@ function containsPrivateInfo(text) {
     /@[a-zA-Z0-9_.]{3,}/
   ];
 
-  return patterns.some(pattern => pattern.test(lower));
+  return patterns.some(pattern => pattern.test(text.toLowerCase()));
+}
+
+async function getUserName(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (snap.exists()) {
+    return snap.data().name || snap.data().email || "User";
+  }
+  return "User";
 }
 
 async function createOrLoadChat(user) {
+
+  // CASE 1: Opening existing chat from My Chats
+  if (chatId) {
+    const chatRef = doc(db, "chats", chatId);
+    const chatSnap = await getDoc(chatRef);
+
+    if (!chatSnap.exists()) {
+      chatBox.innerHTML = "Chat not found ❌";
+      return;
+    }
+
+    const chatData = chatSnap.data();
+
+    if (!chatData.participants || !chatData.participants.includes(user.uid)) {
+      chatBox.innerHTML = "You are not allowed to open this chat ❌";
+      return;
+    }
+
+    otherUserId = chatData.participants.find(uid => uid !== user.uid);
+
+    const otherName = await getUserName(otherUserId);
+    chatTitle.innerText = "Chat with " + otherName;
+
+    loadMessages();
+    return;
+  }
+
+  // CASE 2: Starting new chat from mentor-profile.html
   if (!mentorId) {
     chatBox.innerHTML = "Invalid chat link ❌";
     return;
@@ -237,25 +254,19 @@ async function createOrLoadChat(user) {
     return;
   }
 
-  chatId = chatId || [user.uid, mentorId].sort().join("_");
+  chatId = [user.uid, mentorId].sort().join("_");
+  otherUserId = mentorId;
 
-  const chatRef = doc(db, "chats", chatId);
-  const chatSnap = await getDoc(chatRef);
+  await setDoc(doc(db, "chats", chatId), {
+    studentId: user.uid,
+    mentorId: mentorId,
+    participants: [user.uid, mentorId],
+    status: "active",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
 
-  if (!chatSnap.exists()) {
-    await setDoc(chatRef, {
-      studentId: user.uid,
-      mentorId: mentorId,
-      participants: [user.uid, mentorId],
-      status: "active",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
-  }
-
-  const mentorSnap = await getDoc(doc(db, "users", mentorId));
-  const mentorName = mentorSnap.exists() ? mentorSnap.data().name || "Mentor" : "Mentor";
-
+  const mentorName = await getUserName(mentorId);
   chatTitle.innerText = "Chat with " + mentorName;
 
   loadMessages();
@@ -264,18 +275,16 @@ async function createOrLoadChat(user) {
 function loadMessages() {
   if (unsubscribeMessages) unsubscribeMessages();
 
-  const messagesRef = collection(db, "chats", chatId, "messages");
-  const q = query(messagesRef, orderBy("createdAt", "asc"));
+  const q = query(
+    collection(db, "chats", chatId, "messages"),
+    orderBy("createdAt", "asc")
+  );
 
   unsubscribeMessages = onSnapshot(q, (snap) => {
     chatBox.innerHTML = "";
 
     if (snap.empty) {
-      chatBox.innerHTML = `
-        <p style="text-align:center;color:gray;">
-          No messages yet. Start the conversation.
-        </p>
-      `;
+      chatBox.innerHTML = "<p style='text-align:center;color:gray;'>No messages yet.</p>";
       return;
     }
 
@@ -306,6 +315,11 @@ window.sendMessage = async function() {
     return;
   }
 
+  if (!chatId) {
+    chatMsg.innerText = "Chat not ready ❌";
+    return;
+  }
+
   if (containsPrivateInfo(text)) {
     chatMsg.innerText = "Private contact details are not allowed ❌";
     return;
@@ -325,7 +339,6 @@ window.sendMessage = async function() {
     }, { merge: true });
 
     messageInput.value = "";
-    chatMsg.innerText = "";
 
   } catch (error) {
     console.error(error);
