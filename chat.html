@@ -2,70 +2,100 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Private Chat | Connect</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Private Chat | Connect</title>
 <link rel="stylesheet" href="style.css">
 
 <style>
-.chat-box {
-  max-width: 800px;
+.chat-page {
+  max-width: 850px;
   margin: 30px auto;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
   overflow: hidden;
 }
 
 .chat-header {
   background: #4f46e5;
   color: white;
-  padding: 15px;
-  font-weight: bold;
+  padding: 18px;
 }
 
-.messages {
-  height: 420px;
+.chat-header h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.chat-header p {
+  margin-top: 5px;
+  font-size: 13px;
+  color: #e0e7ff;
+}
+
+.chat-box {
+  height: 450px;
   overflow-y: auto;
-  padding: 15px;
+  padding: 20px;
   background: #f8fafc;
 }
 
-.msg {
-  max-width: 70%;
+.message {
+  max-width: 75%;
+  padding: 12px 15px;
   margin-bottom: 12px;
-  padding: 10px 14px;
   border-radius: 14px;
   font-size: 14px;
+  line-height: 1.4;
 }
 
-.me {
+.mine {
   background: #4f46e5;
   color: white;
   margin-left: auto;
+  border-bottom-right-radius: 4px;
 }
 
 .other {
-  background: #e5e7eb;
+  background: white;
   color: #111827;
+  border: 1px solid #e5e7eb;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
 }
 
-.chat-input {
+.chat-input-area {
   display: flex;
   gap: 10px;
   padding: 15px;
+  border-top: 1px solid #e5e7eb;
+  background: white;
 }
 
-.chat-input input {
+.chat-input-area input {
   flex: 1;
-  padding: 12px;
-  border-radius: 10px;
+  padding: 13px;
+  border-radius: 30px;
   border: 1px solid #ccc;
+  outline: none;
+}
+
+.chat-input-area button {
+  border: none;
+  cursor: pointer;
 }
 
 .warning {
-  color: red;
+  background: #fff7ed;
+  color: #9a3412;
+  padding: 10px 15px;
+  font-size: 13px;
   text-align: center;
-  font-size: 14px;
+}
+
+#chatMsg {
+  text-align: center;
+  font-size: 13px;
   margin: 8px;
 }
 </style>
@@ -75,42 +105,67 @@
 
 <nav>
   <div class="container">
-    <div class="logo">Connect</div>
+    <div class="logo">
+      <a href="/connect-mentorship/" style="color:white;text-decoration:none;">Connect</a>
+    </div>
+
+    <div class="menu-toggle" onclick="toggleMenu()">☰</div>
+
     <div class="nav-links">
-      <a href="index.html">Home</a>
-      <a href="mentor.html">Mentors</a>
-      <a href="profile.html">Profile</a>
+      <a href="/connect-mentorship/">Home</a>
+      <a href="/connect-mentorship/questions.html">Questions</a>
+      <a href="/connect-mentorship/ask.html">Ask Question</a>
+      <a href="/connect-mentorship/mentor.html">Mentors</a>
+      <a href="/connect-mentorship/profile.html">Profile</a>
+      <span id="userArea"></span>
     </div>
   </div>
 </nav>
 
-<div class="chat-box">
-  <div class="chat-header" id="chatTitle">Private Chat</div>
-  <div class="messages" id="messages"></div>
+<div class="chat-page">
 
-  <p class="warning" id="warning"></p>
+  <div class="chat-header">
+    <h2>💬 Private Connect Chat</h2>
+    <p id="chatTitle">Loading chat...</p>
+  </div>
 
-  <div class="chat-input">
-    <input id="messageInput" placeholder="Type message...">
+  <div class="warning">
+    For privacy, phone numbers, emails, links, WhatsApp, Instagram, Telegram, UPI and direct contact details are blocked.
+  </div>
+
+  <div class="chat-box" id="chatBox">
+    Loading messages...
+  </div>
+
+  <p id="chatMsg"></p>
+
+  <div class="chat-input-area">
+    <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
     <button class="btn" onclick="sendMessage()">Send</button>
   </div>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   doc,
   getDoc,
   setDoc,
-  addDoc,
   collection,
+  addDoc,
   query,
   orderBy,
   onSnapshot,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -121,33 +176,29 @@ const firebaseConfig = {
   appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+/* IMPORTANT:
+   Replace YOUR_API_KEY with your same apiKey from mentor-profile.html:
+   AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg
+*/
+
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const params = new URLSearchParams(window.location.search);
 const mentorId = params.get("mentorId");
+let chatId = params.get("chatId");
 
-const messagesBox = document.getElementById("messages");
-const input = document.getElementById("messageInput");
-const warning = document.getElementById("warning");
+const chatBox = document.getElementById("chatBox");
+const chatMsg = document.getElementById("chatMsg");
+const chatTitle = document.getElementById("chatTitle");
+const messageInput = document.getElementById("messageInput");
 
-let currentUser;
-let chatId;
+let currentUser = null;
+let unsubscribeMessages = null;
 
-// Contact detail detector
-function containsContact(text) {
-  const patterns = [
-    /\b\d{10,15}\b/g,
-    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/gi,
-    /whatsapp|telegram|instagram|insta|gmail|email|phone|mobile|call me|dm me|upi/gi
-  ];
-
-  return patterns.some(pattern => pattern.test(text));
-}
-
-function escapeHTML(str) {
-  return str.replace(/[&<>"']/g, m => ({
+function escapeHTML(text) {
+  return String(text || "").replace(/[&<>"']/g, (m) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -156,87 +207,156 @@ function escapeHTML(str) {
   }[m]));
 }
 
-onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    window.location.href = "login.html";
-    return;
-  }
+function containsPrivateInfo(text) {
+  const lower = text.toLowerCase();
 
+  const patterns = [
+    /\b\d{10,15}\b/,
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/,
+    /(https?:\/\/|www\.)/i,
+    /\bwhatsapp\b|\bwa\.me\b/i,
+    /\binstagram\b|\binsta\b|\big\b/i,
+    /\btelegram\b|\bt\.me\b/i,
+    /\bfacebook\b|\bfb\.com\b/i,
+    /\bsnapchat\b/i,
+    /\bupi\b|\bpaytm\b|\bgpay\b|\bphonepe\b/i,
+    /@[a-zA-Z0-9_.]{3,}/
+  ];
+
+  return patterns.some(pattern => pattern.test(lower));
+}
+
+async function createOrLoadChat(user) {
   if (!mentorId) {
-    alert("Mentor not found");
-    window.location.href = "mentor.html";
+    chatBox.innerHTML = "Invalid chat link ❌";
     return;
   }
 
-  currentUser = user;
+  if (user.uid === mentorId) {
+    chatBox.innerHTML = "You cannot chat with yourself ❌";
+    return;
+  }
 
-  const ids = [currentUser.uid, mentorId].sort();
-  chatId = ids.join("_");
+  chatId = chatId || [user.uid, mentorId].sort().join("_");
 
   const chatRef = doc(db, "chats", chatId);
   const chatSnap = await getDoc(chatRef);
 
   if (!chatSnap.exists()) {
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 7);
-
     await setDoc(chatRef, {
-      participants: ids,
-      studentId: currentUser.uid,
+      studentId: user.uid,
       mentorId: mentorId,
+      participants: [user.uid, mentorId],
+      status: "active",
       createdAt: serverTimestamp(),
-      expiresAt: expires,
-      status: "active"
+      updatedAt: serverTimestamp()
     });
   }
 
+  const mentorSnap = await getDoc(doc(db, "users", mentorId));
+  const mentorName = mentorSnap.exists() ? mentorSnap.data().name || "Mentor" : "Mentor";
+
+  chatTitle.innerText = "Chat with " + mentorName;
+
   loadMessages();
-});
+}
 
 function loadMessages() {
-  const q = query(
-    collection(db, "chats", chatId, "messages"),
-    orderBy("createdAt", "asc")
-  );
+  if (unsubscribeMessages) unsubscribeMessages();
 
-  onSnapshot(q, (snap) => {
-    messagesBox.innerHTML = "";
+  const messagesRef = collection(db, "chats", chatId, "messages");
+  const q = query(messagesRef, orderBy("createdAt", "asc"));
 
-    snap.forEach(docSnap => {
+  unsubscribeMessages = onSnapshot(q, (snap) => {
+    chatBox.innerHTML = "";
+
+    if (snap.empty) {
+      chatBox.innerHTML = `
+        <p style="text-align:center;color:gray;">
+          No messages yet. Start the conversation.
+        </p>
+      `;
+      return;
+    }
+
+    snap.forEach((docSnap) => {
       const msg = docSnap.data();
 
       const div = document.createElement("div");
-      div.className = "msg " + (msg.senderId === currentUser.uid ? "me" : "other");
+      div.className = "message " + (msg.senderId === currentUser.uid ? "mine" : "other");
       div.innerHTML = escapeHTML(msg.text);
 
-      messagesBox.appendChild(div);
+      chatBox.appendChild(div);
     });
 
-    messagesBox.scrollTop = messagesBox.scrollHeight;
+    chatBox.scrollTop = chatBox.scrollHeight;
   });
 }
 
 window.sendMessage = async function() {
-  const text = input.value.trim();
+  const text = messageInput.value.trim();
+
+  chatMsg.innerText = "";
+  chatMsg.style.color = "red";
 
   if (!text) return;
 
-  if (containsContact(text)) {
-    warning.innerText = "⚠️ Sharing phone, email, WhatsApp, Instagram or payment details is not allowed.";
+  if (!currentUser) {
+    chatMsg.innerText = "Please login first ❌";
     return;
   }
 
-  warning.innerText = "";
+  if (containsPrivateInfo(text)) {
+    chatMsg.innerText = "Private contact details are not allowed ❌";
+    return;
+  }
 
-  await addDoc(collection(db, "chats", chatId, "messages"), {
-    text,
-    senderId: currentUser.uid,
-    createdAt: serverTimestamp(),
-    flagged: false
-  });
+  try {
+    await addDoc(collection(db, "chats", chatId, "messages"), {
+      text,
+      senderId: currentUser.uid,
+      createdAt: serverTimestamp(),
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    });
 
-  input.value = "";
+    await setDoc(doc(db, "chats", chatId), {
+      updatedAt: serverTimestamp(),
+      lastMessage: text
+    }, { merge: true });
+
+    messageInput.value = "";
+    chatMsg.innerText = "";
+
+  } catch (error) {
+    console.error(error);
+    chatMsg.innerText = "Message failed ❌ Check Firestore rules.";
+  }
 };
+
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    sendMessage();
+  }
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    alert("Please login to open chat ❌");
+    window.location.href = "/connect-mentorship/login.html";
+    return;
+  }
+
+  currentUser = user;
+  await createOrLoadChat(user);
+});
+</script>
+
+<script type="module" src="auth.js"></script>
+
+<script>
+function toggleMenu() {
+  document.querySelector(".nav-links").classList.toggle("active");
+}
 </script>
 
 </body>
