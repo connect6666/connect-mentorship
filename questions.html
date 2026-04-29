@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta name="description" content="Browse student questions and answers about career, exams, college, and skills. Learn from real experiences and mentorship.">
 <meta name="robots" content="index, follow">
 <title>Student Questions & Answers | Career Guidance India</title>
@@ -13,8 +12,7 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-/* PRO UI STYLING */
-.question-search-box input {
+.question-search-box {
   width: 100%;
   max-width: 500px;
   padding: 14px;
@@ -64,6 +62,37 @@
   transform: translateY(-5px);
 }
 
+.question-card h3,
+.question-card a {
+  color: #0f172a;
+}
+
+.question-meta {
+  color: #475569;
+  font-weight: 700;
+}
+
+.question-attachment {
+  margin: 14px 0;
+}
+
+.question-attachment img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+.question-attachment a {
+  display: inline-block;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+  font-weight: 800;
+}
+
 .no-result {
   text-align: center;
   color: red;
@@ -75,17 +104,16 @@
   to {opacity: 1; transform: scale(1);}
 }
 </style>
-
 </head>
 
 <body>
 
-<!-- NAV SAME -->
 <nav>
   <div class="container">
     <div class="logo">
       <a href="/connect-mentorship/">Connect</a>
     </div>
+
     <div class="menu-toggle" onclick="toggleMenu()">☰</div>
 
     <div class="nav-links">
@@ -106,7 +134,6 @@
   <p>Browse real questions asked by students.</p>
 </section>
 
-<!-- 🔥 NEW PRO FILTER + SEARCH -->
 <section class="container">
   <input type="text" id="searchInput" placeholder="Search questions..." class="question-search-box">
 
@@ -118,25 +145,22 @@
   </div>
 </section>
 
-<!-- QUESTIONS -->
 <div class="questions-container" id="questionsList"></div>
 
 <p id="noResult" class="no-result">No questions found</p>
 
-  <footer>
-    <div style="margin-top:10px; font-size:14px; color:gray;">
-  <a href="privacy.html">Privacy</a> |
-  <a href="terms.html">Terms</a> |
-  <a href="cookie.html">Cookies</a> |
-  <a href="disclaimer.html">Disclaimer</a>
-</div>
-    <p>© 2026 Connect Mentorship</p>
-    <a href="feedback.html">Feedback</a>
-  </footer>
+<footer>
+  <div style="margin-top:10px; font-size:14px; color:gray;">
+    <a href="privacy.html">Privacy</a> |
+    <a href="terms.html">Terms</a> |
+    <a href="cookie.html">Cookies</a> |
+    <a href="disclaimer.html">Disclaimer</a>
+  </div>
+  <p>© 2026 Connect Mentorship</p>
+  <a href="feedback.html">Feedback</a>
+</footer>
 
-<!-- FIREBASE LOGIC -->
 <script type="module">
-
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
@@ -168,69 +192,94 @@ const noResult = document.getElementById("noResult");
 let allQuestions = [];
 let selectedCategory = "all";
 
-/* LOAD QUESTIONS */
-function loadQuestions() {
+function escapeHTML(str) {
+  return String(str || "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
+}
 
-  const qRef = query(collection(db, "questions"), orderBy("createdAt", "desc"), limit(50));
+function loadQuestions() {
+  const qRef = query(
+    collection(db, "questions"),
+    orderBy("createdAt", "desc"),
+    limit(50)
+  );
 
   onSnapshot(qRef, (snap) => {
     allQuestions = [];
 
-    snap.forEach(doc => {
-      const data = doc.data();
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+
       allQuestions.push({
-  id: doc.id,
-  question: data.question,
-  name: data.name || "User",
-  category: (data.category || "general").toLowerCase(),
-  attachmentURL: data.attachmentURL || "",
-  attachmentName: data.attachmentName || "",
-  attachmentType: data.attachmentType || ""
-});
+        id: docSnap.id,
+        question: data.question || "",
+        name: data.name || "User",
+        category: (data.category || "general").toLowerCase(),
+        attachmentURL: data.attachmentURL || "",
+        attachmentName: data.attachmentName || "",
+        attachmentType: data.attachmentType || ""
+      });
+    });
 
     renderQuestions();
+  }, (error) => {
+    console.error("Error loading questions:", error);
+    container.innerHTML = "";
+    noResult.innerText = "Error loading questions";
+    noResult.style.display = "block";
   });
 }
 
-/* RENDER */
 function renderQuestions() {
-
   container.innerHTML = "";
   let visible = 0;
 
   const searchText = searchInput.value.toLowerCase();
 
-  allQuestions.forEach(q => {
-
+  allQuestions.forEach((q) => {
+    const questionText = String(q.question || "");
     const matchCategory = selectedCategory === "all" || q.category === selectedCategory;
-    const matchSearch = q.question.toLowerCase().includes(searchText);
+    const matchSearch = questionText.toLowerCase().includes(searchText);
 
     if (matchCategory && matchSearch) {
-
       visible++;
 
       const card = document.createElement("div");
       card.className = "question-card";
 
-    card.innerHTML = `
-  <h3>
-    <a href="/connect-mentorship/view-question.html?id=${q.id}" class="question-title-link">
-      ${q.question}
-    </a>
-  </h3>
+      const safeQuestion = escapeHTML(q.question);
+      const safeName = escapeHTML(q.name);
+      const safeCategory = escapeHTML(q.category);
+      const safeURL = escapeHTML(q.attachmentURL);
 
-  ${q.attachmentURL ? `
-    <div class="question-attachment">
-      ${
-        q.attachmentType && q.attachmentType.startsWith("image/")
-          ? `<img src="${q.attachmentURL}" alt="Question attachment">`
-          : `<a href="${q.attachmentURL}" target="_blank">📎 View Attachment</a>`
-      }
-    </div>
-  ` : ""}
+      card.innerHTML = `
+        <h3>
+          <a href="/connect-mentorship/view-question.html?id=${q.id}" class="question-title-link">
+            ${safeQuestion}
+          </a>
+        </h3>
 
-  <small class="question-meta">${q.name} | ${q.category}</small>
-`;
+        ${
+          q.attachmentURL
+            ? `
+              <div class="question-attachment">
+                ${
+                  q.attachmentType && q.attachmentType.startsWith("image/")
+                    ? `<img src="${safeURL}" alt="Question attachment">`
+                    : `<a href="${safeURL}" target="_blank">📎 View Attachment</a>`
+                }
+              </div>
+            `
+            : ""
+        }
+
+        <small class="question-meta">${safeName} | ${safeCategory}</small>
+      `;
 
       container.appendChild(card);
     }
@@ -239,10 +288,9 @@ function renderQuestions() {
   noResult.style.display = visible === 0 ? "block" : "none";
 }
 
-/* FILTER BUTTON */
-document.querySelectorAll(".filter-btn").forEach(btn => {
+document.querySelectorAll(".filter-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
 
     selectedCategory = btn.dataset.category;
@@ -250,12 +298,11 @@ document.querySelectorAll(".filter-btn").forEach(btn => {
   });
 });
 
-/* SEARCH */
 searchInput.addEventListener("input", renderQuestions);
 
-/* INIT */
-onAuthStateChanged(auth, () => loadQuestions());
-
+onAuthStateChanged(auth, () => {
+  loadQuestions();
+});
 </script>
 
 <script>
