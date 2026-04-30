@@ -13,9 +13,38 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification?.title || "New message on Connect", {
+  const title = payload.notification?.title || "New message on Connect";
+  const options = {
     body: payload.notification?.body || "You received a new message",
     icon: "/connect-mentorship/icon.png",
-    data: payload.data || {}
-  });
+    badge: "/connect-mentorship/icon.png",
+    data: {
+      url: payload.data?.url || "/connect-mentorship/my-chats.html",
+      chatId: payload.data?.chatId || ""
+    }
+  };
+
+  self.registration.showNotification(title, options);
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || "/connect-mentorship/my-chats.html";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes("/connect-mentorship/") && "focus" in client) {
+          client.focus();
+          client.navigate(urlToOpen);
+          return;
+        }
+      }
+
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
 });
