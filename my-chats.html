@@ -245,7 +245,7 @@ async function getUser(uid) {
   name: data.name || data.email || "User",
   photoURL: data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=6366f1&color=fff`,
   role: data.role || "user",
-  isOnline: data.isOnline || false,
+  isOnline: data.isOnline === true,
   lastSeen: data.lastSeen || null
 };
   }
