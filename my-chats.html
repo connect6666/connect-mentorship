@@ -233,6 +233,11 @@ function escapeHTML(text) {
     "'": "&#039;"
   }[m]));
 }
+  function getLastSeenTime(lastSeen) {
+  if (!lastSeen) return 0;
+  if (lastSeen.toDate) return lastSeen.toDate().getTime();
+  return new Date(lastSeen).getTime();
+}
 
 async function getUser(uid) {
   const snap = await getDoc(doc(db, "users", uid));
@@ -245,8 +250,8 @@ async function getUser(uid) {
   name: data.name || data.email || "User",
   photoURL: data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=6366f1&color=fff`,
   role: data.role || "user",
-  isOnline: data.isOnline === true,
-  lastSeen: data.lastSeen || null
+lastSeen: data.lastSeen || null,
+isOnline: data.isOnline === true && (Date.now() - getLastSeenTime(data.lastSeen) < 70000)
 };
   }
 
