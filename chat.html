@@ -320,7 +320,10 @@ function loadMessages() {
     orderBy("createdAt", "asc")
   );
 
-  unsubscribeMessages = onSnapshot(q, (snap) => {
+  unsubscribeMessages = onSnapshot(q, { includeMetadataChanges: true }, (snap) => {
+
+  console.log("Realtime update triggered");  // ✅ ADD HERE
+
     chatBox.innerHTML = "";
 
     snap.docs.forEach(docSnap => {
