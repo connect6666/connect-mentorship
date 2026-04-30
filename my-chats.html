@@ -167,7 +167,12 @@ body {
   <div class="dm-left">
     <div class="dm-left-header">
       <h2>Messages</h2>
-      <div class="search-box">🔍 Search messages</div>
+     <input 
+  type="text" 
+  id="searchInput" 
+  class="search-box" 
+  placeholder="🔍 Search messages"
+>
     </div>
 
     <div id="chatList">Loading chats...</div>
@@ -216,6 +221,8 @@ const auth = getAuth(app);
 
 const chatList = document.getElementById("chatList");
 const chatPreview = document.getElementById("chatPreview");
+  const searchInput = document.getElementById("searchInput");
+let allChats = [];
 
 function escapeHTML(text) {
   return String(text || "").replace(/[&<>"']/g, (m) => ({
@@ -234,17 +241,19 @@ async function getUser(uid) {
     const data = snap.data();
 
     return {
-      name: data.name || data.email || "User",
-      photoURL: data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=6366f1&color=fff`,
-      role: data.role || "user"
-    };
+  id: uid,
+  name: data.name || data.email || "User",
+  photoURL: data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=6366f1&color=fff`,
+  role: data.role || "user"
+};
   }
 
-  return {
-    name: "User",
-    photoURL: "https://ui-avatars.com/api/?name=User&background=6366f1&color=fff",
-    role: "user"
-  };
+ return {
+  id: uid,
+  name: "User",
+  photoURL: "https://ui-avatars.com/api/?name=User&background=6366f1&color=fff",
+  role: "user"
+};
 }
 
 function openPreview(chatId, otherUser, lastMessage, mentorId) {
@@ -261,6 +270,50 @@ function openPreview(chatId, otherUser, lastMessage, mentorId) {
   `;
 }
 
+  function renderChats(chats) {
+  chatList.innerHTML = "";
+
+  if (chats.length === 0) {
+    chatList.innerHTML = `<p style="padding:20px;color:gray;">No chats found.</p>`;
+    return;
+  }
+
+  chats.forEach(({ chatId, chat, otherUser }) => {
+    const item = document.createElement("div");
+    item.className = "chat-user";
+
+    item.innerHTML = `
+      <img src="${otherUser.photoURL}" alt="${escapeHTML(otherUser.name)}">
+
+      <div class="chat-user-info">
+        <h3>${escapeHTML(otherUser.name)}</h3>
+        <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
+      </div>
+    `;
+
+    item.onclick = () => {
+      if (window.innerWidth <= 768) {
+        window.location.href = `/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(chat.mentorId || otherUser.id)}`;
+      } else {
+        openPreview(chatId, otherUser, chat.lastMessage, chat.mentorId || otherUser.id);
+      }
+    };
+
+    chatList.appendChild(item);
+  });
+}
+
+searchInput.addEventListener("input", () => {
+  const keyword = searchInput.value.toLowerCase().trim();
+
+  const filtered = allChats.filter(item =>
+    item.otherUser.name.toLowerCase().includes(keyword) ||
+    String(item.chat.lastMessage || "").toLowerCase().includes(keyword)
+  );
+
+  renderChats(filtered);
+});
+
 onAuthStateChanged(auth, (user) => {
   if (!user) {
     alert("Please login first ❌");
@@ -274,46 +327,32 @@ onAuthStateChanged(auth, (user) => {
   );
 
   onSnapshot(q, async (snap) => {
-    chatList.innerHTML = "";
+   allChats = [];
 
-    if (snap.empty) {
-      chatList.innerHTML = `
-        <p style="padding:20px;color:gray;">No chats yet.</p>
-      `;
-      return;
-    }
+if (snap.empty) {
+  chatList.innerHTML = `
+    <p style="padding:20px;color:gray;">No chats yet.</p>
+  `;
+  return;
+}
 
-    for (const docSnap of snap.docs) {
-      const chat = docSnap.data();
-      const chatId = docSnap.id;
+for (const docSnap of snap.docs) {
+  const chat = docSnap.data();
+  const chatId = docSnap.id;
 
-      if (!chat.participants || !Array.isArray(chat.participants)) continue;
+  if (!chat.participants || !Array.isArray(chat.participants)) continue;
 
-      const otherUserId = chat.participants.find(id => id !== user.uid);
-      const otherUser = await getUser(otherUserId);
+  const otherUserId = chat.participants.find(id => id !== user.uid);
+  const otherUser = await getUser(otherUserId);
 
-      const item = document.createElement("div");
-      item.className = "chat-user";
+  allChats.push({
+    chatId,
+    chat,
+    otherUser
+  });
+}
 
-      item.innerHTML = `
-        <img src="${otherUser.photoURL}" alt="${escapeHTML(otherUser.name)}">
-
-        <div class="chat-user-info">
-          <h3>${escapeHTML(otherUser.name)}</h3>
-          <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
-        </div>
-      `;
-
-      item.onclick = () => {
-        if (window.innerWidth <= 768) {
-          window.location.href = `/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(chat.mentorId || otherUserId)}`;
-        } else {
-          openPreview(chatId, otherUser, chat.lastMessage, chat.mentorId || otherUserId);
-        }
-      };
-
-      chatList.appendChild(item);
-    }
+renderChats(allChats);
 
   }, (error) => {
     console.error(error);
