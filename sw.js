@@ -39,6 +39,11 @@ self.addEventListener("activate", (event) => {
 
 // FETCH (CACHE FIRST → FALLBACK NETWORK)
 self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
