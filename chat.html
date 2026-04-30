@@ -146,6 +146,9 @@ src="https://www.facebook.com/tr?id=2190385751757102&ev=PageView&noscript=1"/>
   <p id="typingStatus" style="padding:0 20px;color:#6b7280;font-size:13px;"></p>
 
   <p id="chatMsg"></p>
+  <button id="enableNotifyBtn" class="btn" style="margin:10px auto;display:flex;">
+  🔔 Enable Notifications
+</button>
 
   <div class="chat-input-area">
     <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
@@ -202,6 +205,7 @@ let otherUserId = null;
 let unsubscribeMessages = null;
 let typingTimer = null;
 let firstMessageLoad = true;
+  let notificationsEnabled = false;
 
 // ===================== UTIL =====================
 function escapeHTML(text) {
@@ -282,7 +286,7 @@ async function createOrLoadChat(user) {
     loadMessages();
     listenTyping();
     markChatAsRead();
-    requestNotificationPermission();
+   
     return;
   }
 
@@ -306,7 +310,7 @@ async function createOrLoadChat(user) {
   loadMessages();
   listenTyping();
   markChatAsRead();
-  requestNotificationPermission();
+ 
 }
 
 // ===================== LOAD MESSAGES =====================
@@ -319,14 +323,15 @@ function loadMessages() {
   unsubscribeMessages = onSnapshot(q, (snap) => {
     chatBox.innerHTML = "";
 
-    snap.forEach(docSnap => {
-      const msg = docSnap.data();
+   snap.docChanges().forEach(change => {
+  if (change.type !== "added") return;
 
-      // 🔔 notification
-      if (!firstMessageLoad && msg.senderId !== currentUser.uid) {
-        showMessageNotification(msg.text);
-      }
+  const msg = change.doc.data();
 
+  if (!firstMessageLoad && msg.senderId !== currentUser.uid && document.hidden) {
+    showMessageNotification(msg.text);
+  }
+     
       const div = document.createElement("div");
       div.className = "message " + (msg.senderId === currentUser.uid ? "mine" : "other");
       div.innerHTML = escapeHTML(msg.text);
@@ -386,7 +391,10 @@ async function setTypingStatus(val) {
     isTyping: val
   }, { merge: true });
 }
-
+  
+document.getElementById("enableNotifyBtn").addEventListener("click", () => {
+  requestNotificationPermission();
+});
 messageInput.addEventListener("input", () => {
   setTypingStatus(true);
   clearTimeout(typingTimer);
@@ -401,16 +409,29 @@ async function markChatAsRead() {
 }
 
 // ===================== NOTIFICATION =====================
-function requestNotificationPermission() {
-  if ("Notification" in window && Notification.permission === "default") {
-    Notification.requestPermission();
+async function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    console.log("Notifications not supported");
+    return;
+  }
+
+  const permission = await Notification.requestPermission();
+  console.log("Notification permission:", permission);
+
+  notificationsEnabled = permission === "granted";
+
+  const btn = document.getElementById("enableNotifyBtn");
+  if (btn) {
+    btn.innerText = notificationsEnabled ? "🔔 Notifications Enabled" : "🔕 Notifications Blocked";
   }
 }
 
 function showMessageNotification(text) {
-  console.log("Notification permission:", Notification.permission);
+  console.log("Trying notification:", Notification.permission, text);
 
-  if ("Notification" in window && Notification.permission === "granted") {
+  if (!("Notification" in window)) return;
+
+  if (Notification.permission === "granted") {
     new Notification("New message on Connect", {
       body: text,
       icon: "/connect-mentorship/icon.png"
