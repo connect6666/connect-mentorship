@@ -177,6 +177,11 @@ import {
   getAuth,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+  getMessaging,
+  getToken,
+  onMessage
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -190,6 +195,7 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+  const messaging = getMessaging(app);
 
 const params = new URLSearchParams(window.location.search);
 let chatId = params.get("chatId");
@@ -199,6 +205,7 @@ const chatBox = document.getElementById("chatBox");
 const chatMsg = document.getElementById("chatMsg");
 const chatTitle = document.getElementById("chatTitle");
 const messageInput = document.getElementById("messageInput");
+  const enableNotifyBtn = document.getElementById("enableNotifyBtn");
 
 let currentUser = null;
 let otherUserId = null;
@@ -399,8 +406,8 @@ async function setTypingStatus(val) {
   }, { merge: true });
 }
   
-document.getElementById("enableNotifyBtn").addEventListener("click", () => {
-  requestNotificationPermission();
+enableNotifyBtn.addEventListener("click", async () => {
+  await saveFcmToken();
 });
 messageInput.addEventListener("input", () => {
   setTypingStatus(true);
@@ -416,7 +423,7 @@ async function markChatAsRead() {
 }
 
 // ===================== NOTIFICATION =====================
-async function requestNotificationPermission() {
+async function saveFcmToken() {
   if (!("Notification" in window)) {
     console.log("Notifications not supported");
     return;
@@ -425,13 +432,28 @@ async function requestNotificationPermission() {
   const permission = await Notification.requestPermission();
   console.log("Notification permission:", permission);
 
-  notificationsEnabled = permission === "granted";
-
-  const btn = document.getElementById("enableNotifyBtn");
-  if (btn) {
-    btn.innerText = notificationsEnabled ? "🔔 Notifications Enabled" : "🔕 Notifications Blocked";
+  if (permission !== "granted") {
+    enableNotifyBtn.innerText = "🔕 Notifications Blocked";
+    return;
   }
+
+  const token = await getToken(messaging, {
+    vapidKey: "BIYazYzPt-AW7rK5iIAmgFQxBVmczsUmiM5GmhHwXzv--xdx6TrjMCqixSK5g1XSAui_J3s1TgrhqqNlA37NAS4"
+  });
+
+  if (!token || !currentUser) return;
+
+  await setDoc(doc(db, "users", currentUser.uid), {
+    fcmTokens: {
+      [token]: true
+    },
+    updatedAt: new Date()
+  }, { merge: true });
+
+  enableNotifyBtn.innerText = "🔔 Notifications Enabled";
+  console.log("FCM token saved:", token);
 }
+
 
 function showMessageNotification(text) {
   console.log("Trying notification:", Notification.permission, text);
@@ -445,6 +467,17 @@ function showMessageNotification(text) {
     });
   }
 }
+
+  onMessage(messaging, (payload) => {
+  console.log("Foreground FCM:", payload);
+
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(payload.notification?.title || "New message on Connect", {
+      body: payload.notification?.body || "You received a new message",
+      icon: "/connect-mentorship/icon.png"
+    });
+  }
+});
 
 // ===================== INIT =====================
 onAuthStateChanged(auth, async (user) => {
