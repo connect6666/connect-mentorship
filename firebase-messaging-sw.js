@@ -13,9 +13,9 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  self.registration.showNotification(payload.notification.title, {
-    body: payload.notification.body,
+  self.registration.showNotification(payload.notification?.title || "New message on Connect", {
+    body: payload.notification?.body || "You received a new message",
     icon: "/connect-mentorship/icon.png",
-    data: payload.data
+    data: payload.data || {}
   });
 });
