@@ -240,19 +240,23 @@ async function getUser(uid) {
   if (snap.exists()) {
     const data = snap.data();
 
-    return {
+   return {
   id: uid,
   name: data.name || data.email || "User",
   photoURL: data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=6366f1&color=fff`,
-  role: data.role || "user"
+  role: data.role || "user",
+  isOnline: data.isOnline || false,
+  lastSeen: data.lastSeen || null
 };
   }
 
- return {
+return {
   id: uid,
   name: "User",
   photoURL: "https://ui-avatars.com/api/?name=User&background=6366f1&color=fff",
-  role: "user"
+  role: "user",
+  isOnline: false,
+  lastSeen: null
 };
 }
 
@@ -283,13 +287,24 @@ function openPreview(chatId, otherUser, lastMessage, mentorId) {
     item.className = "chat-user";
 
     item.innerHTML = `
-      <img src="${otherUser.photoURL}" alt="${escapeHTML(otherUser.name)}">
+  <img src="${otherUser.photoURL}" alt="${escapeHTML(otherUser.name)}">
 
-      <div class="chat-user-info">
-        <h3>${escapeHTML(otherUser.name)}</h3>
-        <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
-      </div>
-    `;
+  <div class="chat-user-info">
+    <h3>${escapeHTML(otherUser.name)}</h3>
+
+    <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
+
+    <small style="color:${otherUser.isOnline ? '#22c55e' : '#9ca3af'};">
+      ${otherUser.isOnline ? '● Online' : '● Offline'}
+    </small>
+  </div>
+
+  ${chat.unread && chat.unread[auth.currentUser.uid] > 0 ? `
+    <span class="unread-badge">
+      ${chat.unread[auth.currentUser.uid]}
+    </span>
+  ` : ""}
+`;
 
     item.onclick = () => {
       if (window.innerWidth <= 768) {
