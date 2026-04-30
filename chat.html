@@ -232,6 +232,36 @@ async function getUserName(uid) {
   const snap = await getDoc(doc(db, "users", uid));
   return snap.exists() ? (snap.data().name || snap.data().email) : "User";
 }
+  // ===================== ONLINE / OFFLINE =====================
+let onlineInterval = null;
+
+async function updateOnlineStatus(isOnline) {
+  if (!currentUser) return;
+
+  await setDoc(doc(db, "users", currentUser.uid), {
+    isOnline: isOnline,
+    lastSeen: new Date()
+  }, { merge: true });
+}
+
+function startOnlineHeartbeat() {
+  updateOnlineStatus(true);
+
+  if (onlineInterval) clearInterval(onlineInterval);
+
+  onlineInterval = setInterval(() => {
+    updateOnlineStatus(true);
+  }, 30000);
+}
+
+window.addEventListener("beforeunload", () => {
+  if (currentUser) {
+    setDoc(doc(db, "users", currentUser.uid), {
+      isOnline: false,
+      lastSeen: new Date()
+    }, { merge: true });
+  }
+});
 
 // ===================== CHAT INIT =====================
 async function createOrLoadChat(user) {
@@ -388,6 +418,10 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) return location.href = "/connect-mentorship/login.html";
 
   currentUser = user;
+
+  // ✅ ADD THIS LINE
+  startOnlineHeartbeat();
+
   await createOrLoadChat(user);
 });
 </script>
