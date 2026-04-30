@@ -1,53 +1,141 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Meta Pixel Code -->
-<script>
-!function(f,b,e,v,n,t,s)
-{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-n.queue=[];t=b.createElement(e);t.async=!0;
-t.src='https://connect.facebook.net/en_US/fbevents.js';
-s=b.getElementsByTagName(e)[0];
-s.parentNode.insertBefore(t,s)}(window, document,'script');
-
-fbq('init', '2190385751757102');
-fbq('track', 'PageView');
-</script>
-<noscript>
-<img height="1" width="1" style="display:none"
-src="https://www.facebook.com/tr?id=2190385751757102&ev=PageView&noscript=1"/>
-</noscript>
-<!-- End Meta Pixel Code -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Chats | Connect</title>
+<title>Messages | Connect</title>
 <link rel="stylesheet" href="style.css">
 
 <style>
-.chat-list {
-  max-width: 800px;
-  margin: 40px auto;
-  padding: 0 15px;
+body {
+  background: #0b1020;
 }
 
-.chat-card {
-  background: white;
-  padding: 18px;
-  margin-bottom: 15px;
-  border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+.dm-wrapper {
+  max-width: 1150px;
+  height: calc(100vh - 90px);
+  margin: 25px auto;
+  background: #ffffff;
+  border-radius: 18px;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
 }
 
-.chat-card h3 {
-  margin-bottom: 8px;
+.dm-left {
+  border-right: 1px solid #e5e7eb;
+  background: #fff;
+  overflow-y: auto;
 }
 
-.chat-card p {
-  color: gray;
-  font-size: 14px;
-  margin-bottom: 12px;
+.dm-left-header {
+  padding: 22px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dm-left-header h2 {
+  text-align: left;
+  font-size: 24px;
+  margin: 0;
+}
+
+.search-box {
+  margin-top: 15px;
+  background: #f3f4f6;
+  border-radius: 999px;
+  padding: 12px 16px;
+  color: #6b7280;
+}
+
+.chat-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 18px;
+  cursor: pointer;
+  transition: 0.2s;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.chat-user:hover {
+  background: #f8fafc;
+}
+
+.chat-user img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.chat-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-user-info h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #111827;
+}
+
+.chat-user-info p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dm-right {
+  background: linear-gradient(135deg, #eef2ff, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-chat img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  margin-bottom: 18px;
+}
+
+.empty-chat h2 {
+  margin-bottom: 10px;
+}
+
+.empty-chat p {
+  color: #6b7280;
+  max-width: 380px;
+}
+
+.open-btn {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 13px 28px;
+  border-radius: 999px;
+  background: #4f46e5;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .dm-wrapper {
+    height: auto;
+    margin: 0;
+    border-radius: 0;
+    grid-template-columns: 1fr;
+  }
+
+  .dm-right {
+    display: none;
+  }
 }
 </style>
 </head>
@@ -74,9 +162,25 @@ src="https://www.facebook.com/tr?id=2190385751757102&ev=PageView&noscript=1"/>
   </div>
 </nav>
 
-<div class="chat-list">
-  <h2>💬 My Chats</h2>
-  <div id="chatList">Loading chats...</div>
+<div class="dm-wrapper">
+
+  <div class="dm-left">
+    <div class="dm-left-header">
+      <h2>Messages</h2>
+      <div class="search-box">🔍 Search messages</div>
+    </div>
+
+    <div id="chatList">Loading chats...</div>
+  </div>
+
+  <div class="dm-right" id="chatPreview">
+    <div class="empty-chat">
+      <div style="font-size:70px;">💬</div>
+      <h2>Your messages</h2>
+      <p>Select a chat from the left side to continue your private mentorship conversation.</p>
+    </div>
+  </div>
+
 </div>
 
 <script type="module">
@@ -111,6 +215,7 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 
 const chatList = document.getElementById("chatList");
+const chatPreview = document.getElementById("chatPreview");
 
 function escapeHTML(text) {
   return String(text || "").replace(/[&<>"']/g, (m) => ({
@@ -122,23 +227,38 @@ function escapeHTML(text) {
   }[m]));
 }
 
-async function getUserName(uid) {
-  if (!uid) return "User";
+async function getUser(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
 
-  try {
-    const snap = await getDoc(doc(db, "users", uid));
+  if (snap.exists()) {
+    const data = snap.data();
 
-    if (snap.exists()) {
-      const data = snap.data();
-      return data.name || data.email || "User";
-    }
-
-    return "User";
-
-  } catch (error) {
-    console.error("User name fetch error:", error);
-    return "User";
+    return {
+      name: data.name || data.email || "User",
+      photoURL: data.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=6366f1&color=fff`,
+      role: data.role || "user"
+    };
   }
+
+  return {
+    name: "User",
+    photoURL: "https://ui-avatars.com/api/?name=User&background=6366f1&color=fff",
+    role: "user"
+  };
+}
+
+function openPreview(chatId, otherUser, lastMessage, mentorId) {
+  chatPreview.innerHTML = `
+    <div class="empty-chat">
+      <img src="${otherUser.photoURL}" alt="${escapeHTML(otherUser.name)}">
+      <h2>${escapeHTML(otherUser.name)}</h2>
+      <p>${escapeHTML(lastMessage || "No message yet")}</p>
+
+      <a class="open-btn" href="/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(mentorId)}">
+        Open Chat
+      </a>
+    </div>
+  `;
 }
 
 onAuthStateChanged(auth, (user) => {
@@ -157,7 +277,9 @@ onAuthStateChanged(auth, (user) => {
     chatList.innerHTML = "";
 
     if (snap.empty) {
-      chatList.innerHTML = "<p>No chats yet.</p>";
+      chatList.innerHTML = `
+        <p style="padding:20px;color:gray;">No chats yet.</p>
+      `;
       return;
     }
 
@@ -165,31 +287,37 @@ onAuthStateChanged(auth, (user) => {
       const chat = docSnap.data();
       const chatId = docSnap.id;
 
-      if (!chat.participants || !Array.isArray(chat.participants)) {
-        continue;
-      }
+      if (!chat.participants || !Array.isArray(chat.participants)) continue;
 
       const otherUserId = chat.participants.find(id => id !== user.uid);
-      const otherName = await getUserName(otherUserId);
+      const otherUser = await getUser(otherUserId);
 
-      const card = document.createElement("div");
-      card.className = "chat-card";
+      const item = document.createElement("div");
+      item.className = "chat-user";
 
-      card.innerHTML = `
-        <h3>${escapeHTML(otherName)}</h3>
-        <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
+      item.innerHTML = `
+        <img src="${otherUser.photoURL}" alt="${escapeHTML(otherUser.name)}">
 
-        <a class="btn" href="/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(chat.mentorId || otherUserId)}">
-          Open Chat
-        </a>
+        <div class="chat-user-info">
+          <h3>${escapeHTML(otherUser.name)}</h3>
+          <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
+        </div>
       `;
 
-      chatList.appendChild(card);
+      item.onclick = () => {
+        if (window.innerWidth <= 768) {
+          window.location.href = `/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(chat.mentorId || otherUserId)}`;
+        } else {
+          openPreview(chatId, otherUser, chat.lastMessage, chat.mentorId || otherUserId);
+        }
+      };
+
+      chatList.appendChild(item);
     }
 
   }, (error) => {
     console.error(error);
-    chatList.innerHTML = "<p style='color:red;'>Error loading chats ❌ Check Firestore rules.</p>";
+    chatList.innerHTML = "<p style='padding:20px;color:red;'>Error loading chats ❌</p>";
   });
 });
 </script>
