@@ -78,6 +78,7 @@ import {
   getFirestore,
   doc,
   updateDoc,
+  setDoc,
   collection,
   query,
   where,
@@ -203,16 +204,30 @@ async function saveProfile() {
   const name = document.getElementById("editName").value.trim();
   const phone = document.getElementById("editPhone").value.trim();
 
-  await updateDoc(doc(db, "users", currentUser.uid), { name, phone });
+  if (!name) {
+    alert("Name required ❌");
+    return;
+  }
+
+  await setDoc(doc(db, "users", currentUser.uid), {
+    name,
+    phone,
+    email: currentUser.email,
+    updatedAt: new Date()
+  }, { merge: true });
+
   alert("Profile updated ✅");
 }
 
 /* APPLY */
 window.applyVerification = async function() {
-  await updateDoc(doc(db, "users", currentUser.uid), {
+  await setDoc(doc(db, "users", currentUser.uid), {
+    email: currentUser.email,
     role: "mentor",
-    verified: false
-  });
+    verified: false,
+    updatedAt: new Date()
+  }, { merge: true });
+
   alert("Applied for mentor ✅");
 };
 
