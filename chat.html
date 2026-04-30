@@ -323,20 +323,24 @@ function loadMessages() {
   unsubscribeMessages = onSnapshot(q, (snap) => {
     chatBox.innerHTML = "";
 
-   snap.docChanges().forEach(change => {
-  if (change.type !== "added") return;
+    snap.docs.forEach(docSnap => {
+      const msg = docSnap.data();
 
-  const msg = change.doc.data();
-
-  if (!firstMessageLoad && msg.senderId !== currentUser.uid && document.hidden) {
-    showMessageNotification(msg.text);
-  }
-     
       const div = document.createElement("div");
       div.className = "message " + (msg.senderId === currentUser.uid ? "mine" : "other");
       div.innerHTML = escapeHTML(msg.text);
 
       chatBox.appendChild(div);
+    });
+
+    snap.docChanges().forEach(change => {
+      if (change.type !== "added") return;
+
+      const msg = change.doc.data();
+
+      if (!firstMessageLoad && msg.senderId !== currentUser.uid) {
+        showMessageNotification(msg.text);
+      }
     });
 
     chatBox.scrollTop = chatBox.scrollHeight;
