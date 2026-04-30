@@ -357,7 +357,7 @@ setInterval(async () => {
     where("participants", "array-contains", user.uid)
   );
 
- onSnapshot(q, { includeMetadataChanges: true }, (snap) => {
+onSnapshot(q, { includeMetadataChanges: true }, async (snap) => {
    allChats = [];
 
 if (snap.empty) {
