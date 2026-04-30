@@ -198,7 +198,8 @@ import {
   where,
   onSnapshot,
   doc,
-  getDoc
+  getDoc,
+  setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -335,6 +336,16 @@ searchInput.addEventListener("input", () => {
 });
 
 onAuthStateChanged(auth, (user) => {
+  // 🔥 ADD THIS
+setInterval(async () => {
+  if (auth.currentUser) {
+    await setDoc(doc(db, "users", auth.currentUser.uid), {
+      isOnline: true,
+      lastSeen: new Date()
+    }, { merge: true });
+  }
+}, 30000);
+  
   if (!user) {
     alert("Please login first ❌");
     window.location.href = "/connect-mentorship/login.html";
@@ -346,7 +357,7 @@ onAuthStateChanged(auth, (user) => {
     where("participants", "array-contains", user.uid)
   );
 
-  onSnapshot(q, async (snap) => {
+ onSnapshot(q, { includeMetadataChanges: true }, (snap) => {
    allChats = [];
 
 if (snap.empty) {
