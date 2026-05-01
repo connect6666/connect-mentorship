@@ -87,6 +87,7 @@
       <div class="stat-card"><h3 id="userCount">0</h3><p>Users</p></div>
       <div class="stat-card"><h3 id="contactCount">0</h3><p>Contact Messages</p></div>
       <div class="stat-card"><h3 id="chatCount">0</h3><p>Chats</p></div>
+      <div class="stat-card"><h3 id="sessionCount">0</h3><p>Paid Sessions</p></div>
     </section>
 
     <div class="tabs">
@@ -95,6 +96,7 @@
       <button class="tab-btn" data-tab="users">Users / Verify Mentors</button>
       <button class="tab-btn" data-tab="contacts">Contact Messages</button>
       <button class="tab-btn" data-tab="chats">Chats</button>
+      <button class="tab-btn" data-tab="sessions">Payment Approval</button>
     </div>
 
     <section id="questionsTab" class="admin-card">
@@ -139,6 +141,16 @@
       <input id="chatSearch" placeholder="Search chats by user id, status, last message..." />
       <div id="chatsList"></div>
     </section>
+
+    
+<section id="sessionsTab" class="admin-card hidden">
+  <div class="toolbar">
+    <h2>Session Payment Approval</h2>
+  </div>
+  <input id="sessionSearch" placeholder="Search sessions by user id, status, payment..." />
+  <div id="sessionsList"></div>
+</section>
+    
   </main>
 </div>
 
@@ -158,7 +170,8 @@ import {
   getDoc,
   getDocs,
   updateDoc,
-  deleteDoc,
+setDoc,
+deleteDoc,
   query,
   orderBy,
   serverTimestamp
@@ -186,6 +199,7 @@ let allMentorApps = [];
 let allUsers = [];
 let allContacts = [];
 let allChats = [];
+  let allSessions = [];
 let currentAdmin = null;
 
 function safe(value) {
@@ -265,7 +279,14 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function loadAllData() {
-  await Promise.all([loadQuestions(), loadMentorApplications(), loadUsers(), loadContacts(), loadChats()]);
+ await Promise.all([
+  loadQuestions(),
+  loadMentorApplications(),
+  loadUsers(),
+  loadContacts(),
+  loadChats(),
+  loadSessions()
+]);
   updateStats();
 }
 
@@ -564,12 +585,134 @@ window.deleteChat = async function(chatId) {
     await deleteDoc(typingDoc.ref);
   }
 
+
   // delete main chat document
   await deleteDoc(doc(db, "chats", chatId));
 
   alert("Chat permanently deleted ✅");
   await loadChats();
 };
+
+
+
+  // . Add sessions functions
+
+  
+
+
+  async function loadSessions() {
+  const snap = await getDocs(collection(db, "sessions"));
+  allSessions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  allSessions.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  renderSessions();
+}
+
+function renderSessions() {
+  const searchEl = document.getElementById("sessionSearch");
+  const search = searchEl ? searchEl.value.toLowerCase() : "";
+  const list = document.getElementById("sessionsList");
+  if (!list) return;
+
+  const filtered = allSessions.filter(s =>
+    JSON.stringify(s).toLowerCase().includes(search)
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = "<p class='small'>No sessions found.</p>";
+    return;
+  }
+
+  list.innerHTML = filtered.map(s => {
+    const payClass = s.paymentStatus === "paid" ? "green" : "yellow";
+    const statusClass = s.status === "paid" || s.status === "active" ? "green" : "yellow";
+
+    return `
+      <div class="data-card">
+        <h3>Session ID: ${safe(s.id)}</h3>
+
+        <p><strong>Student:</strong> ${safe(getUserLabel(s.studentId))}</p>
+        <p><strong>Mentor:</strong> ${safe(getUserLabel(s.mentorId))}</p>
+        <p><strong>Chat ID:</strong> ${safe(s.chatId)}</p>
+
+        <p><strong>Amount:</strong> ₹${safe(s.amount || 99)}</p>
+        <p><strong>Duration:</strong> ${safe(s.durationMinutes || 15)} minutes</p>
+
+        <p><strong>Status:</strong> <span class="badge ${statusClass}">${safe(s.status || "pending")}</span></p>
+        <p><strong>Payment:</strong> <span class="badge ${payClass}">${safe(s.paymentStatus || "unpaid")}</span></p>
+
+        <p class="small"><strong>Created:</strong> ${safe(formatDate(s.createdAt))}</p>
+
+        <button class="btn success-btn" onclick="approveSessionPayment('${s.id}', '${s.chatId}', ${s.durationMinutes || 15})">
+          Approve Payment
+        </button>
+
+        <button class="btn warning-btn" onclick="markSessionPending('${s.id}')">
+          Mark Pending
+        </button>
+
+        <button class="btn danger-btn" onclick="deleteRecord('sessions','${s.id}')">
+          Delete Session
+        </button>
+
+        <a class="btn btn-outline" target="_blank"
+          href="chat.html?chatId=${encodeURIComponent(s.chatId)}&mentorId=${encodeURIComponent(s.mentorId)}&sessionId=${encodeURIComponent(s.id)}">
+          Open Paid Chat
+        </a>
+      </div>
+    `;
+  }).join("");
+}
+
+window.approveSessionPayment = async function(sessionId, chatId, minutes) {
+  if (!confirm("Approve payment and unlock chat?")) return;
+
+  const sessionRef = doc(db, "sessions", sessionId);
+  const sessionSnap = await getDoc(sessionRef);
+
+  if (!sessionSnap.exists()) {
+    alert("Session not found ❌");
+    return;
+  }
+
+  const s = sessionSnap.data();
+
+  await updateDoc(sessionRef, {
+    status: "paid",
+    paymentStatus: "paid",
+    paidAt: serverTimestamp(),
+    approvedBy: currentAdmin.uid,
+    updatedAt: serverTimestamp()
+  });
+
+  await setDoc(doc(db, "chats", chatId), {
+    studentId: s.studentId,
+    mentorId: s.mentorId,
+    participants: [s.studentId, s.mentorId],
+    status: "active",
+    sessionId: sessionId,
+    paymentStatus: "paid",
+    sessionMinutes: minutes,
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+
+  alert("Payment approved ✅ Chat unlocked.");
+  await loadAllData();
+};
+
+window.markSessionPending = async function(sessionId) {
+  await updateDoc(doc(db, "sessions", sessionId), {
+    status: "pending",
+    paymentStatus: "unpaid",
+    updatedAt: serverTimestamp()
+  });
+
+  alert("Session marked pending.");
+  await loadSessions();
+};
+
+
+
+  
   
 window.deleteRecord = async function(collectionName, id) {
   if (!confirm("Are you sure you want to delete this record?")) return;
@@ -584,6 +727,7 @@ function updateStats() {
   document.getElementById("userCount").innerText = allUsers.length;
   document.getElementById("contactCount").innerText = allContacts.length;
   document.getElementById("chatCount").innerText = allChats.length;
+  document.getElementById("sessionCount").innerText = allSessions.length;
 }
 
 function toCSV(rows) {
@@ -609,6 +753,7 @@ document.getElementById("exportChatsBtn").onclick = () => downloadCSV("chats.csv
 document.getElementById("questionSearch").addEventListener("input", renderQuestions);
 document.getElementById("userSearch").addEventListener("input", renderUsers);
 document.getElementById("chatSearch").addEventListener("input", renderChats);
+  document.getElementById("sessionSearch").addEventListener("input", renderSessions);
 document.getElementById("loginBtn").onclick = loginAdmin;
 document.getElementById("forgotBtn").onclick = forgotPassword;
 document.getElementById("logoutBtn").onclick = async () => signOut(auth);
@@ -618,7 +763,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["questions", "mentorApps", "users", "contacts", "chats"].forEach(tab => {
+["questions", "mentorApps", "users", "contacts", "chats", "sessions"].forEach(tab => {
       document.getElementById(`${tab}Tab`).classList.add("hidden");
     });
     document.getElementById(`${btn.dataset.tab}Tab`).classList.remove("hidden");
