@@ -71,6 +71,8 @@ import {
   getDoc,
   updateDoc,
   setDoc,
+  addDoc,
+  collection,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -158,11 +160,12 @@ function renderProfile(data) {
     <p><strong>Experience:</strong> ${data.experience ? escapeHTML(data.experience) + " years" : "Not added"}</p>
     <p>${safeBio}</p>
 
-    ${!isOwner ? `
-      <button class="chat-btn btn" onclick="startChat('${id}')">
-        💬 Chat with Mentor
-      </button>
-    ` : ""}
+   ${!isOwner ? `
+  <button class="chat-btn btn" onclick="bookSession('${id}')">
+    🎧 Book Paid Session ₹99
+  </button>
+
+` : ""}
 
     <p style="font-size:10px; color:gray; margin-top:15px;">
       Verification confirms identity only. Connect does not guarantee results or outcomes.
@@ -308,6 +311,55 @@ async function loadMentorProfile() {
     showError("Error loading profile ❌", "Please try again later.");
   }
 }
+
+
+// book session
+
+  window.bookSession = async function(mentorId) {
+  const user = auth.currentUser;
+
+  if (!user) {
+    alert("Please login to book a session ❌");
+    window.location.href = "/connect-mentorship/login.html";
+    return;
+  }
+
+  if (user.uid === mentorId) {
+    alert("You cannot book yourself ❌");
+    return;
+  }
+
+  try {
+    const chatId = [user.uid, mentorId].sort().join("_");
+
+    const sessionRef = await addDoc(collection(db, "sessions"), {
+      studentId: user.uid,
+      mentorId: mentorId,
+      chatId: chatId,
+
+      status: "pending",
+      paymentStatus: "unpaid",
+
+      amount: 99,
+      durationMinutes: 15,
+
+      callStatus: "not_started",
+
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    alert("Session request created ✅ Now payment step will open.");
+
+    // For now redirect to chat/payment later
+    window.location.href = `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
+
+  } catch (error) {
+    console.error(error);
+    alert("Booking failed ❌ Check Firestore rules.");
+  }
+};
+  
 
 window.startChat = async function(mentorId) {
   const user = auth.currentUser;
