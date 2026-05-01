@@ -13,14 +13,15 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || "New message on Connect";
+  console.log("Background message:", payload);
+
+  const title = payload.notification?.title || "New message";
   const options = {
-    body: payload.notification?.body || "You received a new message",
+    body: payload.notification?.body || "You received a message",
     icon: "/connect-mentorship/icon.png",
     badge: "/connect-mentorship/icon.png",
     data: {
-      url: payload.data?.url || "/connect-mentorship/my-chats.html",
-      chatId: payload.data?.chatId || ""
+      url: payload.data?.url || "/connect-mentorship/my-chats.html"
     }
   };
 
@@ -30,21 +31,16 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || "/connect-mentorship/my-chats.html";
+  const url = event.notification.data?.url;
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if (client.url.includes("/connect-mentorship/") && "focus" in client) {
-          client.focus();
-          client.navigate(urlToOpen);
-          return;
+          return client.focus();
         }
       }
-
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
+      return clients.openWindow(url);
     })
   );
 });
