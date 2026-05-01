@@ -634,8 +634,9 @@ function renderSessions() {
         <p><strong>Mentor:</strong> ${safe(getUserLabel(s.mentorId))}</p>
         <p><strong>Chat ID:</strong> ${safe(s.chatId)}</p>
 
-        <p><strong>Amount:</strong> ₹${safe(s.amount || 99)}</p>
-        <p><strong>Duration:</strong> ${safe(s.durationMinutes || 15)} minutes</p>
+       <p><strong>Session Type:</strong> ${safe(s.sessionType || "chat")}</p>
+<p><strong>Amount:</strong> ₹${safe(s.amount || 99)}</p>
+<p><strong>Duration:</strong> ${safe(s.durationMinutes || 15)} minutes</p>
 
         <p><strong>Status:</strong> <span class="badge ${statusClass}">${safe(s.status || "pending")}</span></p>
         <p><strong>Payment:</strong> <span class="badge ${payClass}">${safe(s.paymentStatus || "unpaid")}</span></p>
