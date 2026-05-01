@@ -114,7 +114,7 @@ const AGORA_APP_ID = "22c5f354475d4e61a4956b72745fc298";
 // Temporary testing only.
 // Later we replace null with secure backend token.
 async function getToken(channelName) {
-  const res = await fetch(`http://localhost:3000/token?channel=${channelName}`);
+  const res = await fetch(`https://connect-agora-server.onrender.com/token?channel=${channelName}`);
   const data = await res.json();
   return data.token;
 }
@@ -206,9 +206,14 @@ async function joinCall() {
       }
     });
 
-    client.on("user-unpublished", () => {
-      document.getElementById("remote-player").innerHTML = "";
-    });
+    client.on("user-joined", (user) => {
+  console.log("User joined:", user.uid);
+});
+
+   client.on("user-unpublished", (user) => {
+  const remoteDiv = document.getElementById("remote-player");
+  remoteDiv.innerHTML = "";
+});
 
    const agoraUid =
   Number(String(currentUser.uid).slice(-6).replace(/\D/g, "")) ||
@@ -243,10 +248,10 @@ await client.join(
     joined = true;
     callStatus.innerText = "Call live ✅";
 
-  } catch (error) {
-    console.error(error);
-    callStatus.innerText = "Call failed ❌ Check Agora App ID / camera permission.";
-  }
+} catch (error) {
+  console.error("JOIN ERROR:", error);
+  callStatus.innerText = "Call failed ❌ Check console";
+}
 }
 
 async function leaveCall() {
