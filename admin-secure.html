@@ -76,7 +76,7 @@
     <div class="admin-header">
       <div class="admin-title">
         <h1>Full Control Admin Panel</h1>
-        <p>Manage questions, answers, mentors, users, and contact messages.</p>
+        <p>Manage questions, answers, mentors, users, contact messages, and chat sessions.</p>
       </div>
       <button class="btn btn-outline" id="refreshBtn">Refresh Data</button>
     </div>
@@ -86,6 +86,7 @@
       <div class="stat-card"><h3 id="mentorAppCount">0</h3><p>Mentor Applications</p></div>
       <div class="stat-card"><h3 id="userCount">0</h3><p>Users</p></div>
       <div class="stat-card"><h3 id="contactCount">0</h3><p>Contact Messages</p></div>
+      <div class="stat-card"><h3 id="chatCount">0</h3><p>Chats</p></div>
     </section>
 
     <div class="tabs">
@@ -93,6 +94,7 @@
       <button class="tab-btn" data-tab="mentorApps">Mentor Applications</button>
       <button class="tab-btn" data-tab="users">Users / Verify Mentors</button>
       <button class="tab-btn" data-tab="contacts">Contact Messages</button>
+      <button class="tab-btn" data-tab="chats">Chats</button>
     </div>
 
     <section id="questionsTab" class="admin-card">
@@ -127,6 +129,15 @@
         <button class="btn btn-outline" id="exportContactsBtn">Export CSV</button>
       </div>
       <div id="contactsList"></div>
+    </section>
+
+    <section id="chatsTab" class="admin-card hidden">
+      <div class="toolbar">
+        <h2>Chat Sessions</h2>
+        <button class="btn btn-outline" id="exportChatsBtn">Export CSV</button>
+      </div>
+      <input id="chatSearch" placeholder="Search chats by user id, status, last message..." />
+      <div id="chatsList"></div>
     </section>
   </main>
 </div>
@@ -174,6 +185,7 @@ let allQuestions = [];
 let allMentorApps = [];
 let allUsers = [];
 let allContacts = [];
+let allChats = [];
 let currentAdmin = null;
 
 function safe(value) {
@@ -253,7 +265,7 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 async function loadAllData() {
-  await Promise.all([loadQuestions(), loadMentorApplications(), loadUsers(), loadContacts()]);
+  await Promise.all([loadQuestions(), loadMentorApplications(), loadUsers(), loadContacts(), loadChats()]);
   updateStats();
 }
 
@@ -451,6 +463,101 @@ function renderContacts() {
   `).join("");
 }
 
+
+async function loadChats() {
+  const snap = await getDocs(collection(db, "chats"));
+  allChats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  allChats.sort((a,b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+  renderChats();
+}
+
+function getUserLabel(uid) {
+  const user = allUsers.find(u => u.id === uid);
+  if (!user) return uid;
+  return `${user.name || "User"} (${user.email || uid})`;
+}
+
+function renderChats() {
+  const searchEl = document.getElementById("chatSearch");
+  const search = searchEl ? searchEl.value.toLowerCase() : "";
+  const list = document.getElementById("chatsList");
+  if (!list) return;
+
+  const filtered = allChats.filter(c =>
+    JSON.stringify(c).toLowerCase().includes(search) ||
+    (c.participants || []).some(uid => getUserLabel(uid).toLowerCase().includes(search))
+  );
+
+  if (!filtered.length) {
+    list.innerHTML = "<p class='small'>No chats found.</p>";
+    return;
+  }
+
+  list.innerHTML = filtered.map(c => {
+    const participants = (c.participants || []).map(uid => safe(getUserLabel(uid))).join("<br>");
+    const statusClass = c.status === "active" ? "green" : c.status === "expired" ? "red" : "yellow";
+
+    return `
+      <div class="data-card">
+        <h3>Chat ID: ${safe(c.id)}</h3>
+        <p><strong>Participants:</strong><br>${participants || "Not available"}</p>
+        <p><strong>Status:</strong> <span class="badge ${statusClass}">${safe(c.status || "pending")}</span></p>
+        <p><strong>Last Message:</strong> ${safe(c.lastMessage || "No message yet")}</p>
+        <p><strong>Session Minutes:</strong> ${safe(c.sessionMinutes || "Not started")}</p>
+        <p><strong>Session Ends:</strong> ${safe(formatDate(c.sessionEndsAt))}</p>
+        <p><strong>Delete After:</strong> ${safe(formatDate(c.deleteAt))}</p>
+        <p><strong>Updated:</strong> ${safe(formatDate(c.updatedAt))}</p>
+
+        <button class="btn success-btn" onclick="startChatSession('${c.id}', 15)">Start 15 Min</button>
+        <button class="btn success-btn" onclick="startChatSession('${c.id}', 30)">Start 30 Min</button>
+        <button class="btn warning-btn" onclick="expireChat('${c.id}')">Expire Now</button>
+        <a class="btn btn-outline" target="_blank" href="chat.html?chatId=${encodeURIComponent(c.id)}">Open Chat</a>
+        <button class="btn danger-btn" onclick="deleteChat('${c.id}')">Delete Chat</button>
+      </div>
+    `;
+  }).join("");
+}
+
+window.startChatSession = async function(chatId, minutes) {
+  const endTime = new Date(Date.now() + minutes * 60 * 1000);
+  const deleteTime = new Date(endTime.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  await updateDoc(doc(db, "chats", chatId), {
+    status: "active",
+    sessionMinutes: minutes,
+    sessionStartedAt: serverTimestamp(),
+    sessionEndsAt: endTime,
+    deleteAt: deleteTime,
+    updatedAt: serverTimestamp(),
+    startedBy: currentAdmin.uid
+  });
+
+  alert(`${minutes} minute session started ✅`);
+  await loadChats();
+};
+
+window.expireChat = async function(chatId) {
+  if (!confirm("Expire this chat now?")) return;
+
+  await updateDoc(doc(db, "chats", chatId), {
+    status: "expired",
+    expiredAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  alert("Chat expired ✅");
+  await loadChats();
+};
+
+window.deleteChat = async function(chatId) {
+  if (!confirm("Delete this chat? This deletes the chat room. Existing message subcollection may need cleanup later with Cloud Function.")) return;
+
+  await deleteDoc(doc(db, "chats", chatId));
+  alert("Chat deleted ✅");
+  await loadChats();
+  updateStats();
+};
+
 window.deleteRecord = async function(collectionName, id) {
   if (!confirm("Are you sure you want to delete this record?")) return;
   await deleteDoc(doc(db, collectionName, id));
@@ -463,6 +570,7 @@ function updateStats() {
   document.getElementById("mentorAppCount").innerText = allMentorApps.length;
   document.getElementById("userCount").innerText = allUsers.length;
   document.getElementById("contactCount").innerText = allContacts.length;
+  document.getElementById("chatCount").innerText = allChats.length;
 }
 
 function toCSV(rows) {
@@ -483,9 +591,11 @@ document.getElementById("exportQuestionsBtn").onclick = () => downloadCSV("quest
 document.getElementById("exportMentorsBtn").onclick = () => downloadCSV("mentor-applications.csv", [["Name","Email","Level","Experience","Reason","Status","Date"], ...allMentorApps.map(m => [m.name,m.email,m.level,m.experience,m.reason,m.status,formatDate(m.createdAt || m.appliedAt)])]);
 document.getElementById("exportUsersBtn").onclick = () => downloadCSV("users.csv", [["Name","Email","Phone","Role","Verified","Admin"], ...allUsers.map(u => [u.name,u.email,u.phone,u.role,u.verified,u.isAdmin])]);
 document.getElementById("exportContactsBtn").onclick = () => downloadCSV("contacts.csv", [["Name","Email","Message","Date"], ...allContacts.map(c => [c.name,c.email,c.message,formatDate(c.createdAt || c.date)])]);
+document.getElementById("exportChatsBtn").onclick = () => downloadCSV("chats.csv", [["Chat ID","Participants","Status","Last Message","Session Minutes","Session Ends","Delete At","Updated"], ...allChats.map(c => [c.id,(c.participants || []).map(uid => getUserLabel(uid)).join(" | "),c.status,c.lastMessage,c.sessionMinutes,formatDate(c.sessionEndsAt),formatDate(c.deleteAt),formatDate(c.updatedAt)])]);
 
 document.getElementById("questionSearch").addEventListener("input", renderQuestions);
 document.getElementById("userSearch").addEventListener("input", renderUsers);
+document.getElementById("chatSearch").addEventListener("input", renderChats);
 document.getElementById("loginBtn").onclick = loginAdmin;
 document.getElementById("forgotBtn").onclick = forgotPassword;
 document.getElementById("logoutBtn").onclick = async () => signOut(auth);
@@ -495,7 +605,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    ["questions", "mentorApps", "users", "contacts"].forEach(tab => {
+    ["questions", "mentorApps", "users", "contacts", "chats"].forEach(tab => {
       document.getElementById(`${tab}Tab`).classList.add("hidden");
     });
     document.getElementById(`${btn.dataset.tab}Tab`).classList.remove("hidden");
