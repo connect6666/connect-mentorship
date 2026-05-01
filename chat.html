@@ -198,6 +198,8 @@ const auth = getAuth(app);
 const params = new URLSearchParams(window.location.search);
 let chatId = params.get("chatId");
 let mentorId = params.get("mentorId");
+let sessionId = params.get("sessionId");
+let currentSessionData = null;
 
 const chatBox = document.getElementById("chatBox");
 const chatMsg = document.getElementById("chatMsg");
@@ -328,10 +330,90 @@ function updateSessionUI(chat) {
   sessionTimer = setInterval(renderTimer, 1000);
 }
 
+
+  // access block ui
+function blockChatAccess(title, message) {
+  chatTitle.innerText = title;
+  chatBox.innerHTML = `
+    <div style="text-align:center;padding:40px;">
+      <h3>${escapeHTML(title)}</h3>
+      <p>${escapeHTML(message)}</p>
+      <a href="/connect-mentorship/mentor.html" class="btn">Browse Mentors</a>
+    </div>
+  `;
+
+  messageInput.disabled = true;
+
+  const inputArea = document.querySelector(".chat-input-area");
+  if (inputArea) inputArea.style.display = "none";
+}
+
+  
+
+
+// ✅ ADD HERE (immediately below)
+async function verifyPaidSession(user) {
+  if (!sessionId) {
+    blockChatAccess(
+      "Paid session required 🔒",
+      "Please book a paid session from mentor profile before opening chat."
+    );
+    return false;
+  }
+
+  const sessionSnap = await getDoc(doc(db, "sessions", sessionId));
+
+  if (!sessionSnap.exists()) {
+    blockChatAccess(
+      "Session not found ❌",
+      "This booking session does not exist."
+    );
+    return false;
+  }
+
+  const session = sessionSnap.data();
+  currentSessionData = session;
+
+  const isMember =
+    user.uid === session.studentId ||
+    user.uid === session.mentorId;
+
+  if (!isMember) {
+    blockChatAccess(
+      "Access denied ❌",
+      "You are not allowed to open this private session."
+    );
+    return false;
+  }
+
+  if (session.chatId !== chatId) {
+    blockChatAccess(
+      "Invalid chat link ❌",
+      "This chat does not match your booked session."
+    );
+    return false;
+  }
+
+  if (session.paymentStatus !== "paid" || !["paid", "active"].includes(session.status)) {
+    blockChatAccess(
+      "Payment pending 🔒",
+      "Complete payment first. Chat will unlock after payment success."
+    );
+    return false;
+  }
+
+  return true;
+}
+
+  
+
 // ===================== CHAT INIT =====================
 async function createOrLoadChat(user) {
 
   if (chatId) {
+    const allowed = await verifyPaidSession(user);
+    if (!allowed) return;
+
     const chatSnap = await getDoc(doc(db, "chats", chatId));
 
     if (!chatSnap.exists()) {
@@ -443,11 +525,11 @@ window.sendMessage = async function () {
   }
 
   // 🟡 BLOCK if session not started
-  if (!currentChatData?.sessionEndsAt) {
-    chatMsg.innerText = "Paid session not started yet.";
-    chatMsg.style.color = "#f59e0b";
-    return;
-  }
+ if (!currentSessionData || currentSessionData.paymentStatus !== "paid") {
+  chatMsg.innerText = "Payment required before sending messages.";
+  chatMsg.style.color = "red";
+  return;
+}
 
   // 🔒 Existing validation
   if (!text || containsPrivateInfo(text)) return;
