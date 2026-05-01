@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Call | Connect</title>
+<link rel="stylesheet" href="style.css">
+
+<script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
+
+<style>
+.call-wrap {
+  max-width: 1000px;
+  margin: 30px auto;
+  padding: 20px;
+}
+
+.video-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.video-box {
+  background: #111827;
+  height: 360px;
+  border-radius: 14px;
+  overflow: hidden;
+  color: white;
+}
+
+.controls {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.controls button {
+  margin: 8px;
+}
+
+@media(max-width:768px){
+  .video-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<nav>
+  <div class="container">
+    <div class="logo">
+      <a href="/connect-mentorship/" style="color:white;text-decoration:none;">Connect</a>
+    </div>
+  </div>
+</nav>
+
+<div class="call-wrap">
+  <h2>📞 Secure Mentorship Call</h2>
+  <p id="callStatus">Checking session...</p>
+
+  <div class="video-grid">
+    <div class="video-box" id="local-player"></div>
+    <div class="video-box" id="remote-player"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="joinBtn">Join Call</button>
+    <button class="btn btn-outline" id="muteBtn">Mute Mic</button>
+    <button class="btn btn-outline" id="cameraBtn">Turn Camera Off</button>
+    <button class="btn" id="leaveBtn" style="background:#ef4444;color:white;">Leave Call</button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  updateDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "connect-mentorship.firebaseapp.com",
+  projectId: "connect-mentorship",
+};
+
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const params = new URLSearchParams(window.location.search);
+const sessionId = params.get("sessionId");
+
+const callStatus = document.getElementById("callStatus");
+const joinBtn = document.getElementById("joinBtn");
+const leaveBtn = document.getElementById("leaveBtn");
+const muteBtn = document.getElementById("muteBtn");
+const cameraBtn = document.getElementById("cameraBtn");
+
+// 🔴 Replace this with your Agora App ID
+const AGORA_APP_ID = "22c5f354475d4e61a4956b72745fc298";
+
+// Temporary testing only.
+// Later we replace null with secure backend token.
+const TOKEN = null;
+
+let client;
+let localTracks = {
+  audioTrack: null,
+  videoTrack: null
+};
+
+let currentUser = null;
+let sessionData = null;
+let joined = false;
+let micMuted = false;
+let cameraOff = false;
+
+function blockCall(message) {
+  callStatus.innerText = message;
+  joinBtn.disabled = true;
+  muteBtn.disabled = true;
+  cameraBtn.disabled = true;
+  leaveBtn.disabled = true;
+}
+
+async function verifyCallAccess(user) {
+  if (!sessionId) {
+    blockCall("Invalid call link ❌");
+    return false;
+  }
+
+  const snap = await getDoc(doc(db, "sessions", sessionId));
+
+  if (!snap.exists()) {
+    blockCall("Session not found ❌");
+    return false;
+  }
+
+  const session = snap.data();
+  sessionData = session;
+
+  const isMember =
+    user.uid === session.studentId ||
+    user.uid === session.mentorId;
+
+  if (!isMember) {
+    blockCall("Access denied ❌");
+    return false;
+  }
+
+  if (session.paymentStatus !== "paid") {
+    blockCall("Payment required before call 🔒");
+    return false;
+  }
+
+  if (session.sessionType !== "call") {
+    blockCall("This is chat-only session. Call not allowed 🔒");
+    return false;
+  }
+
+  callStatus.innerText = "Call access verified ✅ Click Join Call.";
+  return true;
+}
+
+async function joinCall() {
+  if (joined) return;
+
+  try {
+    const channelName = sessionId;
+
+    client = AgoraRTC.createClient({
+      mode: "rtc",
+      codec: "vp8"
+    });
+
+    client.on("user-published", async (user, mediaType) => {
+      await client.subscribe(user, mediaType);
+
+      if (mediaType === "video") {
+        user.videoTrack.play("remote-player");
+      }
+
+      if (mediaType === "audio") {
+        user.audioTrack.play();
+      }
+    });
+
+    client.on("user-unpublished", () => {
+      document.getElementById("remote-player").innerHTML = "";
+    });
+
+    await client.join(
+      AGORA_APP_ID,
+      channelName,
+      TOKEN,
+      currentUser.uid
+    );
+
+    const tracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+    localTracks.audioTrack = tracks[0];
+    localTracks.videoTrack = tracks[1];
+
+    localTracks.videoTrack.play("local-player");
+
+    await client.publish([
+      localTracks.audioTrack,
+      localTracks.videoTrack
+    ]);
+
+    await updateDoc(doc(db, "sessions", sessionId), {
+      callStatus: "live",
+      callStartedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    joined = true;
+    callStatus.innerText = "Call live ✅";
+
+  } catch (error) {
+    console.error(error);
+    callStatus.innerText = "Call failed ❌ Check Agora App ID / camera permission.";
+  }
+}
+
+async function leaveCall() {
+  try {
+    if (localTracks.audioTrack) {
+      localTracks.audioTrack.close();
+    }
+
+    if (localTracks.videoTrack) {
+      localTracks.videoTrack.close();
+    }
+
+    if (client) {
+      await client.leave();
+    }
+
+    await updateDoc(doc(db, "sessions", sessionId), {
+      callStatus: "ended",
+      callEndedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    joined = false;
+    callStatus.innerText = "Call ended ✅";
+    document.getElementById("local-player").innerHTML = "";
+    document.getElementById("remote-player").innerHTML = "";
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+joinBtn.onclick = joinCall;
+leaveBtn.onclick = leaveCall;
+
+muteBtn.onclick = async () => {
+  if (!localTracks.audioTrack) return;
+
+  micMuted = !micMuted;
+  await localTracks.audioTrack.setEnabled(!micMuted);
+  muteBtn.innerText = micMuted ? "Unmute Mic" : "Mute Mic";
+};
+
+cameraBtn.onclick = async () => {
+  if (!localTracks.videoTrack) return;
+
+  cameraOff = !cameraOff;
+  await localTracks.videoTrack.setEnabled(!cameraOff);
+  cameraBtn.innerText = cameraOff ? "Turn Camera On" : "Turn Camera Off";
+};
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "/connect-mentorship/login.html";
+    return;
+  }
+
+  currentUser = user;
+  await verifyCallAccess(user);
+});
+</script>
+
+</body>
+</html>
