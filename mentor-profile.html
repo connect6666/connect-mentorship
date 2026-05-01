@@ -161,9 +161,13 @@ function renderProfile(data) {
     <p>${safeBio}</p>
 
    ${!isOwner ? `
-  <button class="chat-btn btn" onclick="bookSession('${id}')">
-    🎧 Book Paid Session ₹99
-  </button>
+<button class="chat-btn btn" onclick="bookSession('${id}', 'chat')">
+  💬 Book Chat Session ₹99
+</button>
+
+<button class="chat-btn btn btn-outline" onclick="bookSession('${id}', 'call')">
+  📞 Book Call Session ₹199
+</button>
 
 ` : ""}
 
@@ -315,7 +319,7 @@ async function loadMentorProfile() {
 
 // book session
 
-  window.bookSession = async function(mentorId) {
+ window.bookSession = async function(mentorId, type) {
   const user = auth.currentUser;
 
   if (!user) {
@@ -332,16 +336,24 @@ async function loadMentorProfile() {
   try {
     const chatId = [user.uid, mentorId].sort().join("_");
 
+    // 🔥 Decide price + duration based on type
+    const isCall = type === "call";
+
+    const amount = isCall ? 199 : 99;
+    const duration = isCall ? 30 : 15;
+
     const sessionRef = await addDoc(collection(db, "sessions"), {
       studentId: user.uid,
       mentorId: mentorId,
       chatId: chatId,
 
+      sessionType: type, // 🔥 IMPORTANT
+
       status: "pending",
       paymentStatus: "unpaid",
 
-      amount: 99,
-      durationMinutes: 15,
+      amount: amount,
+      durationMinutes: duration,
 
       callStatus: "not_started",
 
@@ -349,9 +361,8 @@ async function loadMentorProfile() {
       updatedAt: serverTimestamp()
     });
 
-    alert("Session request created ✅ Now payment step will open.");
+    alert(`Session created ✅ ${isCall ? "Call" : "Chat"} session`);
 
-    // For now redirect to chat/payment later
     window.location.href = `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
 
   } catch (error) {
@@ -359,6 +370,8 @@ async function loadMentorProfile() {
     alert("Booking failed ❌ Check Firestore rules.");
   }
 };
+
+ 
   
 
 window.startChat = async function(mentorId) {
