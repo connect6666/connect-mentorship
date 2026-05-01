@@ -266,14 +266,14 @@ return {
 };
 }
 
-function openPreview(chatId, otherUser, lastMessage, mentorId) {
+function openPreview(chatId, otherUser, lastMessage, mentorId, currentPreviewSessionId) {
   chatPreview.innerHTML = `
     <div class="empty-chat">
       <img src="${otherUser.photoURL}" alt="${escapeHTML(otherUser.name)}">
       <h2>${escapeHTML(otherUser.name)}</h2>
       <p>${escapeHTML(lastMessage || "No message yet")}</p>
 
-      <a class="open-btn" href="/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(mentorId)}">
+      <a class="open-btn" href="/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(mentorId)}&sessionId=${encodeURIComponent(currentPreviewSessionId)}">
         Open Chat
       </a>
     </div>
@@ -314,9 +314,9 @@ function openPreview(chatId, otherUser, lastMessage, mentorId) {
 
     item.onclick = () => {
       if (window.innerWidth <= 768) {
-        window.location.href = `/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(chat.mentorId || otherUser.id)}`;
+window.location.href = `/connect-mentorship/chat.html?chatId=${encodeURIComponent(chatId)}&mentorId=${encodeURIComponent(chat.mentorId || otherUser.id)}&sessionId=${encodeURIComponent(chat.sessionId)}`;
       } else {
-        openPreview(chatId, otherUser, chat.lastMessage, chat.mentorId || otherUser.id);
+       openPreview(chatId, otherUser, chat.lastMessage, chat.mentorId || otherUser.id, chat.sessionId);
       }
     };
 
