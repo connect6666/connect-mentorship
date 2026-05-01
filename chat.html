@@ -210,7 +210,9 @@ let otherUserId = null;
 let unsubscribeMessages = null;
 let typingTimer = null;
 let firstMessageLoad = true;
-  let notificationsEnabled = false;
+let notificationsEnabled = false;
+let currentChatData = null;
+let sessionTimer = null;
 
 // ===================== UTIL =====================
 function escapeHTML(text) {
@@ -272,6 +274,60 @@ window.addEventListener("beforeunload", () => {
   }
 });
 
+
+  function getTimeMs(value) {
+  if (!value) return null;
+  if (value.toDate) return value.toDate().getTime();
+  return new Date(value).getTime();
+}
+
+function isSessionExpired(chat) {
+  if (!chat) return false;
+  if (chat.status === "expired") return true;
+
+  const endMs = getTimeMs(chat.sessionEndsAt);
+  if (!endMs) return false;
+
+  return Date.now() > endMs;
+}
+
+function updateSessionUI(chat) {
+  currentChatData = chat;
+
+  const expired = isSessionExpired(chat);
+  const endMs = getTimeMs(chat.sessionEndsAt);
+
+  if (sessionTimer) clearInterval(sessionTimer);
+
+  if (!endMs) {
+    chatMsg.innerText = "Session not started yet. Admin can start 15/30 min session.";
+    chatMsg.style.color = "#f59e0b";
+    messageInput.disabled = false;
+    return;
+  }
+
+  function renderTimer() {
+    const left = endMs - Date.now();
+
+    if (left <= 0 || isSessionExpired(currentChatData)) {
+      chatMsg.innerText = "Session expired. You cannot send new messages.";
+      chatMsg.style.color = "red";
+      messageInput.disabled = true;
+      return;
+    }
+
+    const min = Math.floor(left / 60000);
+    const sec = Math.floor((left % 60000) / 1000);
+
+    chatMsg.innerText = `Paid session active: ${min}m ${sec}s left`;
+    chatMsg.style.color = "green";
+  messageInput.disabled = true;
+  }
+
+  renderTimer();
+  sessionTimer = setInterval(renderTimer, 1000);
+}
+
 // ===================== CHAT INIT =====================
 async function createOrLoadChat(user) {
 
@@ -283,12 +339,15 @@ async function createOrLoadChat(user) {
       return;
     }
 
-    const data = chatSnap.data();
-    otherUserId = data.participants.find(id => id !== user.uid);
+   const data = chatSnap.data();
+currentChatData = data;
+otherUserId = data.participants.find(id => id !== user.uid);
 
-    chatTitle.innerText = "Chat with " + await getUserName(otherUserId);
+chatTitle.innerText = "Chat with " + await getUserName(otherUserId);
 
-    loadMessages();
+updateSessionUI(data);
+listenChatStatus();
+loadMessages();
     listenTyping();
     markChatAsRead();
    
@@ -304,18 +363,32 @@ async function createOrLoadChat(user) {
   otherUserId = mentorId;
 
   await setDoc(doc(db, "chats", chatId), {
-    participants: [user.uid, mentorId],
-    status: "active",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  }, { merge: true });
+  participants: [user.uid, mentorId],
+  status: "pending",
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+  sessionEndsAt: null,
+  deleteAt: null
+}, { merge: true });
 
-  chatTitle.innerText = "Chat with " + await getUserName(mentorId);
+ chatTitle.innerText = "Chat with " + await getUserName(mentorId);
 
-  loadMessages();
+listenChatStatus();
+loadMessages();
   listenTyping();
   markChatAsRead();
  
+}
+
+
+
+  function listenChatStatus() {
+  onSnapshot(doc(db, "chats", chatId), (snap) => {
+    if (!snap.exists()) return;
+
+    currentChatData = snap.data();
+    updateSessionUI(currentChatData);
+  });
 }
 
 // ===================== LOAD MESSAGES =====================
@@ -362,8 +435,22 @@ function loadMessages() {
 window.sendMessage = async function () {
   const text = messageInput.value.trim();
 
-  if (!text || containsPrivateInfo(text)) return;
+  // 🔴 BLOCK if session expired
+  if (isSessionExpired(currentChatData)) {
+    chatMsg.innerText = "Session expired. You cannot send new messages.";
+    chatMsg.style.color = "red";
+    return;
+  }
 
+  // 🟡 BLOCK if session not started
+  if (!currentChatData?.sessionEndsAt) {
+    chatMsg.innerText = "Paid session not started yet.";
+    chatMsg.style.color = "#f59e0b";
+    return;
+  }
+
+  // 🔒 Existing validation
+  if (!text || containsPrivateInfo(text)) return;
   await addDoc(collection(db, "chats", chatId, "messages"), {
     text,
     senderId: currentUser.uid,
