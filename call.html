@@ -109,11 +109,15 @@ const muteBtn = document.getElementById("muteBtn");
 const cameraBtn = document.getElementById("cameraBtn");
 
 // 🔴 Replace this with your Agora App ID
-const AGORA_APP_ID = "a5b7473d52ab4acb8ec3a0dab465b98b";
+const AGORA_APP_ID = "22c5f354475d4e61a4956b72745fc298";
 
 // Temporary testing only.
 // Later we replace null with secure backend token.
-const TOKEN = null;
+async function getToken(channelName) {
+  const res = await fetch(`http://localhost:3000/token?channel=${channelName}`);
+  const data = await res.json();
+  return data.token;
+}
 
 let client;
 let localTracks = {
@@ -206,12 +210,18 @@ async function joinCall() {
       document.getElementById("remote-player").innerHTML = "";
     });
 
-    await client.join(
-      AGORA_APP_ID,
-      channelName,
-      TOKEN,
-     Number(String(currentUser.uid).slice(-6).replace(/\D/g, "")) || Math.floor(Math.random() * 100000)
-    );
+   const agoraUid =
+  Number(String(currentUser.uid).slice(-6).replace(/\D/g, "")) ||
+  Math.floor(Math.random() * 100000);
+
+const token = await getToken(channelName);
+
+await client.join(
+  AGORA_APP_ID,
+  channelName,
+  token,
+  agoraUid
+);
 
     const tracks = await AgoraRTC.createMicrophoneAndCameraTracks();
     localTracks.audioTrack = tracks[0];
