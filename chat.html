@@ -320,7 +320,7 @@ function updateSessionUI(chat) {
     if (left <= 0 || isSessionExpired(currentChatData)) {
       chatMsg.innerText = "Session expired. You cannot send new messages.";
       chatMsg.style.color = "red";
-      messageInput.disabled = true;
+     messageInput.disabled = true;
       return;
     }
 
@@ -329,7 +329,7 @@ function updateSessionUI(chat) {
 
     chatMsg.innerText = `Paid session active: ${min}m ${sec}s left`;
     chatMsg.style.color = "green";
-  messageInput.disabled = true;
+  messageInput.disabled = false;
   }
 
   renderTimer();
