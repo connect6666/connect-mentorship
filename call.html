@@ -86,9 +86,12 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
+  apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
   authDomain: "connect-mentorship.firebaseapp.com",
   projectId: "connect-mentorship",
+  storageBucket: "connect-mentorship.firebasestorage.app",
+  messagingSenderId: "229549559214",
+  appId: "1:229549559214:web:254671d221c2aaebc80c3f"
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -100,6 +103,7 @@ const sessionId = params.get("sessionId");
 
 const callStatus = document.getElementById("callStatus");
 const joinBtn = document.getElementById("joinBtn");
+  joinBtn.disabled = true;
 const leaveBtn = document.getElementById("leaveBtn");
 const muteBtn = document.getElementById("muteBtn");
 const cameraBtn = document.getElementById("cameraBtn");
@@ -167,12 +171,17 @@ async function verifyCallAccess(user) {
   }
 
   callStatus.innerText = "Call access verified ✅ Click Join Call.";
-  return true;
+joinBtn.disabled = false;
+return true;
 }
 
 async function joinCall() {
   if (joined) return;
 
+  if (!currentUser) {
+    callStatus.innerText = "Please wait, checking login...";
+    return;
+  }
   try {
     const channelName = sessionId;
 
@@ -201,7 +210,7 @@ async function joinCall() {
       AGORA_APP_ID,
       channelName,
       TOKEN,
-      currentUser.uid
+     Number(String(currentUser.uid).slice(-6).replace(/\D/g, "")) || Math.floor(Math.random() * 100000)
     );
 
     const tracks = await AgoraRTC.createMicrophoneAndCameraTracks();
