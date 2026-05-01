@@ -550,14 +550,27 @@ window.expireChat = async function(chatId) {
 };
 
 window.deleteChat = async function(chatId) {
-  if (!confirm("Delete this chat? This deletes the chat room. Existing message subcollection may need cleanup later with Cloud Function.")) return;
+  if (!confirm("Permanently delete this chat and all messages?")) return;
 
+  // delete messages subcollection
+  const messagesSnap = await getDocs(collection(db, "chats", chatId, "messages"));
+  for (const msgDoc of messagesSnap.docs) {
+    await deleteDoc(msgDoc.ref);
+  }
+
+  // delete typing subcollection
+  const typingSnap = await getDocs(collection(db, "chats", chatId, "typing"));
+  for (const typingDoc of typingSnap.docs) {
+    await deleteDoc(typingDoc.ref);
+  }
+
+  // delete main chat document
   await deleteDoc(doc(db, "chats", chatId));
-  alert("Chat deleted ✅");
-  await loadChats();
-  updateStats();
-};
 
+  alert("Chat permanently deleted ✅");
+  await loadChats();
+};
+  
 window.deleteRecord = async function(collectionName, id) {
   if (!confirm("Are you sure you want to delete this record?")) return;
   await deleteDoc(doc(db, collectionName, id));
