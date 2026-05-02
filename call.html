@@ -92,9 +92,27 @@ let cameraOff = false;
 let callTimerInterval = null;
 let callEndTime = null;
 
-async function getToken(channelName) {
-  const res = await fetch(`https://connect-agora-server.onrender.com/token?channel=${channelName}`);
+async function getToken(channelName, agoraUid) {
+  const idToken = await currentUser.getIdToken();
+
+  const res = await fetch("https://connect-agora-server.onrender.com/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + idToken
+    },
+    body: JSON.stringify({
+      sessionId: channelName,
+      uid: agoraUid
+    })
+  });
+
   const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Token failed");
+  }
+
   return data.token;
 }
 
@@ -292,8 +310,7 @@ async function joinCall() {
       Number(String(currentUser.uid).slice(-6).replace(/\D/g, "")) ||
       Math.floor(Math.random() * 100000);
 
-    const token = await getToken(channelName);
-
+    const token = await getToken(channelName, agoraUid);
     await client.join(AGORA_APP_ID, channelName, token, agoraUid);
 
     const tracks = await AgoraRTC.createMicrophoneAndCameraTracks(
