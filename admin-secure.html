@@ -524,7 +524,8 @@ function renderChats() {
         <p><strong>Participants:</strong><br>${participants || "Not available"}</p>
         <p><strong>Status:</strong> <span class="badge ${statusClass}">${safe(c.status || "pending")}</span></p>
         <p><strong>Last Message:</strong> ${safe(c.lastMessage || "No message yet")}</p>
-        <p><strong>Session Minutes:</strong> ${safe(c.sessionMinutes || "Not started")}</p>
+       <p><strong>Session Type:</strong> ${safe(c.sessionType || "chat")}</p>
+<p><strong>Session Minutes:</strong> ${safe(c.sessionMinutes || "Not started")}</p>
         <p><strong>Session Ends:</strong> ${safe(formatDate(c.sessionEndsAt))}</p>
         <p><strong>Delete After:</strong> ${safe(formatDate(c.deleteAt))}</p>
         <p><strong>Updated:</strong> ${safe(formatDate(c.updatedAt))}</p>
@@ -643,9 +644,9 @@ function renderSessions() {
 
         <p class="small"><strong>Created:</strong> ${safe(formatDate(s.createdAt))}</p>
 
-        <button class="btn success-btn" onclick="approveSessionPayment('${s.id}', '${s.chatId}', ${s.durationMinutes || 15})">
-          Approve Payment
-        </button>
+       <button class="btn success-btn" onclick="approveSessionPayment('${s.id}', '${s.chatId}')">
+  Approve Payment
+</button>
 
         <button class="btn warning-btn" onclick="markSessionPending('${s.id}')">
           Mark Pending
@@ -664,8 +665,8 @@ function renderSessions() {
   }).join("");
 }
 
-window.approveSessionPayment = async function(sessionId, chatId, minutes) {
-  if (!confirm("Approve payment and unlock chat?")) return;
+window.approveSessionPayment = async function(sessionId, chatId) {
+  if (!confirm("Approve payment and unlock session?")) return;
 
   const sessionRef = doc(db, "sessions", sessionId);
   const sessionSnap = await getDoc(sessionRef);
@@ -676,10 +677,20 @@ window.approveSessionPayment = async function(sessionId, chatId, minutes) {
   }
 
   const s = sessionSnap.data();
+  if (s.paymentStatus === "paid") {
+  alert("Already approved ❌");
+  return;
+}
+
+  const sessionType = s.sessionType || "chat";
+  const minutes = s.durationMinutes || (sessionType === "call" ? 30 : 15);
+  const amount = s.amount || (sessionType === "call" ? 199 : 99);
 
   await updateDoc(sessionRef, {
     status: "paid",
     paymentStatus: "paid",
+    durationMinutes: minutes,
+    amount: amount,
     paidAt: serverTimestamp(),
     approvedBy: currentAdmin.uid,
     updatedAt: serverTimestamp()
@@ -691,12 +702,13 @@ window.approveSessionPayment = async function(sessionId, chatId, minutes) {
     participants: [s.studentId, s.mentorId],
     status: "active",
     sessionId: sessionId,
+    sessionType: sessionType,
     paymentStatus: "paid",
     sessionMinutes: minutes,
     updatedAt: serverTimestamp()
   }, { merge: true });
 
-  alert("Payment approved ✅ Chat unlocked.");
+  alert(`Payment approved ✅ ${sessionType === "call" ? "Call" : "Chat"} unlocked for ${minutes} minutes.`);
   await loadAllData();
 };
 
