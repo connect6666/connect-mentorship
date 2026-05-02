@@ -293,7 +293,15 @@ function isSessionExpired(chat) {
   if (!chat) return false;
   if (chat.status === "expired") return true;
 
-  const endMs = getTimeMs(chat.sessionEndsAt);
+ let endMs = getTimeMs(chat.sessionEndsAt);
+
+if (
+  currentSessionData &&
+  currentSessionData.sessionType === "call" &&
+  currentSessionData.callEndsAt
+) {
+  endMs = getTimeMs(currentSessionData.callEndsAt);
+}
   if (!endMs) return false;
 
   return Date.now() > endMs;
@@ -303,7 +311,15 @@ function updateSessionUI(chat) {
   currentChatData = chat;
 
   const expired = isSessionExpired(chat);
-  const endMs = getTimeMs(chat.sessionEndsAt);
+let endMs = getTimeMs(chat.sessionEndsAt);
+
+if (
+  currentSessionData &&
+  currentSessionData.sessionType === "call" &&
+  currentSessionData.callEndsAt
+) {
+  endMs = getTimeMs(currentSessionData.callEndsAt);
+}
 
   if (sessionTimer) clearInterval(sessionTimer);
 
@@ -495,8 +511,18 @@ loadMessages();
   onSnapshot(doc(db, "chats", chatId), (snap) => {
     if (!snap.exists()) return;
 
-    currentChatData = snap.data();
+   currentChatData = snap.data();
+
+if (sessionId) {
+  getDoc(doc(db, "sessions", sessionId)).then((sessionSnap) => {
+    if (sessionSnap.exists()) {
+      currentSessionData = sessionSnap.data();
+    }
     updateSessionUI(currentChatData);
+  });
+} else {
+  updateSessionUI(currentChatData);
+}
   });
 }
 
