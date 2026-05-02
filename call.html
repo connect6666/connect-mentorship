@@ -5,47 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Secure Call | Connect</title>
 <link rel="stylesheet" href="style.css">
-
 <script src="https://download.agora.io/sdk/release/AgoraRTC_N.js"></script>
 
 <style>
-.call-wrap {
-  max-width: 1000px;
-  margin: 30px auto;
-  padding: 20px;
-}
-
-.video-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-}
-
-.video-box {
-  background: #111827;
-  height: 360px;
-  border-radius: 14px;
-  overflow: hidden;
-  color: white;
-}
-
-.controls {
-  text-align: center;
-  margin-top: 20px;
-}
-
-.controls button {
-  margin: 8px;
-}
-
-@media(max-width:768px){
-  .video-grid { grid-template-columns: 1fr; }
-}
+.call-wrap { max-width:1000px; margin:30px auto; padding:20px; }
+.video-grid { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
+.video-box { background:#111827; height:360px; border-radius:14px; overflow:hidden; color:white; }
+.controls { text-align:center; margin-top:20px; }
+.controls button { margin:8px; }
+@media(max-width:768px){ .video-grid{grid-template-columns:1fr;} }
 </style>
 </head>
 
 <body>
-
 <nav>
   <div class="container">
     <div class="logo">
@@ -74,17 +46,8 @@
 
 <script type="module">
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  updateDoc,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {
-  getAuth,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
@@ -103,39 +66,33 @@ const params = new URLSearchParams(window.location.search);
 const sessionId = params.get("sessionId");
 
 const callStatus = document.getElementById("callStatus");
+const callTimer = document.getElementById("callTimer");
 const joinBtn = document.getElementById("joinBtn");
 const leaveBtn = document.getElementById("leaveBtn");
 const muteBtn = document.getElementById("muteBtn");
 const cameraBtn = document.getElementById("cameraBtn");
-const callTimer = document.getElementById("callTimer");
 
 joinBtn.disabled = true;
 muteBtn.disabled = true;
 cameraBtn.disabled = true;
-// 🔴 Replace this with your Agora App ID
+
 const AGORA_APP_ID = "22c5f354475d4e61a4956b72745fc298";
 
-// Temporary testing only.
-// Later we replace null with secure backend token.
-async function getToken(channelName) {
-  const res = await fetch(`https://connect-agora-server.onrender.com/token?channel=${channelName}`);
-  const data = await res.json();
-  return data.token;
-}
-
-let client;
-let localTracks = {
-  audioTrack: null,
-  videoTrack: null
-};
-
+let client = null;
+let localTracks = { audioTrack: null, videoTrack: null };
 let currentUser = null;
 let sessionData = null;
 let joined = false;
 let micMuted = false;
 let cameraOff = false;
-  let callTimerInterval = null;
-let callDurationSeconds = 30 * 60; // 30 minutes
+let callTimerInterval = null;
+let callEndTime = null;
+
+async function getToken(channelName) {
+  const res = await fetch(`https://connect-agora-server.onrender.com/token?channel=${channelName}`);
+  const data = await res.json();
+  return data.token;
+}
 
 function blockCall(message) {
   callStatus.innerText = message;
@@ -146,188 +103,185 @@ function blockCall(message) {
 }
 
 async function verifyCallAccess(user) {
-  if (!sessionId) {
-    blockCall("Invalid call link ❌");
-    return false;
-  }
+  if (!sessionId) return blockCall("Invalid call link ❌");
 
   const snap = await getDoc(doc(db, "sessions", sessionId));
+  if (!snap.exists()) return blockCall("Session not found ❌");
 
-  if (!snap.exists()) {
-    blockCall("Session not found ❌");
-    return false;
-  }
+  sessionData = snap.data();
 
-  const session = snap.data();
-  sessionData = session;
+  const isMember = user.uid === sessionData.studentId || user.uid === sessionData.mentorId;
+  if (!isMember) return blockCall("Access denied ❌");
 
-  const isMember =
-    user.uid === session.studentId ||
-    user.uid === session.mentorId;
-
-  if (!isMember) {
-    blockCall("Access denied ❌");
-    return false;
-  }
-
-  if (session.paymentStatus !== "paid") {
-    blockCall("Payment required before call 🔒");
-    return false;
-  }
-
-  if (session.sessionType !== "call") {
-    blockCall("This is chat-only session. Call not allowed 🔒");
-    return false;
-  }
+  if (sessionData.paymentStatus !== "paid") return blockCall("Payment required before call 🔒");
+  if (sessionData.sessionType !== "call") return blockCall("This is chat-only session. Call not allowed 🔒");
 
   callStatus.innerText = "Call access verified ✅ Click Join Call.";
-joinBtn.disabled = false;
-return true;
+  joinBtn.disabled = false;
 }
 
-  // timer function
-
-  function startCallTimer() {
+function startCallTimer() {
   if (callTimerInterval) clearInterval(callTimerInterval);
 
-  let remaining = callDurationSeconds;
-
   callTimerInterval = setInterval(async () => {
-    const min = Math.floor(remaining / 60);
-    const sec = remaining % 60;
+    if (!callEndTime) return;
 
-    callTimer.innerText = `Time left: ${min}m ${sec}s`;
+    const remaining = Math.floor((callEndTime - Date.now()) / 1000);
 
     if (remaining <= 0) {
       clearInterval(callTimerInterval);
       callTimer.innerText = "Call time ended";
-      await leaveCall();
+      await leaveCall(true);
       return;
     }
 
-    remaining--;
+    const min = Math.floor(remaining / 60);
+    const sec = remaining % 60;
+    callTimer.innerText = `Time left: ${min}m ${sec}s`;
   }, 1000);
+}
+
+async function setupCallEndTime() {
+  const freshSnap = await getDoc(doc(db, "sessions", sessionId));
+  const freshSession = freshSnap.data();
+  sessionData = freshSession;
+
+  if (freshSession.callEndsAt) {
+    callEndTime = freshSession.callEndsAt.toDate
+      ? freshSession.callEndsAt.toDate().getTime()
+      : new Date(freshSession.callEndsAt).getTime();
+
+    await updateDoc(doc(db, "sessions", sessionId), {
+      callStatus: "live",
+      updatedAt: serverTimestamp()
+    });
+
+    return;
+  }
+
+  const durationMinutes = freshSession.durationMinutes || 30;
+  const endTime = new Date(Date.now() + durationMinutes * 60 * 1000);
+
+  await updateDoc(doc(db, "sessions", sessionId), {
+    callStatus: "live",
+    callStartedAt: serverTimestamp(),
+    callEndsAt: endTime,
+    updatedAt: serverTimestamp()
+  });
+
+  callEndTime = endTime.getTime();
 }
 
 async function joinCall() {
   if (joined) return;
-
   if (!currentUser) {
     callStatus.innerText = "Please wait, checking login...";
     return;
   }
+
   try {
+    joinBtn.disabled = true;
     const channelName = sessionId;
 
-    client = AgoraRTC.createClient({
-      mode: "rtc",
-      codec: "vp8"
-    });
+    client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
     client.on("user-published", async (user, mediaType) => {
       await client.subscribe(user, mediaType);
-
-      if (mediaType === "video") {
-        user.videoTrack.play("remote-player");
-      }
-
-      if (mediaType === "audio") {
-        user.audioTrack.play();
-      }
+      if (mediaType === "video") user.videoTrack.play("remote-player");
+      if (mediaType === "audio") user.audioTrack.play();
     });
 
     client.on("user-joined", (user) => {
-  console.log("User joined:", user.uid);
-});
+      console.log("User joined:", user.uid);
+    });
 
-   client.on("user-unpublished", (user) => {
-  const remoteDiv = document.getElementById("remote-player");
-  remoteDiv.innerHTML = "";
-});
+    client.on("user-unpublished", () => {
+      document.getElementById("remote-player").innerHTML = "";
+    });
 
-   const agoraUid =
-  Number(String(currentUser.uid).slice(-6).replace(/\D/g, "")) ||
-  Math.floor(Math.random() * 100000);
+    const agoraUid =
+      Number(String(currentUser.uid).slice(-6).replace(/\D/g, "")) ||
+      Math.floor(Math.random() * 100000);
 
-const token = await getToken(channelName);
+    const token = await getToken(channelName);
 
-await client.join(
-  AGORA_APP_ID,
-  channelName,
-  token,
-  agoraUid
-);
+    await client.join(AGORA_APP_ID, channelName, token, agoraUid);
 
-    const tracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+    const tracks = await AgoraRTC.createMicrophoneAndCameraTracks(
+      { AEC: true, ANS: true, AGC: true },
+      { encoderConfig: "480p_1" }
+    );
+
     localTracks.audioTrack = tracks[0];
     localTracks.videoTrack = tracks[1];
 
     localTracks.videoTrack.play("local-player");
 
-    await client.publish([
-      localTracks.audioTrack,
-      localTracks.videoTrack
-    ]);
+    await client.publish([localTracks.audioTrack, localTracks.videoTrack]);
 
-    await updateDoc(doc(db, "sessions", sessionId), {
-      callStatus: "live",
-      callStartedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    await setupCallEndTime();
 
     joined = true;
     callStatus.innerText = "Call live ✅";
-
     joinBtn.style.display = "none";
-muteBtn.disabled = false;
-cameraBtn.disabled = false;
-startCallTimer();
+    muteBtn.disabled = false;
+    cameraBtn.disabled = false;
+    startCallTimer();
 
-} catch (error) {
-  console.error("JOIN ERROR:", error);
-  callStatus.innerText = "Call failed ❌ Check console";
-}
+  } catch (error) {
+    console.error("JOIN ERROR:", error);
+    callStatus.innerText = "Call failed ❌ Check console";
+    joinBtn.disabled = false;
+  }
 }
 
-async function leaveCall() {
+async function leaveCall(autoEnded = false) {
   try {
     if (localTracks.audioTrack) {
       localTracks.audioTrack.close();
+      localTracks.audioTrack = null;
     }
 
     if (localTracks.videoTrack) {
       localTracks.videoTrack.close();
+      localTracks.videoTrack = null;
     }
 
     if (client) {
       await client.leave();
+      client = null;
     }
 
     await updateDoc(doc(db, "sessions", sessionId), {
-      callStatus: "ended",
+      callStatus: autoEnded ? "ended_auto" : "ended",
       callEndedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
 
     joined = false;
-    callStatus.innerText = "Call ended ✅";
+    callStatus.innerText = autoEnded ? "Call time ended ✅" : "Call ended ✅";
+
     if (callTimerInterval) clearInterval(callTimerInterval);
-callTimer.innerText = "Call ended";
-joinBtn.style.display = "inline-block";
+    callTimer.innerText = autoEnded ? "Call time ended" : "Call ended";
+
+    joinBtn.style.display = "inline-block";
+    joinBtn.disabled = autoEnded;
+    muteBtn.disabled = true;
+    cameraBtn.disabled = true;
+
     document.getElementById("local-player").innerHTML = "";
     document.getElementById("remote-player").innerHTML = "";
 
   } catch (error) {
-    console.error(error);
+    console.error("LEAVE ERROR:", error);
   }
 }
 
 joinBtn.onclick = joinCall;
-leaveBtn.onclick = leaveCall;
+leaveBtn.onclick = () => leaveCall(false);
 
 muteBtn.onclick = async () => {
   if (!localTracks.audioTrack) return;
-
   micMuted = !micMuted;
   await localTracks.audioTrack.setEnabled(!micMuted);
   muteBtn.innerText = micMuted ? "Unmute Mic" : "Mute Mic";
@@ -335,7 +289,6 @@ muteBtn.onclick = async () => {
 
 cameraBtn.onclick = async () => {
   if (!localTracks.videoTrack) return;
-
   cameraOff = !cameraOff;
   await localTracks.videoTrack.setEnabled(!cameraOff);
   cameraBtn.innerText = cameraOff ? "Turn Camera On" : "Turn Camera Off";
@@ -351,6 +304,5 @@ onAuthStateChanged(auth, async (user) => {
   await verifyCallAccess(user);
 });
 </script>
-
 </body>
 </html>
