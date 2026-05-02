@@ -27,6 +27,7 @@ src="https://www.facebook.com/tr?id=2190385751757102&ev=PageView&noscript=1"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verified Mentor Profile | Student Career Guidance</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 
 <body>
@@ -319,7 +320,7 @@ async function loadMentorProfile() {
 
 // book session
 
- window.bookSession = async function(mentorId, type) {
+window.bookSession = async function(mentorId, type) {
   const user = auth.currentUser;
 
   if (!user) {
@@ -335,42 +336,118 @@ async function loadMentorProfile() {
 
   try {
     const chatId = [user.uid, mentorId].sort().join("_");
-
-    // 🔥 Decide price + duration based on type
     const isCall = type === "call";
-
     const amount = isCall ? 199 : 99;
     const duration = isCall ? 30 : 15;
 
-    const sessionRef = await addDoc(collection(db, "sessions"), {
-      studentId: user.uid,
-      mentorId: mentorId,
-      chatId: chatId,
-
-      sessionType: type, // 🔥 IMPORTANT
-
-      status: "pending",
-      paymentStatus: "unpaid",
-
-      amount: amount,
-      durationMinutes: duration,
-
-      callStatus: "not_started",
-
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+    const orderRes = await fetch("https://connect-agora-server.onrender.com/create-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        amount: amount,
+        sessionType: type
+      })
     });
 
-    alert(`Session created ✅ ${isCall ? "Call" : "Chat"} session`);
+    const orderData = await orderRes.json();
 
-    window.location.href = `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
+    if (!orderRes.ok || !orderData.success) {
+      alert("Payment order failed ❌");
+      console.error(orderData);
+      return;
+    }
+
+    const options = {
+      key: "rzp_live_SkWu8CaCqPCe9m",
+      amount: orderData.order.amount,
+      currency: "INR",
+      name: "Connect Mentorship",
+      description: isCall ? "Paid Call Session ₹199" : "Paid Chat Session ₹99",
+      order_id: orderData.order.id,
+
+      handler: async function(response) {
+        const verifyRes = await fetch("https://connect-agora-server.onrender.com/verify-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(response)
+        });
+
+        const verifyData = await verifyRes.json();
+
+        if (!verifyRes.ok || !verifyData.success) {
+          alert("Payment verification failed ❌");
+          console.error(verifyData);
+          return;
+        }
+
+        const sessionRef = await addDoc(collection(db, "sessions"), {
+          studentId: user.uid,
+          mentorId: mentorId,
+          chatId: chatId,
+
+          sessionType: type,
+          status: "paid",
+          paymentStatus: "paid",
+
+          amount: amount,
+          durationMinutes: duration,
+
+          razorpayOrderId: response.razorpay_order_id,
+          razorpayPaymentId: response.razorpay_payment_id,
+
+          callStatus: isCall ? "not_started" : null,
+
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          paidAt: serverTimestamp()
+        });
+
+        await setDoc(doc(db, "chats", chatId), {
+          studentId: user.uid,
+          mentorId: mentorId,
+          participants: [user.uid, mentorId],
+          status: "active",
+          sessionId: sessionRef.id,
+          sessionType: type,
+          paymentStatus: "paid",
+          sessionMinutes: duration,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        alert("Payment successful ✅ Session unlocked");
+
+        window.location.href =
+          `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
+      },
+
+      modal: {
+        ondismiss: function() {
+          alert("Payment cancelled");
+        }
+      },
+
+      prefill: {
+        email: user.email || ""
+      },
+
+      theme: {
+        color: "#4f46e5"
+      }
+    };
+
+    const razorpay = new Razorpay(options);
+    razorpay.open();
 
   } catch (error) {
     console.error(error);
-    alert("Booking failed ❌ Check Firestore rules.");
+    alert("Booking failed ❌");
   }
 };
-
  
   
 
