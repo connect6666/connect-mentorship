@@ -31,6 +31,8 @@
   <p id="callStatus">Checking session...</p>
   <p id="callTimer" style="font-weight:700;color:#22c55e;">Timer: not started</p>
 
+  <p id="speechWarning" style="font-weight:700;color:#ef4444;"></p>
+
   <div class="video-grid">
     <div class="video-box" id="local-player"></div>
     <div class="video-box" id="remote-player"></div>
@@ -67,6 +69,8 @@ const sessionId = params.get("sessionId");
 
 const callStatus = document.getElementById("callStatus");
 const callTimer = document.getElementById("callTimer");
+
+  const speechWarning = document.getElementById("speechWarning");
 const joinBtn = document.getElementById("joinBtn");
 const leaveBtn = document.getElementById("leaveBtn");
 const muteBtn = document.getElementById("muteBtn");
@@ -172,6 +176,91 @@ async function setupCallEndTime() {
   callEndTime = endTime.getTime();
 }
 
+
+// speech detaction
+
+  let recognition = null;
+
+function checkSensitiveSpeech(text) {
+const patterns = [
+  /\b\d{10}\b/,                 // direct number
+  /\b\d{5}\s?\d{5}\b/,         // spaced number
+  /\b\d{3}\s\d{3}\s\d{4}\b/,   // spoken format
+
+  /@gmail\.com|@yahoo\.com|@outlook\.com/i,
+
+  /whatsapp number/i,
+  /send me on whatsapp/i,
+  /text me/i,
+  /call me/i,
+  /contact me/i,
+
+  /upi id/i,
+  /paytm number/i
+];
+
+  if (patterns.some(p => p.test(text))) {
+  speechWarning.innerText = "⚠️ Sharing personal contact is not allowed. Stay on platform.";
+
+setTimeout(() => {
+  speechWarning.innerText = "";
+}, 5000);
+
+console.warn("Sensitive speech detected:", text);
+  }
+}
+
+function startSpeechDetection() {
+    if (recognition) {
+    try {
+      recognition.stop();
+    } catch (e) {}
+    recognition = null;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    console.log("Speech detection not supported in this browser.");
+    speechWarning.innerText = "Speech privacy check not supported on this browser.";
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-IN";
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (event) => {
+    let transcript = "";
+
+   for (let i = event.resultIndex; i < event.results.length; i++) {
+  if (event.results[i].isFinal) {
+    transcript += event.results[i][0].transcript + " ";
+  }
+}
+
+if (transcript) {
+  checkSensitiveSpeech(transcript.toLowerCase());
+}
+  };
+
+  recognition.onerror = (event) => {
+    console.log("Speech recognition error:", event.error);
+  };
+
+  recognition.onend = () => {
+    if (joined) {
+      try {
+        recognition.start();
+      } catch (e) {}
+    }
+  };
+
+  recognition.start();
+}
+  
+
 async function joinCall() {
   if (joined) return;
   if (!currentUser) {
@@ -227,6 +316,7 @@ async function joinCall() {
     muteBtn.disabled = false;
     cameraBtn.disabled = false;
     startCallTimer();
+    startSpeechDetection();
 
   } catch (error) {
     console.error("JOIN ERROR:", error);
@@ -262,6 +352,12 @@ async function leaveCall(autoEnded = false) {
     callStatus.innerText = autoEnded ? "Call time ended ✅" : "Call ended ✅";
 
     if (callTimerInterval) clearInterval(callTimerInterval);
+
+    if (recognition) {
+  recognition.stop();
+  recognition = null;
+}
+speechWarning.innerText = "";
     callTimer.innerText = autoEnded ? "Call time ended" : "Call ended";
 
     joinBtn.style.display = "inline-block";
