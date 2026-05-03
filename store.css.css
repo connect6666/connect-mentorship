@@ -733,3 +733,78 @@ body {
   max-width: 680px !important;
   font-size: 1.08rem !important;
 }
+
+
+/* ============================= */
+/* 🔥 MOBILE OPTIMIZATION FIX */
+/* ============================= */
+
+@media (max-width: 640px) {
+
+  /* Reduce overall padding */
+  .store-shell {
+    padding: 20px 0 40px !important;
+  }
+
+  /* HERO spacing */
+  .store-header {
+    padding: 32px 16px !important;
+    min-height: auto !important;
+  }
+
+  /* Fix BIG heading */
+  .header-copy h1 {
+    font-size: 2.2rem !important;
+    line-height: 1.1 !important;
+  }
+
+  /* Fix summary spacing */
+  .header-summary {
+    font-size: 0.95rem !important;
+  }
+
+  /* 🔥 PRODUCT GRID FIX */
+  .product-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  /* 🔥 CARD SIZE FIX */
+  .product-card {
+    border-radius: 18px !important;
+  }
+
+  /* 🔥 IMAGE HEIGHT FIX (MOST IMPORTANT) */
+  .image-wrap {
+    aspect-ratio: 16 / 9 !important;
+    max-height: 180px !important;
+  }
+
+  .image-wrap img {
+    object-fit: cover !important;
+  }
+
+  /* Reduce content padding */
+  .product-content {
+    padding: 14px !important;
+  }
+
+  /* Text scaling */
+  .benefit {
+    font-size: 0.9rem !important;
+  }
+
+  .description {
+    font-size: 0.85rem !important;
+  }
+
+  /* Button full width */
+  .product-footer {
+    flex-direction: column !important;
+  }
+
+  .product-cta {
+    width: 100% !important;
+  }
+
+}
