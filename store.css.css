@@ -810,5 +810,25 @@ body {
 }
 
 
+/* FIX STORE SECTION TITLE VISIBILITY */
+.store-shell .section-heading h2,
+.store-shell #recommendedTitle,
+.store-shell #categoryTitle,
+.store-shell #analyticsTitle {
+  color: #0f172a !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background: none !important;
+}
+
+.store-shell .section-heading .eyebrow {
+  color: #635bff !important;
+}
+
+.store-shell .text-button {
+  color: #635bff !important;
+  -webkit-text-fill-color: #635bff !important;
+}
+
+
 /* Store page spacing after navbar */
 
