@@ -569,4 +569,13 @@ window.SmartStudentStore = {
   loadProductsFromFirestore,
 };
 
-window.addEventListener('DOMContentLoaded', initializeStoreUI);
+window.addEventListener('DOMContentLoaded', () => {
+  const isStorePage = document.getElementById('recommendedContainer');
+
+  if (isStorePage) {
+    initializeStoreUI();
+  } else {
+    loadUserActivity();
+    renderActivityStats();
+  }
+});
