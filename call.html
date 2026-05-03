@@ -95,7 +95,18 @@ let callEndTime = null;
 async function getToken(channelName, agoraUid) {
   const idToken = await currentUser.getIdToken();
 
-  const res = await fetch("https://connect-agora-server.onrender.com/token", {
+  // call back
+  const sessionRef = doc(db, "sessions", sessionId);
+const sessionSnap = await getDoc(sessionRef);
+const session = sessionSnap.data();
+
+if (session.callStatus !== "unlocked") {
+  alert("Call will be unlocked by admin before meeting");
+  window.location.href = "mentor.html";
+  return;
+}
+
+  const res = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/generateToken", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
