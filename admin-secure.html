@@ -645,7 +645,7 @@ function renderSessions() {
         <p class="small"><strong>Created:</strong> ${safe(formatDate(s.createdAt))}</p>
 
        <button class="btn success-btn" onclick="approveSessionPayment('${s.id}', '${s.chatId}')">
-  Approve Payment
+ Unlock Session
 </button>
 
         <button class="btn warning-btn" onclick="markSessionPending('${s.id}')">
@@ -666,7 +666,7 @@ function renderSessions() {
 }
 
 window.approveSessionPayment = async function(sessionId, chatId) {
-  if (!confirm("Approve payment and unlock session?")) return;
+  if (!confirm("Unlock this session now? Chat/call will become active.")) return;
 
   const sessionRef = doc(db, "sessions", sessionId);
   const sessionSnap = await getDoc(sessionRef);
@@ -677,21 +677,19 @@ window.approveSessionPayment = async function(sessionId, chatId) {
   }
 
   const s = sessionSnap.data();
-  if (s.paymentStatus === "paid") {
-  alert("Already approved ❌");
-  return;
-}
 
   const sessionType = s.sessionType || "chat";
   const minutes = s.durationMinutes || (sessionType === "call" ? 30 : 15);
-  const amount = s.amount || (sessionType === "call" ? 199 : 99);
+  const endTime = new Date(Date.now() + minutes * 60 * 1000);
+  const deleteTime = new Date(endTime.getTime() + 3 * 24 * 60 * 60 * 1000);
 
   await updateDoc(sessionRef, {
-    status: "paid",
+    status: "active",
     paymentStatus: "paid",
-    durationMinutes: minutes,
-    amount: amount,
-    paidAt: serverTimestamp(),
+    chatStatus: "unlocked",
+    callStatus: sessionType === "call" ? "unlocked" : null,
+    sessionStartedAt: serverTimestamp(),
+    sessionEndsAt: endTime,
     approvedBy: currentAdmin.uid,
     updatedAt: serverTimestamp()
   });
@@ -704,11 +702,23 @@ window.approveSessionPayment = async function(sessionId, chatId) {
     sessionId: sessionId,
     sessionType: sessionType,
     paymentStatus: "paid",
+    chatStatus: "unlocked",
+    callStatus: sessionType === "call" ? "unlocked" : null,
     sessionMinutes: minutes,
+    sessionStartedAt: serverTimestamp(),
+    sessionEndsAt: endTime,
+    deleteAt: deleteTime,
     updatedAt: serverTimestamp()
   }, { merge: true });
 
-  alert(`Payment approved ✅ ${sessionType === "call" ? "Call" : "Chat"} unlocked for ${minutes} minutes.`);
+  if (s.slotId) {
+    await updateDoc(doc(db, "bookedSlots", s.slotId), {
+      status: "active",
+      updatedAt: serverTimestamp()
+    });
+  }
+
+  alert(`${sessionType === "call" ? "Call" : "Chat"} unlocked ✅`);
   await loadAllData();
 };
 
