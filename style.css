@@ -1422,3 +1422,109 @@ body:has(.dm-wrapper) {
   margin-top: 4px;
   font-size: 12px;
 }
+
+
+/* ============================= */
+/* SMART STORE WIDGET SAFE CSS */
+/* ============================= */
+
+.smart-store-widget {
+  color: #172033 !important;
+  margin-top: 25px;
+}
+
+.smart-store-widget .product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.smart-store-widget .compact-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.smart-store-widget .product-card {
+  background: #ffffff !important;
+  color: #172033 !important;
+  border: 1px solid #dbe3ef !important;
+  border-radius: 18px !important;
+  overflow: hidden;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.12) !important;
+}
+
+.smart-store-widget .image-wrap {
+  position: relative;
+  height: 190px;
+  background: #f1f5f9;
+}
+
+.smart-store-widget .image-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.smart-store-widget .recommendation-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: #ffffff;
+  color: #059669;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.smart-store-widget .product-content {
+  padding: 18px;
+}
+
+.smart-store-widget .product-content h3,
+.smart-store-widget .product-content p,
+.smart-store-widget .product-footer strong {
+  color: #172033 !important;
+}
+
+.smart-store-widget .product-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.smart-store-widget .product-meta span {
+  background: #eef2ff;
+  color: #475569;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.smart-store-widget .benefit {
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.smart-store-widget .description {
+  color: #64748b !important;
+  font-size: 14px;
+}
+
+.smart-store-widget .product-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.smart-store-widget .product-cta {
+  background: #4f46e5 !important;
+  color: white !important;
+  padding: 10px 18px !important;
+  border-radius: 999px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
