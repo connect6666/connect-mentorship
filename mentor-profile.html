@@ -28,6 +28,99 @@ src="https://www.facebook.com/tr?id=2190385751757102&ev=PageView&noscript=1"/>
   <title>Verified Mentor Profile | Student Career Guidance</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <style>
+.booking-modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.65);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+
+.booking-box {
+  background:#fff;
+  width:100%;
+  max-width:520px;
+  border-radius:22px;
+  padding:26px;
+  position:relative;
+  box-shadow:0 25px 60px rgba(0,0,0,0.25);
+}
+
+.booking-box h2 {
+  margin:0 0 6px;
+  color:#111827;
+}
+
+.booking-box p {
+  color:#6b7280;
+}
+
+.booking-box label {
+  display:block;
+  margin-top:16px;
+  font-weight:700;
+  color:#111827;
+}
+
+.booking-box input {
+  width:100%;
+  padding:13px;
+  border-radius:12px;
+  border:1px solid #d1d5db;
+  margin-top:8px;
+  box-sizing:border-box;
+}
+
+.booking-close {
+  position:absolute;
+  right:18px;
+  top:14px;
+  border:none;
+  background:#f3f4f6;
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  font-size:22px;
+  cursor:pointer;
+}
+
+.slot-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+
+.slot-btn {
+  border:1px solid #4f46e5;
+  background:white;
+  color:#4f46e5;
+  padding:12px;
+  border-radius:14px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.slot-btn.active {
+  background:#4f46e5;
+  color:white;
+}
+
+.booking-pay-btn {
+  width:100%;
+  margin-top:18px;
+}
+
+#bookingMsg {
+  font-size:13px;
+  margin-top:12px;
+}
+</style>
 </head>
 
 <body>
@@ -61,6 +154,26 @@ src="https://www.facebook.com/tr?id=2190385751757102&ev=PageView&noscript=1"/>
 
 <div class="profile-container">
   <div class="profile-card" id="profile">Loading...</div>
+</div>
+  <div id="bookingModal" class="booking-modal">
+  <div class="booking-box">
+    <button class="booking-close" onclick="closeBookingModal()">×</button>
+
+    <h2>Book Your Session</h2>
+    <p id="bookingTypeText">Choose date and time</p>
+
+    <label>Select Date</label>
+    <input type="date" id="bookingDate">
+
+    <label>Select Time Slot</label>
+    <div id="slotGrid" class="slot-grid"></div>
+
+    <p id="bookingMsg"></p>
+
+    <button class="btn booking-pay-btn" onclick="continueBookingPayment()">
+      Continue to Payment
+    </button>
+  </div>
 </div>
 
 <script type="module">
@@ -107,6 +220,10 @@ const profile = document.getElementById("profile");
 
 let currentUser = null;
 let mentorData = null;
+  let selectedBookingMentorId = null;
+let selectedBookingType = null;
+let selectedBookingDate = null;
+let selectedBookingSlot = null;
 
 function escapeHTML(str) {
   return String(str || "").replace(/[&<>"']/g, (m) => ({
@@ -321,7 +438,7 @@ async function loadMentorProfile() {
 
 // book session
 
-// book session with date + slot + double booking protection
+// ================= BOOKING SYSTEM (FINAL CLEAN VERSION) =================
 
 const AVAILABLE_SLOTS = [
   "09:00 AM - 09:30 AM",
@@ -337,6 +454,33 @@ function cleanSlotId(text) {
   return text.replaceAll(" ", "_").replaceAll(":", "-");
 }
 
+// ---------- MODAL UI ----------
+function renderSlotButtons() {
+  const grid = document.getElementById("slotGrid");
+  grid.innerHTML = AVAILABLE_SLOTS.map(slot => `
+    <button class="slot-btn" onclick="selectBookingSlot('${slot}')">
+      ${slot}
+    </button>
+  `).join("");
+}
+
+window.selectBookingSlot = function(slot) {
+  selectedBookingSlot = slot;
+
+  document.querySelectorAll(".slot-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.innerText.trim() === slot);
+  });
+};
+
+window.closeBookingModal = function() {
+  document.getElementById("bookingModal").style.display = "none";
+};
+
+document.getElementById("bookingDate").addEventListener("change", (e) => {
+  selectedBookingDate = e.target.value;
+});
+
+// ---------- OPEN MODAL ----------
 window.bookSession = async function(mentorId, type) {
   const user = auth.currentUser;
 
@@ -351,35 +495,46 @@ window.bookSession = async function(mentorId, type) {
     return;
   }
 
-  const selectedDate = prompt("Enter session date in YYYY-MM-DD format\nExample: 2026-05-10");
+  selectedBookingMentorId = mentorId;
+  selectedBookingType = type;
+  selectedBookingDate = null;
+  selectedBookingSlot = null;
 
-  if (!selectedDate) return;
+  document.getElementById("bookingTypeText").innerText =
+    type === "call" ? "Call Session ₹199" : "Chat Session ₹99";
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  document.getElementById("bookingDate").value = "";
+  document.getElementById("bookingMsg").innerText = "";
 
-  const chosenDate = new Date(selectedDate);
-  chosenDate.setHours(0, 0, 0, 0);
+  renderSlotButtons();
+  document.getElementById("bookingModal").style.display = "flex";
+};
 
-  if (chosenDate < today) {
-    alert("Past date not allowed ❌");
+// ---------- CONTINUE ----------
+window.continueBookingPayment = async function() {
+  if (!selectedBookingDate) {
+    document.getElementById("bookingMsg").innerText = "Select date ❌";
     return;
   }
 
-  const slotText = AVAILABLE_SLOTS
-    .map((slot, index) => `${index + 1}. ${slot}`)
-    .join("\n");
-
-  const slotChoice = prompt(`Choose time slot number:\n\n${slotText}`);
-
-  if (!slotChoice) return;
-
-  const selectedSlot = AVAILABLE_SLOTS[Number(slotChoice) - 1];
-
-  if (!selectedSlot) {
-    alert("Invalid slot selected ❌");
+  if (!selectedBookingSlot) {
+    document.getElementById("bookingMsg").innerText = "Select slot ❌";
     return;
   }
+
+  document.getElementById("bookingModal").style.display = "none";
+
+  await startBookingPayment(
+    selectedBookingMentorId,
+    selectedBookingType,
+    selectedBookingDate,
+    selectedBookingSlot
+  );
+};
+
+// ---------- MAIN PAYMENT LOGIC ----------
+async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
+  const user = auth.currentUser;
 
   try {
     const chatId = [user.uid, mentorId].sort().join("_");
@@ -391,7 +546,7 @@ window.bookSession = async function(mentorId, type) {
     const slotRef = doc(db, "bookedSlots", slotId);
     const sessionRef = doc(collection(db, "sessions"));
 
-    // 🔒 Double booking protection
+    // 🔒 DOUBLE BOOKING PROTECTION
     await runTransaction(db, async (transaction) => {
       const slotSnap = await transaction.get(slotRef);
 
@@ -399,7 +554,7 @@ window.bookSession = async function(mentorId, type) {
         const slotData = slotSnap.data();
 
         if (["locked", "paid", "active", "pending_admin"].includes(slotData.status)) {
-          throw new Error("This slot is already booked. Please choose another slot.");
+          throw new Error("Slot already booked ❌");
         }
       }
 
@@ -409,103 +564,70 @@ window.bookSession = async function(mentorId, type) {
         sessionId: sessionRef.id,
         date: selectedDate,
         timeSlot: selectedSlot,
-        sessionType: type,
         status: "locked",
-        lockedAt: serverTimestamp()
+        createdAt: serverTimestamp()
       });
 
       transaction.set(sessionRef, {
         studentId: user.uid,
         mentorId,
         chatId,
-
         sessionType: type,
         date: selectedDate,
         timeSlot: selectedSlot,
-
         status: "pending_payment",
         paymentStatus: "unpaid",
         chatStatus: "locked",
         callStatus: isCall ? "locked" : null,
-
         amount,
         durationMinutes: duration,
         slotId,
-
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        createdAt: serverTimestamp()
       });
     });
 
+    // CREATE ORDER
     const orderRes = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/createOrder", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        amount,
-        sessionType: type
-      })
+      body: JSON.stringify({ amount })
     });
 
     const orderData = await orderRes.json();
 
     if (!orderRes.ok || !orderData.success) {
-      await updateDoc(slotRef, { status: "failed_order", updatedAt: serverTimestamp() });
-      await updateDoc(sessionRef, { status: "payment_failed", updatedAt: serverTimestamp() });
-      alert("Payment order failed ❌");
-      console.error(orderData);
+      alert("Order failed ❌");
       return;
     }
 
+    // RAZORPAY
     const options = {
       key: "rzp_live_Skm3aaUq71xXIz",
       amount: orderData.order.amount,
       currency: "INR",
       name: "Connect Mentorship",
-      description: isCall ? "Paid Call Session ₹199" : "Paid Chat Session ₹99",
       order_id: orderData.order.id,
 
       handler: async function(response) {
-        const verifyRes = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/verifyPayment", {
+
+        await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/verifyPayment", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             ...response,
             sessionId: sessionRef.id
           })
         });
 
-        const verifyData = await verifyRes.json();
-
-        if (!verifyRes.ok || !verifyData.success) {
-          await updateDoc(slotRef, { status: "payment_verify_failed", updatedAt: serverTimestamp() });
-          await updateDoc(sessionRef, { status: "payment_verify_failed", updatedAt: serverTimestamp() });
-          alert("Payment verification failed ❌");
-          console.error(verifyData);
-          return;
-        }
-
         await updateDoc(sessionRef, {
           status: "pending_admin",
-          paymentStatus: "paid",
-          chatStatus: "locked",
-          callStatus: isCall ? "locked" : null,
-
-          razorpayOrderId: response.razorpay_order_id,
-          razorpayPaymentId: response.razorpay_payment_id,
-
-          paidAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          paymentStatus: "paid"
         });
 
         await updateDoc(slotRef, {
-          status: "pending_admin",
-          paymentStatus: "paid",
-          paidAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
+          status: "pending_admin"
         });
 
         await setDoc(doc(db, "chats", chatId), {
@@ -513,56 +635,31 @@ window.bookSession = async function(mentorId, type) {
           mentorId,
           participants: [user.uid, mentorId],
           status: "locked",
-          sessionId: sessionRef.id,
-          sessionType: type,
-          paymentStatus: "paid",
-          chatStatus: "locked",
-          sessionMinutes: duration,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+          sessionId: sessionRef.id
+        });
 
-        alert("Payment successful ✅ Your session is booked. Admin will inform you before meeting.");
+        alert("Payment successful ✅ Waiting for admin approval");
 
-        window.location.href =
-          `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
+      window.location.href =
+  `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
       },
 
       modal: {
         ondismiss: async function() {
-          await updateDoc(slotRef, {
-            status: "cancelled",
-            updatedAt: serverTimestamp()
-          });
-
-          await updateDoc(sessionRef, {
-            status: "cancelled",
-            paymentStatus: "unpaid",
-            updatedAt: serverTimestamp()
-          });
-
-          alert("Payment cancelled. Slot released.");
+          await updateDoc(slotRef, { status: "cancelled" });
+          await updateDoc(sessionRef, { status: "cancelled" });
+          alert("Payment cancelled");
         }
-      },
-
-      prefill: {
-        email: user.email || ""
-      },
-
-      theme: {
-        color: "#4f46e5"
       }
     };
 
-    const razorpay = new Razorpay(options);
-    razorpay.open();
+    new Razorpay(options).open();
 
-  } catch (error) {
-    console.error(error);
-    alert(error.message || "Booking failed ❌");
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Booking failed ❌");
   }
-};
- 
-  
+}
 
 window.startChat = async function(mentorId) {
   const user = auth.currentUser;
