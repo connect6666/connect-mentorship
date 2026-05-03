@@ -149,7 +149,7 @@ const products = [
     tags: ['automation', 'tools', 'productivity', 'chatgpt'],
   },
   // electronics 
-  {
+ {
   id: 'electronics-student-laptop',
   title: 'Student Laptop',
   category: 'electronics',
@@ -157,8 +157,8 @@ const products = [
   benefit: 'Best for coding, online classes, projects, and daily study work.',
   description: 'Recommended laptop option for students who need performance for learning, assignments, and coding practice.',
   price: 'Amazon',
- image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80',
-  link: 'PASTE_AMAZON_AFFILIATE_LINK_HERE',
+  image: 'https://m.media-amazon.com/images/I/81nPkLHN3vL._SL1500_.jpg',
+  link: 'https://amzn.to/49qh7EB',
   priority: 95,
   tags: ['laptop', 'coding', 'student', 'electronics'],
 },
