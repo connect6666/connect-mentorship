@@ -12,11 +12,11 @@ const SMART_STORE_CONFIG = {
   recommendationLimit: 4,
   compactLimit: 3,
   scores: {
-    question: 5,
-    click: 3,
-    pageVisit: 2,
-    categoryVisit: 2,
-  },
+  question: 5,
+  click: 1,
+  pageVisit: 1,
+  categoryVisit: 1,
+},
   firebase: {
     enabled: false,
     config: {
