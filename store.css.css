@@ -452,3 +452,62 @@ input:focus-visible {
     grid-template-columns: 92px minmax(0, 1fr);
   }
 }
+
+
+/* ===== CONNECT STORE OVERRIDE FIX ===== */
+
+.smart-store-widget,
+.store-shell {
+  color: #172033 !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.smart-store-widget *,
+.store-shell * {
+  box-sizing: border-box;
+}
+
+.smart-store-widget h1,
+.smart-store-widget h2,
+.smart-store-widget h3,
+.smart-store-widget p,
+.store-shell h1,
+.store-shell h2,
+.store-shell h3,
+.store-shell p {
+  color: #172033 !important;
+}
+
+.smart-store-widget .product-card,
+.store-shell .product-card {
+  background: #ffffff !important;
+  color: #172033 !important;
+}
+
+.smart-store-widget .product-content,
+.smart-store-widget .product-content h3,
+.smart-store-widget .product-content p,
+.smart-store-widget .product-footer strong,
+.store-shell .product-content,
+.store-shell .product-content h3,
+.store-shell .product-content p,
+.store-shell .product-footer strong {
+  color: #172033 !important;
+}
+
+.smart-store-widget .button,
+.smart-store-widget .product-cta,
+.store-shell .button,
+.store-shell .product-cta {
+  background: #246bfe !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.smart-store-widget .product-grid,
+.store-shell .product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
