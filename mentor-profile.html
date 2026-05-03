@@ -314,8 +314,15 @@ function renderProfile(data) {
   📞 Book Call Session ₹199
 </button>
 
-` : ""}
+<div style="margin-top:24px;">
+  <h3>Recommended Before Booking</h3>
+  <p style="font-size:13px;color:gray;">
+    Smart resources to prepare better before your mentor session.
+  </p>
+  <div id="mentorProfileRecommendations" class="compact-grid" data-placement="mentor-profile"></div>
+</div>
 
+` : ""}
     <p style="font-size:10px; color:gray; margin-top:15px;">
       Verification confirms identity only. Connect does not guarantee results or outcomes.
     </p>
@@ -452,8 +459,20 @@ async function loadMentorProfile() {
       return;
     }
 
-    mentorData = data;
-    renderProfile(data);
+   mentorData = data;
+renderProfile(data);
+
+setTimeout(() => {
+  if (window.SmartStudentStore) {
+    const mentorSignals = `${data.skills || ""} ${data.bio || ""} ${data.name || ""}`;
+    const category = window.SmartStudentStore.detectCategoryFromText(mentorSignals);
+
+    window.SmartStudentStore.updateInterest(category, 2);
+    window.SmartStudentStore.renderProductRecommendations("mentorProfileRecommendations", {
+      compact: true
+    });
+  }
+}, 300);
 
   } catch (error) {
     console.error(error);
