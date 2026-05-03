@@ -808,3 +808,14 @@ body {
   }
 
 }
+
+
+body {
+  padding-top: 80px;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding-top: 100px;
+  }
+}
