@@ -416,13 +416,17 @@ async function verifyPaidSession(user) {
     return false;
   }
 
-  if (session.paymentStatus !== "paid" || !["paid", "active"].includes(session.status)) {
-    blockChatAccess(
-      "Payment pending 🔒",
-      "Complete payment first. Chat will unlock after payment success."
-    );
-    return false;
-  }
+
+ 
+
+  // 🔒 ADMIN CONTROL LOCK
+if (session.status !== "active") {
+  blockChatAccess(
+    "Session not started yet ⏳",
+    "Admin will unlock chat before your meeting time."
+  );
+  return false;
+}
 
   
   updateCallButton();
@@ -578,8 +582,8 @@ window.sendMessage = async function () {
   }
 
   // 🟡 BLOCK if session not started
- if (!currentSessionData || currentSessionData.paymentStatus !== "paid") {
-  chatMsg.innerText = "Payment required before sending messages.";
+if (!currentSessionData || currentSessionData.status !== "active") {
+  chatMsg.innerText = "Chat locked. Wait for admin approval.";
   chatMsg.style.color = "red";
   return;
 }
