@@ -154,8 +154,9 @@ const products = [
   title: 'Student Laptop for Coding & Daily Use',
   category: 'electronics',
   type: 'recommended',
-  benefit: 'Perfect for coding, online classes, projects, and everyday student work.',
-  description: 'A reliable laptop for students to learn coding, complete assignments, attend classes, and build projects smoothly without performance issues.',
+  benefit: 'Handles AI/ML, 4K editing, and hardcore coding smoothly with powerful high-performance multitasking.',
+  description: 'Handles AI/ML training, 4K video editing, and hardcore coding with smooth high-performance multitasking.
+Built for developers and creators running heavy tools like TensorFlow, Docker, Blender, and full-stack environments',
   price: 'View on Amazon',
   image: 'https://m.media-amazon.com/images/I/81nPkLHN3vL._SX522_.jpg',
   link: 'https://amzn.to/49qh7EB',
