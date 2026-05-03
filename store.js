@@ -496,8 +496,14 @@ function handleCategoryChange(event) {
     tab.setAttribute('aria-selected', String(isActive));
   });
 
-  renderCategoryProducts(category);
-  updateInterest(category, SMART_STORE_CONFIG.scores.categoryVisit);
+ renderCategoryProducts(category);
+
+userActivity.categoryClicks[category] =
+  (userActivity.categoryClicks[category] || 0) + 1;
+
+updateInterest(category, SMART_STORE_CONFIG.scores.categoryVisit);
+saveUserActivity();
+renderActivityStats();
 }
 
 function handleQuestionSubmit(event) {
@@ -540,7 +546,7 @@ async function initializeStoreUI() {
 
   renderAllRecommendationPlacements();
   renderCategoryProducts(SMART_STORE_CONFIG.defaultCategory);
-  trackPageVisit('store', SMART_STORE_CONFIG.defaultCategory);
+
 
   document.body.addEventListener('click', handleProductClick);
   document.querySelector('.tabs')?.addEventListener('click', handleCategoryChange);
