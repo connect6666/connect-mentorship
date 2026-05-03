@@ -148,18 +148,59 @@ const products = [
     priority: 79,
     tags: ['automation', 'tools', 'productivity', 'chatgpt'],
   },
+  // electronics 
+  {
+  id: 'electronics-student-laptop',
+  title: 'Student Laptop',
+  category: 'electronics',
+  type: 'affiliate',
+  benefit: 'Best for coding, online classes, projects, and daily study work.',
+  description: 'Recommended laptop option for students who need performance for learning, assignments, and coding practice.',
+  price: 'Amazon',
+ image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80',
+  link: 'PASTE_AMAZON_AFFILIATE_LINK_HERE',
+  priority: 95,
+  tags: ['laptop', 'coding', 'student', 'electronics'],
+},
+{
+  id: 'electronics-headphones',
+  title: 'Study Headphones',
+  category: 'electronics',
+  type: 'affiliate',
+  benefit: 'Focus better during online classes, mentorship calls, and study sessions.',
+  description: 'Useful for students attending online lectures, mentor calls, and coding tutorials.',
+  price: 'Amazon',
+  image: '/connect-mentorship/images/headphones.jpg',
+  link: 'PASTE_AMAZON_AFFILIATE_LINK_HERE',
+  priority: 88,
+  tags: ['headphones', 'study', 'calls', 'electronics'],
+},
+{
+  id: 'electronics-smartphone',
+  title: 'Student Smartphone',
+  category: 'electronics',
+  type: 'affiliate',
+  benefit: 'Useful for learning apps, online classes, notes, and communication.',
+  description: 'Recommended phone category for students who need a reliable device for learning and productivity.',
+  price: 'Amazon',
+  image: '/connect-mentorship/images/student-phone.jpg',
+  link: 'PASTE_AMAZON_AFFILIATE_LINK_HERE',
+  priority: 86,
+  tags: ['phone', 'mobile', 'student', 'electronics'],
+},
 ];
 
 const keywordCategoryMap = {
   coding: ['learn coding', 'code', 'coding', 'python', 'javascript', 'react', 'developer', 'software', 'web', 'frontend', 'backend', 'full stack', 'github', 'portfolio project'],
   business: ['business', 'marketing', 'startup', 'sales', 'entrepreneur', 'strategy', 'growth', 'resume', 'linkedin', 'personal brand', 'product market fit'],
   ai: ['ai', 'artificial intelligence', 'machine learning', 'deep learning', 'data science', 'chatgpt', 'llm', 'prompt', 'automation', 'notebook'],
+  electronics: ['phone', 'mobile', 'laptop', 'headphones', 'earbuds', 'keyboard', 'mouse', 'tablet', 'charger', 'monitor', 'electronics', 'gadget'],
 };
 
 let db = null;
 
 const userActivity = {
-  interests: { coding: 0, business: 0, ai: 0 },
+ interests: { coding: 0, business: 0, ai: 0, electronics: 0 },
   clicks: [],
   pageVisits: [],
   questions: [],
@@ -463,11 +504,13 @@ function renderActivityStats() {
   const coding = document.getElementById('scoreCoding');
   const business = document.getElementById('scoreBusiness');
   const ai = document.getElementById('scoreAI');
+  const electronics = document.getElementById('scoreElectronics');
   const mostClicked = document.getElementById('mostClickedCategory');
 
   if (coding) coding.textContent = userActivity.interests.coding || 0;
   if (business) business.textContent = userActivity.interests.business || 0;
   if (ai) ai.textContent = userActivity.interests.ai || 0;
+   if (electronics) electronics.textContent = userActivity.interests.electronics || 0; 
   if (mostClicked) mostClicked.textContent = getMostClickedCategory();
   updateRecommendationLabels();
 }
@@ -522,7 +565,7 @@ function handleQuestionSubmit(event) {
 function resetActivity() {
   window.localStorage.removeItem(SMART_STORE_CONFIG.activityStorageKey);
   Object.assign(userActivity, {
-    interests: { coding: 0, business: 0, ai: 0 },
+   interests: { coding: 0, business: 0, ai: 0, electronics: 0 },
     clicks: [],
     pageVisits: [],
     questions: [],
