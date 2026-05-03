@@ -74,7 +74,8 @@ import {
   setDoc,
   addDoc,
   collection,
-  serverTimestamp
+  serverTimestamp,
+  runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -320,6 +321,22 @@ async function loadMentorProfile() {
 
 // book session
 
+// book session with date + slot + double booking protection
+
+const AVAILABLE_SLOTS = [
+  "09:00 AM - 09:30 AM",
+  "10:00 AM - 10:30 AM",
+  "11:00 AM - 11:30 AM",
+  "02:00 PM - 02:30 PM",
+  "03:00 PM - 03:30 PM",
+  "04:00 PM - 04:30 PM",
+  "05:00 PM - 05:30 PM"
+];
+
+function cleanSlotId(text) {
+  return text.replaceAll(" ", "_").replaceAll(":", "-");
+}
+
 window.bookSession = async function(mentorId, type) {
   const user = auth.currentUser;
 
@@ -334,11 +351,91 @@ window.bookSession = async function(mentorId, type) {
     return;
   }
 
+  const selectedDate = prompt("Enter session date in YYYY-MM-DD format\nExample: 2026-05-10");
+
+  if (!selectedDate) return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const chosenDate = new Date(selectedDate);
+  chosenDate.setHours(0, 0, 0, 0);
+
+  if (chosenDate < today) {
+    alert("Past date not allowed ❌");
+    return;
+  }
+
+  const slotText = AVAILABLE_SLOTS
+    .map((slot, index) => `${index + 1}. ${slot}`)
+    .join("\n");
+
+  const slotChoice = prompt(`Choose time slot number:\n\n${slotText}`);
+
+  if (!slotChoice) return;
+
+  const selectedSlot = AVAILABLE_SLOTS[Number(slotChoice) - 1];
+
+  if (!selectedSlot) {
+    alert("Invalid slot selected ❌");
+    return;
+  }
+
   try {
     const chatId = [user.uid, mentorId].sort().join("_");
     const isCall = type === "call";
     const amount = isCall ? 199 : 99;
     const duration = isCall ? 30 : 15;
+
+    const slotId = `${mentorId}_${selectedDate}_${cleanSlotId(selectedSlot)}`;
+    const slotRef = doc(db, "bookedSlots", slotId);
+    const sessionRef = doc(collection(db, "sessions"));
+
+    // 🔒 Double booking protection
+    await runTransaction(db, async (transaction) => {
+      const slotSnap = await transaction.get(slotRef);
+
+      if (slotSnap.exists()) {
+        const slotData = slotSnap.data();
+
+        if (["locked", "paid", "active", "pending_admin"].includes(slotData.status)) {
+          throw new Error("This slot is already booked. Please choose another slot.");
+        }
+      }
+
+      transaction.set(slotRef, {
+        mentorId,
+        studentId: user.uid,
+        sessionId: sessionRef.id,
+        date: selectedDate,
+        timeSlot: selectedSlot,
+        sessionType: type,
+        status: "locked",
+        lockedAt: serverTimestamp()
+      });
+
+      transaction.set(sessionRef, {
+        studentId: user.uid,
+        mentorId,
+        chatId,
+
+        sessionType: type,
+        date: selectedDate,
+        timeSlot: selectedSlot,
+
+        status: "pending_payment",
+        paymentStatus: "unpaid",
+        chatStatus: "locked",
+        callStatus: isCall ? "locked" : null,
+
+        amount,
+        durationMinutes: duration,
+        slotId,
+
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+    });
 
     const orderRes = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/createOrder", {
       method: "POST",
@@ -346,7 +443,7 @@ window.bookSession = async function(mentorId, type) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        amount: amount,
+        amount,
         sessionType: type
       })
     });
@@ -354,6 +451,8 @@ window.bookSession = async function(mentorId, type) {
     const orderData = await orderRes.json();
 
     if (!orderRes.ok || !orderData.success) {
+      await updateDoc(slotRef, { status: "failed_order", updatedAt: serverTimestamp() });
+      await updateDoc(sessionRef, { status: "payment_failed", updatedAt: serverTimestamp() });
       alert("Payment order failed ❌");
       console.error(orderData);
       return;
@@ -373,61 +472,75 @@ window.bookSession = async function(mentorId, type) {
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(response)
+          body: JSON.stringify({
+            ...response,
+            sessionId: sessionRef.id
+          })
         });
 
         const verifyData = await verifyRes.json();
 
         if (!verifyRes.ok || !verifyData.success) {
+          await updateDoc(slotRef, { status: "payment_verify_failed", updatedAt: serverTimestamp() });
+          await updateDoc(sessionRef, { status: "payment_verify_failed", updatedAt: serverTimestamp() });
           alert("Payment verification failed ❌");
           console.error(verifyData);
           return;
         }
 
-        const sessionRef = await addDoc(collection(db, "sessions"), {
-          studentId: user.uid,
-          mentorId: mentorId,
-          chatId: chatId,
-
-          sessionType: type,
-          status: "paid",
+        await updateDoc(sessionRef, {
+          status: "pending_admin",
           paymentStatus: "paid",
-
-          amount: amount,
-          durationMinutes: duration,
+          chatStatus: "locked",
+          callStatus: isCall ? "locked" : null,
 
           razorpayOrderId: response.razorpay_order_id,
           razorpayPaymentId: response.razorpay_payment_id,
 
-          callStatus: isCall ? "not_started" : null,
+          paidAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
 
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-          paidAt: serverTimestamp()
+        await updateDoc(slotRef, {
+          status: "pending_admin",
+          paymentStatus: "paid",
+          paidAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         });
 
         await setDoc(doc(db, "chats", chatId), {
           studentId: user.uid,
-          mentorId: mentorId,
+          mentorId,
           participants: [user.uid, mentorId],
-          status: "active",
+          status: "locked",
           sessionId: sessionRef.id,
           sessionType: type,
           paymentStatus: "paid",
+          chatStatus: "locked",
           sessionMinutes: duration,
-          createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }, { merge: true });
 
-        alert("Payment successful ✅ Session unlocked");
+        alert("Payment successful ✅ Your session is booked. Admin will inform you before meeting.");
 
         window.location.href =
           `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
       },
 
       modal: {
-        ondismiss: function() {
-          alert("Payment cancelled");
+        ondismiss: async function() {
+          await updateDoc(slotRef, {
+            status: "cancelled",
+            updatedAt: serverTimestamp()
+          });
+
+          await updateDoc(sessionRef, {
+            status: "cancelled",
+            paymentStatus: "unpaid",
+            updatedAt: serverTimestamp()
+          });
+
+          alert("Payment cancelled. Slot released.");
         }
       },
 
@@ -445,7 +558,7 @@ window.bookSession = async function(mentorId, type) {
 
   } catch (error) {
     console.error(error);
-    alert("Booking failed ❌");
+    alert(error.message || "Booking failed ❌");
   }
 };
  
