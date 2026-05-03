@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Student Essentials Micro Store</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <main class="store-shell">
+    <header class="store-header">
+      <div class="header-copy">
+        <p class="eyebrow">Smart Student Essentials</p>
+        <h1>Micro store recommendations that adapt to each student.</h1>
+        <p class="header-summary">Roadmaps, resume packs, project packs, mentor playbooks, and affiliate resources ranked by learning intent.</p>
+      </div>
+      <aside class="signal-panel" aria-label="Current recommendation signals">
+        <span class="signal-label">Top interest</span>
+        <strong id="topCategoryLabel">Detecting</strong>
+        <span id="abVariantLabel">Variant A</span>
+      </aside>
+    </header>
+
+    <section class="section-band" aria-labelledby="recommendedTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Recommended for You</p>
+          <h2 id="recommendedTitle">Personalized essentials</h2>
+        </div>
+        <button class="text-button" id="resetActivityButton" type="button">Reset signals</button>
+      </div>
+      <div id="recommendedContainer" class="product-grid" data-placement="store-recommended"></div>
+    </section>
+
+    <section class="section-band" aria-labelledby="categoryTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Categories</p>
+          <h2 id="categoryTitle">Browse by focus area</h2>
+        </div>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Product categories">
+        <button class="tab-button active" data-category="coding" role="tab" aria-selected="true" type="button">Coding</button>
+        <button class="tab-button" data-category="business" role="tab" aria-selected="false" type="button">Business</button>
+        <button class="tab-button" data-category="ai" role="tab" aria-selected="false" type="button">AI</button>
+      </div>
+      <div id="categoryProducts" class="product-grid" data-placement="store-category"></div>
+    </section>
+
+    <section class="integration-grid" aria-label="Placement examples">
+      <article class="integration-panel">
+        <div class="panel-heading">
+          <p class="eyebrow">Question page</p>
+          <h2>Intent after submit</h2>
+        </div>
+        <form id="questionForm" class="question-form">
+          <label for="questionInput">Student question</label>
+          <div class="input-row">
+            <input id="questionInput" name="question" type="text" placeholder="I want to learn Python and build projects" required />
+            <button class="button button-primary" type="submit">Submit</button>
+          </div>
+        </form>
+        <p id="questionFeedback" class="inline-feedback" aria-live="polite"></p>
+        <div id="questionRecommendations" class="compact-grid" data-placement="question-page"></div>
+      </article>
+
+      <article class="integration-panel">
+        <div class="panel-heading">
+          <p class="eyebrow">Mentor profile</p>
+          <h2>Below booking CTA</h2>
+        </div>
+        <button id="bookSessionButton" class="button button-secondary" type="button">Book Session</button>
+        <div id="mentorRecommendations" class="compact-grid" data-placement="mentor-profile"></div>
+      </article>
+
+      <article class="integration-panel">
+        <div class="panel-heading">
+          <p class="eyebrow">Chat page</p>
+          <h2>Smart side section</h2>
+        </div>
+        <button id="chatSignalButton" class="button button-secondary" type="button">Simulate AI chat intent</button>
+        <div id="chatRecommendations" class="compact-grid" data-placement="chat-page"></div>
+      </article>
+    </section>
+
+    <section class="section-band" aria-labelledby="analyticsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Conversion Tracking</p>
+          <h2 id="analyticsTitle">Live activity signals</h2>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-value" id="scoreCoding">0</span>
+          <span class="stat-label">Coding interest</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-value" id="scoreBusiness">0</span>
+          <span class="stat-label">Business interest</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-value" id="scoreAI">0</span>
+          <span class="stat-label">AI interest</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-value" id="mostClickedCategory">None</span>
+          <span class="stat-label">Most clicked category</span>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="store.js"></script>
+</body>
+</html>
