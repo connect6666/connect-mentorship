@@ -511,3 +511,89 @@ input:focus-visible {
   gap: 18px;
   align-items: stretch;
 }
+
+
+/* ============================= */
+/* STORE.HTML CENTER PRO UI FIX */
+/* ============================= */
+
+.store-shell {
+  max-width: 1180px;
+  text-align: center;
+}
+
+.store-header {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 28px !important;
+  padding: 55px 0 40px !important;
+}
+
+.header-copy {
+  max-width: 900px !important;
+  margin: 0 auto !important;
+  text-align: center !important;
+}
+
+.header-copy h1 {
+  margin: 0 auto !important;
+  max-width: 900px !important;
+  text-align: center !important;
+}
+
+.header-summary {
+  margin: 22px auto 0 !important;
+  max-width: 760px !important;
+  text-align: center !important;
+}
+
+.signal-panel {
+  width: 100% !important;
+  max-width: 360px !important;
+  min-height: auto !important;
+  text-align: center !important;
+  justify-items: center !important;
+}
+
+.section-heading,
+.panel-heading {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.section-heading > div,
+.panel-heading > div {
+  text-align: center !important;
+}
+
+.text-button {
+  margin-top: 8px !important;
+}
+
+.tabs {
+  justify-content: center !important;
+}
+
+.product-grid {
+  margin-top: 22px !important;
+}
+
+.stats-grid {
+  text-align: center !important;
+}
+
+@media (max-width: 640px) {
+  .header-copy h1 {
+    font-size: 2.5rem !important;
+  }
+
+  .store-header {
+    padding-top: 28px !important;
+  }
+}
