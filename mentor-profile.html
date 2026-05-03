@@ -340,7 +340,7 @@ window.bookSession = async function(mentorId, type) {
     const amount = isCall ? 199 : 99;
     const duration = isCall ? 30 : 15;
 
-    const orderRes = await fetch("https://connect-agora-server.onrender.com/create-order", {
+    const orderRes = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/createOrder", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -368,7 +368,7 @@ window.bookSession = async function(mentorId, type) {
       order_id: orderData.order.id,
 
       handler: async function(response) {
-        const verifyRes = await fetch("https://connect-agora-server.onrender.com/verify-payment", {
+        const verifyRes = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/verifyPayment", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
