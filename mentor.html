@@ -177,7 +177,9 @@ import {
   addDoc,
   onSnapshot,
   query,
-  where
+  where,
+  doc,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -254,6 +256,22 @@ form.addEventListener("submit", async (e) => {
     showError("Please login before applying");
     return;
   }
+  if (!currentUser.emailVerified) {
+  showError("Please verify your email before applying");
+  return;
+}
+
+const userSnap = await getDoc(doc(db, "users", currentUser.uid));
+
+if (userSnap.exists() && userSnap.data().banned === true) {
+  showError("Your account is banned. You cannot apply as mentor.");
+  return;
+}
+
+if (userSnap.exists() && userSnap.data().verified === true && userSnap.data().role === "mentor") {
+  showError("You are already a verified mentor.");
+  return;
+}
 
   if (!name || name.length < 2) {
     showError("Enter valid name");
