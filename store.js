@@ -64,25 +64,18 @@ const products = [
   priority: 99,
   tags: ['python', 'beginner', 'projects', 'automation', 'data-science', 'portfolio', 'job-ready'],
 },
-  {
-  id: 'python-practice-lab',
-  title: 'Python Practice Lab (Build Real Skills 🚀)',
+ {
+  id: 'dsa-cpp-masterclass',
+  title: 'DSA with C & C++ Masterclass',
   category: 'coding',
   type: 'affiliate',
-
-  benefit: 'Master Python faster with hands-on coding challenges, real exercises, and practical problem-solving.',
-
-  description: 'Stop watching tutorials and start coding. This course helps you practice Python through real exercises, mini projects, and structured challenges. Perfect for beginners who want to build confidence, improve logic, and prepare for real-world development and interviews.',
-
+  benefit: 'Master data structures, algorithms, recursion, sorting, and problem-solving for coding interviews.',
+  description: 'Learn DSA using C and C++ with clear explanations and practical implementation. Perfect for students preparing for placements, coding rounds, competitive programming, and strong computer science fundamentals.',
   price: '₹489 (Limited Offer)',
-
   image: 'https://img-c.udemycdn.com/course/480x270/2121018_9de5_5.jpg',
-
   link: 'https://trk.udemy.com/2RWeRQ',
-
   priority: 96,
-
-  tags: ['python', 'practice', 'coding', 'beginner', 'logic', 'projects'],
+  tags: ['dsa', 'algorithms', 'c++', 'c', 'coding interview', 'placement'],
 },
   {
     id: 'business-resume-pack',
