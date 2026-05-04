@@ -125,12 +125,26 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  currentUser = user;
+ currentUser = user;
 
-  /* PROFILE */
-  onSnapshot(doc(db, "users", user.uid), (snap) => {
+if (!user.emailVerified) {
+  await signOut(auth);
+  alert("Please verify your email before opening profile ❌");
+  window.location.href = "/connect-mentorship/login.html";
+  return;
+  
+}
+
+/* PROFILE */
+onSnapshot(doc(db, "users", user.uid), async (snap) => {
 
     const data = snap.exists() ? snap.data() : {};
+  if (data.banned === true) {
+  await signOut(auth);
+  alert("Your account is banned ❌");
+  window.location.href = "/connect-mentorship/login.html";
+  return;
+}
 
     const name = escapeHTML(data.name || "User");
     const role = data.role || "user";
