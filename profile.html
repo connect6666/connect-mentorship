@@ -145,17 +145,25 @@ onSnapshot(doc(db, "users", user.uid), async (snap) => {
   window.location.href = "/connect-mentorship/login.html";
   return;
 }
+  const name = escapeHTML(data.name || "User");
 
-    const name = escapeHTML(data.name || "User");
-    const role = data.role || "user";
-    const verified = data.verified || false;
-    const phone = data.phone || "";
+   const role = data.role || "student";
+const verified = data.verified || false;
+const phone = data.phone || "";
+const profileComplete = data.profileComplete === true;
 
     card.innerHTML = `
       <img src="https://ui-avatars.com/api/?name=${name}" class="profile-img">
 
       <h2>${name}</h2>
       <p>${user.email}</p>
+
+
+      ${
+  profileComplete
+    ? `<div class="badge">Profile Complete ✅</div>`
+    : `<div class="badge" style="background:#f59e0b;">Profile Incomplete ⚠️</div>`
+}
 
       ${
         role === "mentor"
@@ -225,24 +233,28 @@ async function saveProfile() {
     return;
   }
 
-  await setDoc(doc(db, "users", currentUser.uid), {
-    name,
-    phone,
-    email: currentUser.email,
-    updatedAt: new Date()
-  }, { merge: true });
+await setDoc(doc(db, "users", currentUser.uid), {
+  name,
+  phone,
+  email: currentUser.email,
+  profileComplete: true,
+  updatedAt: new Date()
+}, { merge: true });
 
-  alert("Profile updated ✅");
+alert("Profile updated ✅");
 }
+
+
 
 /* APPLY */
 window.applyVerification = async function() {
-  await setDoc(doc(db, "users", currentUser.uid), {
-    email: currentUser.email,
-    role: "mentor",
-    verified: false,
-    updatedAt: new Date()
-  }, { merge: true });
+ await setDoc(doc(db, "users", currentUser.uid), {
+  email: currentUser.email,
+  role: "mentor",
+  verified: false,
+  profileComplete: true,
+  updatedAt: new Date()
+}, { merge: true });
 
   alert("Applied for mentor ✅");
 };
