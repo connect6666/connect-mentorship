@@ -50,7 +50,7 @@ const products = [
   priority: 100,
 
   tags: ['web development', 'javascript', 'react', 'fullstack', 'projects', 'job-ready'],
-}
+},
   {
     id: 'coding-project-pack',
     title: 'Portfolio Project Pack',
