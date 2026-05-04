@@ -204,16 +204,23 @@ if (googleBtn) {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const userRef = doc(db, "users", user.uid);
-      const snap = await getDoc(userRef);
+     const userRef = doc(db, "users", user.uid);
+const snap = await getDoc(userRef);
 
-      if (!snap.exists()) {
-        await setDoc(userRef, {
-          name: user.displayName || "User",
-          role: "user",
-          createdAt: new Date()
-        });
-      }
+if (!snap.exists()) {
+  await setDoc(userRef, {
+    name: user.displayName || "User",
+    email: user.email,
+    phone: "",
+    role: "student",
+    isAdmin: false,
+    verified: false,
+    banned: false,
+    profileComplete: false,
+    experience: 0,
+    createdAt: new Date()
+  });
+}
 
       window.location.href = "index.html";
 
