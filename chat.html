@@ -728,11 +728,27 @@ function showMessageNotification(text) {
 
 // ===================== INIT =====================
 onAuthStateChanged(auth, async (user) => {
-  if (!user) return location.href = "/connect-mentorship/login.html";
+  if (!user) {
+    location.href = "/connect-mentorship/login.html";
+    return;
+  }
+
+  if (!user.emailVerified) {
+    alert("Please verify your email before opening chat ❌");
+    location.href = "/connect-mentorship/login.html";
+    return;
+  }
+
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+
+  if (userSnap.exists() && userSnap.data().banned === true) {
+    alert("Your account is banned ❌");
+    location.href = "/connect-mentorship/login.html";
+    return;
+  }
 
   currentUser = user;
 
-  // ✅ ADD THIS LINE
   startOnlineHeartbeat();
 
   await createOrLoadChat(user);
