@@ -146,8 +146,28 @@ await redirectByRole(user);
     msg.style.color = "red";
     msg.innerText = "Wrong email or password ❌";
   }
+ 
+});
+document.getElementById("forgotBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    msg.style.color = "red";
+    msg.innerText = "Enter your email first ❌";
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    msg.style.color = "green";
+    msg.innerText = "Password reset email sent ✅";
+  } catch (error) {
+    msg.style.color = "red";
+    msg.innerText = "Could not send reset email ❌";
+  }
 });
 
+  
 document.getElementById("googleLogin").addEventListener("click", async () => {
   const provider = new GoogleAuthProvider();
 
@@ -169,24 +189,7 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
         createdAt: new Date()
       });
 
-      document.getElementById("forgotBtn").addEventListener("click", async () => {
-  const email = document.getElementById("email").value.trim();
-
-  if (!email) {
-    msg.style.color = "red";
-    msg.innerText = "Enter your email first ❌";
-    return;
-  }
-
-  try {
-    await sendPasswordResetEmail(auth, email);
-    msg.style.color = "green";
-    msg.innerText = "Password reset email sent ✅";
-  } catch (error) {
-    msg.style.color = "red";
-    msg.innerText = "Could not send reset email ❌";
-  }
-});
+     
 
       window.location.href = "select-role.html";
       return;
