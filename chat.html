@@ -555,7 +555,11 @@ function loadMessages() {
 
   console.log("Realtime update triggered");  // ✅ ADD HERE
 
-    chatBox.innerHTML = "";
+  chatBox.innerHTML = `
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+  <div class="skeleton"></div>
+`;
 
     snap.docs.forEach(docSnap => {
       const msg = docSnap.data();
