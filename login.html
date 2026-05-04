@@ -34,6 +34,10 @@ src="https://www.facebook.com/tr?id=2190385751757102&ev=PageView&noscript=1"/>
 
   <button id="loginBtn" class="btn">Login</button>
 
+  <button id="forgotBtn" class="btn btn-outline" style="margin-top:10px;">
+  Forgot Password
+</button>
+
   <button id="googleLogin" class="btn" style="margin-top:10px;">
     🔵 Continue with Google
   </button>
@@ -48,9 +52,10 @@ import { auth, db } from "./auth.js";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendPasswordResetEmail,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
 import {
   doc,
   getDoc,
@@ -58,6 +63,56 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const msg = document.getElementById("msg");
+
+
+  const blockedDomains = [
+  "tempmail.com",
+  "10minutemail.com",
+  "mailinator.com",
+  "guerrillamail.com",
+  "yopmail.com"
+];
+
+function isFakeEmail(email) {
+  const domain = email.split("@")[1]?.toLowerCase();
+  return blockedDomains.includes(domain);
+}
+
+async function redirectByRole(user) {
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) {
+    window.location.href = "select-role.html";
+    return;
+  }
+
+  const data = snap.data();
+
+  if (data.banned === true) {
+    await signOut(auth);
+    msg.style.color = "red";
+    msg.innerText = "Your account is banned ❌";
+    return;
+  }
+
+  if (!data.role) {
+    window.location.href = "select-role.html";
+    return;
+  }
+
+  if (data.isAdmin === true) {
+    window.location.href = "admin.html";
+    return;
+  }
+
+  if (data.role === "mentor") {
+    window.location.href = "mentor-profile.html?id=" + user.uid;
+    return;
+  }
+
+  window.location.href = "index.html";
+}
 
 document.getElementById("loginBtn").addEventListener("click", async () => {
   const email = document.getElementById("email").value.trim();
@@ -70,8 +125,23 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
   }
 
   try {
-    await signInWithEmailAndPassword(auth, email, pass);
-    window.location.href = "index.html";
+  if (isFakeEmail(email)) {
+  msg.style.color = "red";
+  msg.innerText = "Temporary/fake email not allowed ❌";
+  return;
+}
+
+const result = await signInWithEmailAndPassword(auth, email, pass);
+const user = result.user;
+
+if (!user.emailVerified) {
+  await signOut(auth);
+  msg.style.color = "red";
+  msg.innerText = "Please verify your email before login ❌";
+  return;
+}
+
+await redirectByRole(user);
   } catch (error) {
     msg.style.color = "red";
     msg.innerText = "Wrong email or password ❌";
@@ -98,6 +168,25 @@ document.getElementById("googleLogin").addEventListener("click", async () => {
         experience: 0,
         createdAt: new Date()
       });
+
+      document.getElementById("forgotBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value.trim();
+
+  if (!email) {
+    msg.style.color = "red";
+    msg.innerText = "Enter your email first ❌";
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    msg.style.color = "green";
+    msg.innerText = "Password reset email sent ✅";
+  } catch (error) {
+    msg.style.color = "red";
+    msg.innerText = "Could not send reset email ❌";
+  }
+});
 
       window.location.href = "select-role.html";
       return;
