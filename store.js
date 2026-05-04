@@ -51,32 +51,39 @@ const products = [
 
   tags: ['web development', 'javascript', 'react', 'fullstack', 'projects', 'job-ready'],
 },
+{
+  id: 'python-100-days-bootcamp',
+  title: '100 Days of Code: Python Bootcamp',
+  category: 'coding',
+  type: 'affiliate',
+  benefit: 'Become a job-ready Python developer by building 100 real-world projects — even if you start from zero.',
+  description: 'Learn Python through 100 hands-on projects including automation tools, web apps, games, and data science projects. Build a strong portfolio and become ready for internships, freelancing, or tech jobs.',
+  price: '₹459 (Limited Deal)',
+  image: 'https://img-c.udemycdn.com/course/480x270/2776760_f176_10.jpg',
+  link: 'https://trk.udemy.com/rE2yQR',
+  priority: 99,
+  tags: ['python', 'beginner', 'projects', 'automation', 'data-science', 'portfolio', 'job-ready'],
+},
   {
-    id: 'coding-project-pack',
-    title: 'Portfolio Project Pack',
-    category: 'coding',
-    type: 'own_product',
-    benefit: 'Build job-ready projects with mentor review prompts.',
-    description: 'Five realistic app briefs with feature lists, milestones, GitHub README templates, and demo scripts.',
-    price: '$39',
-    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80',
-    link: 'https://example.com/products/project-pack',
-    priority: 91,
-    tags: ['portfolio', 'github', 'apps', 'developer'],
-  },
-  {
-    id: 'coding-python-kit',
-    title: 'Python Starter Lab',
-    category: 'coding',
-    type: 'affiliate',
-    benefit: 'Practice Python with guided notebooks and mini challenges.',
-    description: 'Affiliate resource for students who need structured Python exercises before building larger projects.',
-    price: 'Free trial',
-    image: 'https://images.unsplash.com/photo-1526379879527-8559ecfcaec0?auto=format&fit=crop&w=1200&q=80',
-    link: 'https://affiliate.example.com/python-lab',
-    priority: 82,
-    tags: ['python', 'backend', 'practice'],
-  },
+  id: 'python-practice-lab',
+  title: 'Python Practice Lab (Build Real Skills 🚀)',
+  category: 'coding',
+  type: 'affiliate',
+
+  benefit: 'Master Python faster with hands-on coding challenges, real exercises, and practical problem-solving.',
+
+  description: 'Stop watching tutorials and start coding. This course helps you practice Python through real exercises, mini projects, and structured challenges. Perfect for beginners who want to build confidence, improve logic, and prepare for real-world development and interviews.',
+
+  price: '₹489 (Limited Offer)',
+
+  image: 'https://img-c.udemycdn.com/course/480x270/2121018_9de5_5.jpg',
+
+  link: 'https://trk.udemy.com/2RWeRQ',
+
+  priority: 96,
+
+  tags: ['python', 'practice', 'coding', 'beginner', 'logic', 'projects'],
+},
   {
     id: 'business-resume-pack',
     title: 'Resume and LinkedIn Pack',
