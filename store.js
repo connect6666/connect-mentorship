@@ -31,19 +31,26 @@ const SMART_STORE_CONFIG = {
 };
 
 const products = [
-  {
-    id: 'coding-roadmap-2026',
-    title: 'Zero to Developer Roadmap',
-    category: 'coding',
-    type: 'own_product',
-    benefit: 'Know exactly what to learn next without wasting months.',
-    description: 'A mentor-approved weekly roadmap for HTML, CSS, JavaScript, React, Git, projects, and interview preparation.',
-    price: '$29',
-    image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1200&q=80',
-    link: 'https://example.com/products/developer-roadmap',
-    priority: 96,
-    tags: ['developer', 'javascript', 'frontend', 'projects'],
-  },
+ {
+  id: 'web-dev-bootcamp-affiliate',
+  title: 'Full Stack Developer Bootcamp (Job Ready 🚀)',
+  category: 'coding',
+  type: 'affiliate',
+
+  benefit: 'Go from beginner to job-ready developer with real projects, portfolio, and interview-ready skills.',
+
+  description: 'Learn HTML, CSS, JavaScript, React, Node, and MongoDB by building real-world projects. Perfect for students who want a clear roadmap, strong portfolio, and fast-track into tech careers.',
+
+  price: '₹459 (Limited Offer)',
+
+  image: 'https://img-c.udemycdn.com/course/480x270/1565838_e54e_18.jpg',
+
+  link: 'https://trk.udemy.com/jROGNv',
+
+  priority: 100,
+
+  tags: ['web development', 'javascript', 'react', 'fullstack', 'projects', 'job-ready'],
+}
   {
     id: 'coding-project-pack',
     title: 'Portfolio Project Pack',
