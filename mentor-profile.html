@@ -341,7 +341,12 @@ function showError(title, text) {
 }
 
 function renderProfile(data) {
-  const isOwner = currentUser && currentUser.uid === id;
+const isOwner =
+  currentUser &&
+  currentUser.uid === id &&
+  data.role === "mentor" &&
+  data.verified === true &&
+  data.banned !== true;
   const safeName = escapeHTML(data.name || "Mentor");
   const safeBio = escapeHTML(data.bio || "This mentor provides guidance related to career choices, college decisions, and skill development.");
   const safeSkills = escapeHTML(data.skills || "Career Guidance • College Advice • Skill Development");
@@ -417,20 +422,34 @@ function renderEditForm(data) {
     <p id="editMsg"></p>
   `;
 }
-
 window.showEditProfileForm = function() {
-  if (!currentUser || currentUser.uid !== id) {
-    alert("You can edit only your own profile ❌");
+  if (
+    !currentUser ||
+    currentUser.uid !== id ||
+    !mentorData ||
+    mentorData.role !== "mentor" ||
+    mentorData.verified !== true ||
+    mentorData.banned === true
+  ) {
+    alert("Only verified mentor owner can edit this profile ❌");
     return;
   }
+
   renderEditForm(mentorData || {});
 };
 
 window.saveProfileChanges = async function() {
-  if (!currentUser || currentUser.uid !== id) {
-    alert("Unauthorized ❌");
-    return;
-  }
+if (
+  !currentUser ||
+  currentUser.uid !== id ||
+  !mentorData ||
+  mentorData.role !== "mentor" ||
+  mentorData.verified !== true ||
+  mentorData.banned === true
+) {
+  alert("Only verified mentor owner can save changes ❌");
+  return;
+}
 
   const name = document.getElementById("editName").value.trim();
   const experience = document.getElementById("editExperience").value.trim();
@@ -470,10 +489,17 @@ function attachUploadListener() {
   if (!input) return;
 
   input.addEventListener("change", async (e) => {
-    if (!currentUser || currentUser.uid !== id) {
-      alert("You can change only your own photo ❌");
-      return;
-    }
+   if (
+  !currentUser ||
+  currentUser.uid !== id ||
+  !mentorData ||
+  mentorData.role !== "mentor" ||
+  mentorData.verified !== true ||
+  mentorData.banned === true
+) {
+  alert("Only verified mentor owner can change photo ❌");
+  return;
+}
 
     const file = e.target.files[0];
     if (!file) return;
