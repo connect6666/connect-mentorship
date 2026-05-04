@@ -202,6 +202,23 @@ let allChats = [];
   let allSessions = [];
 let currentAdmin = null;
 
+  let sessionTimeoutTimer = null;
+const ADMIN_SESSION_LIMIT = 30 * 60 * 1000; // 30 minutes
+
+function resetAdminSessionTimer() {
+  if (sessionTimeoutTimer) clearTimeout(sessionTimeoutTimer);
+
+  sessionTimeoutTimer = setTimeout(async () => {
+    await signOut(auth);
+    alert("Admin session expired. Please login again.");
+    location.reload();
+  }, ADMIN_SESSION_LIMIT);
+}
+
+["click", "mousemove", "keydown", "scroll", "touchstart"].forEach(eventName => {
+  document.addEventListener(eventName, resetAdminSessionTimer);
+});
+
 function safe(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -263,6 +280,11 @@ onAuthStateChanged(auth, async (user) => {
     loginView.classList.remove("hidden");
     return;
   }
+  if (!user.emailVerified) {
+  await signOut(auth);
+  showMsg(loginMsg, "Please verify admin email before login ❌");
+  return;
+}
 
   const allowed = await checkAdmin(user);
   if (!allowed) {
@@ -271,8 +293,9 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  currentAdmin = user;
-  document.getElementById("adminEmail").innerText = user.email;
+ currentAdmin = user;
+resetAdminSessionTimer();
+document.getElementById("adminEmail").innerText = user.email;
   loginView.classList.add("hidden");
   adminView.classList.remove("hidden");
   await loadAllData();
