@@ -445,17 +445,29 @@ function renderUsers() {
       <p><strong>Role:</strong> <span class="badge">${safe(u.role || "user")}</span></p>
       <p><strong>Mentor Verified:</strong> ${u.verified ? '<span class="badge green">Verified</span>' : '<span class="badge yellow">Pending/No</span>'}</p>
       <p><strong>Admin:</strong> ${u.isAdmin ? '<span class="badge red">Admin</span>' : '<span class="badge">No</span>'}</p>
+      <p><strong>Status:</strong> ${
+  u.banned
+    ? '<span class="badge red">Banned</span>'
+    : '<span class="badge green">Active</span>'
+}</p>
       <div class="row">
         <input id="name-${u.id}" value="${safe(u.name || "")}" placeholder="Name" />
         <input id="phone-${u.id}" value="${safe(u.phone || "")}" placeholder="Phone" />
       </div>
       <select id="role-${u.id}">
-        <option value="user" ${u.role === "user" ? "selected" : ""}>Student/User</option>
+<option value="student" ${(u.role === "student" || u.role === "user") ? "selected" : ""}>Student</option>
         <option value="mentor" ${u.role === "mentor" ? "selected" : ""}>Mentor</option>
       </select>
       <button class="btn" onclick="updateUser('${u.id}')">Save User</button>
       <button class="btn success-btn" onclick="verifyMentor('${u.id}', true)">Verify Mentor</button>
       <button class="btn warning-btn" onclick="verifyMentor('${u.id}', false)">Unverify Mentor</button>
+      ${
+  u.id !== currentAdmin.uid
+    ? `<button class="btn warning-btn" onclick="toggleBanUser('${u.id}', ${u.banned ? "false" : "true"})">
+        ${u.banned ? "Unban User" : "Ban User"}
+      </button>`
+    : ""
+}
       ${u.id !== currentAdmin.uid ? `<button class="btn danger-btn" onclick="deleteRecord('users','${u.id}')">Delete User Data</button>` : ""}
     </div>
   `).join("");
@@ -471,6 +483,19 @@ window.updateUser = async function(id) {
   await loadUsers();
 };
 
+window.toggleBanUser = async function(id, value) {
+  if (!confirm(value ? "Ban this user?" : "Unban this user?")) return;
+
+  await updateDoc(doc(db, "users", id), {
+    banned: value,
+    bannedAt: value ? serverTimestamp() : null,
+    bannedBy: value ? currentAdmin.uid : null
+  });
+
+  alert(value ? "User banned ✅" : "User unbanned ✅");
+  await loadUsers();
+};
+
 window.verifyMentor = async function(id, value) {
   await updateDoc(doc(db, "users", id), {
     role: "mentor",
@@ -478,6 +503,7 @@ window.verifyMentor = async function(id, value) {
     verifiedAt: value ? serverTimestamp() : null,
     verifiedBy: value ? currentAdmin.uid : null
   });
+
   alert(value ? "Mentor verified ✅" : "Mentor unverified");
   await loadUsers();
 };
