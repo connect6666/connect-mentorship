@@ -287,7 +287,8 @@ import {
 
 import {
   getAuth,
-  onAuthStateChanged
+  onAuthStateChanged,
+  signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 import {
@@ -599,13 +600,29 @@ document.getElementById("bookingDate").addEventListener("change", (e) => {
 window.bookSession = async function(mentorId, type) {
   const user = auth.currentUser;
 
-  if (!user) {
-    alert("Please login to book a session ❌");
-    window.location.href = "/connect-mentorship/login.html";
-    return;
-  }
+if (!user) {
+  alert("Please login to book a session ❌");
+  window.location.href = "/connect-mentorship/login.html";
+  return;
+}
 
-  if (user.uid === mentorId) {
+if (!user.emailVerified) {
+  alert("Please verify your email before booking ❌");
+  await signOut(auth);
+  window.location.href = "/connect-mentorship/login.html";
+  return;
+}
+
+const userSnap = await getDoc(doc(db, "users", user.uid));
+
+if (userSnap.exists() && userSnap.data().banned === true) {
+  alert("Your account is banned ❌");
+  await signOut(auth);
+  window.location.href = "/connect-mentorship/login.html";
+  return;
+}
+
+if (user.uid === mentorId) {
     alert("You cannot book yourself ❌");
     return;
   }
