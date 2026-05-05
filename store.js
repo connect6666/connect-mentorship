@@ -529,6 +529,16 @@ function handleProductClick(event) {
   const product = products.find((item) => item.id === button.dataset.productId);
   if (!product) return;
 
+  const clickRateKey = `product_click_${product.id}`;
+const lastClickAt = Number(localStorage.getItem(clickRateKey) || 0);
+
+if (lastClickAt && Date.now() - lastClickAt < 3000) {
+  alert("Please wait before clicking again ⏳");
+  return;
+}
+
+localStorage.setItem(clickRateKey, Date.now());
+
   const placement = button.closest('[data-placement]')?.dataset.placement || 'unknown';
   trackProductClick(product.id, placement);
   renderAllRecommendationPlacements();
