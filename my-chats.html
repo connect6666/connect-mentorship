@@ -298,7 +298,7 @@ function openPreview(chatId, otherUser, lastMessage, mentorId, currentPreviewSes
   <div class="chat-user-info">
     <h3>${escapeHTML(otherUser.name)}</h3>
 
-    <p>${escapeHTML(chat.lastMessage || "No message yet")}</p>
+   <p>${escapeHTML(chat.lastMessage || (chat.status === "expired" ? "Session expired" : "Paid session chat"))}</p>
 
     <small style="color:${otherUser.isOnline ? '#22c55e' : '#9ca3af'};">
       ${otherUser.isOnline ? '● Online' : '● Offline'}
@@ -373,7 +373,16 @@ for (const docSnap of snap.docs) {
 
   if (!chat.participants || !Array.isArray(chat.participants)) continue;
 
-  const otherUserId = chat.participants.find(id => id !== user.uid);
+if (
+  !chat.sessionId ||
+  chat.paymentStatus !== "paid" ||
+  chat.chatStatus !== "unlocked" ||
+  !["active", "expired"].includes(chat.status)
+) {
+  continue;
+}
+
+const otherUserId = chat.participants.find(id => id !== user.uid);
   const otherUser = await getUser(otherUserId);
 
   allChats.push({
