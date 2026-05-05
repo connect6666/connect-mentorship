@@ -100,7 +100,11 @@ async function getToken(channelName, agoraUid) {
 const sessionSnap = await getDoc(sessionRef);
 const session = sessionSnap.data();
 
-if (session.callStatus !== "unlocked") {
+if (
+  session.paymentStatus !== "paid" ||
+  session.status !== "active" ||
+  session.callStatus !== "unlocked"
+) {
   alert("Call will be unlocked by admin before meeting");
   window.location.href = "mentor.html";
   return;
@@ -112,11 +116,12 @@ if (session.callStatus !== "unlocked") {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + idToken
     },
-    body: JSON.stringify({
-      sessionId: channelName,
-      uid: agoraUid
-    })
-  });
+body: JSON.stringify({
+  sessionId: channelName,
+  uid: agoraUid,
+  userId: currentUser.uid
+})
+});
 
   const data = await res.json();
 
@@ -146,9 +151,17 @@ async function verifyCallAccess(user) {
   const isMember = user.uid === sessionData.studentId || user.uid === sessionData.mentorId;
   if (!isMember) return blockCall("Access denied ❌");
 
-  if (sessionData.paymentStatus !== "paid") return blockCall("Payment required before call 🔒");
-  if (sessionData.sessionType !== "call") return blockCall("This is chat-only session. Call not allowed 🔒");
+ if (
+  sessionData.paymentStatus !== "paid" ||
+  sessionData.status !== "active" ||
+  sessionData.callStatus !== "unlocked"
+) {
+  return blockCall("Call locked. Payment verification and admin unlock required 🔒");
+}
 
+if (sessionData.sessionType !== "call") {
+  return blockCall("This is chat-only session. Call not allowed 🔒");
+}
   callStatus.innerText = "Call access verified ✅ Click Join Call.";
   joinBtn.disabled = false;
 }
