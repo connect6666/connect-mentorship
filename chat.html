@@ -279,9 +279,9 @@ function startOnlineHeartbeat() {
 
   if (onlineInterval) clearInterval(onlineInterval);
 
-  onlineInterval = setInterval(() => {
-    updateOnlineStatus(true);
-  }, 30000);
+onlineInterval = setInterval(() => {
+  updateOnlineStatus(true);
+}, 120000);
 }
 
 window.addEventListener("beforeunload", () => {
@@ -557,7 +557,7 @@ function loadMessages() {
 
   unsubscribeMessages = onSnapshot(q, { includeMetadataChanges: true }, (snap) => {
 
-  console.log("Realtime update triggered");  // ✅ ADD HERE
+  ✅ ADD HERE
 
 chatBox.innerHTML = "";
 
