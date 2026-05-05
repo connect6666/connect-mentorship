@@ -20,9 +20,9 @@ messaging.onBackgroundMessage((payload) => {
     body: payload.notification?.body || "You received a message",
     icon: "/connect-mentorship/icon.png",
     badge: "/connect-mentorship/icon.png",
-    data: {
-      url: payload.data?.url || "/connect-mentorship/my-chats.html"
-    }
+  data: {
+  url: payload.data?.url || payload.fcmOptions?.link || "/connect-mentorship/my-chats.html"
+}
   };
 
   self.registration.showNotification(title, options);
