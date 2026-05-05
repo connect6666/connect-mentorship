@@ -172,8 +172,11 @@
     <input id="productCategory" placeholder="Category e.g. coding, career, ai">
     <input id="productPrice" type="number" placeholder="Price">
     <input id="productImage" placeholder="Image URL">
-    <input id="productLink" placeholder="Product / affiliate link">
-    <textarea id="productDescription" placeholder="Product description"></textarea>
+   <input id="productLink" placeholder="Product / affiliate link">
+<input id="productType" placeholder="Type: affiliate / own_product / recommended">
+<input id="productPriority" type="number" placeholder="Priority score e.g. 90">
+<textarea id="productBenefit" placeholder="Short benefit line"></textarea>
+<textarea id="productDescription" placeholder="Product description"></textarea>
     <button class="btn success-btn" onclick="createProduct()">Create Product</button>
   </div>
 
@@ -883,6 +886,9 @@ window.deleteRecord = async function(collectionName, id) {
   const image = document.getElementById("productImage").value.trim();
   const link = document.getElementById("productLink").value.trim();
   const description = document.getElementById("productDescription").value.trim();
+    const type = document.getElementById("productType").value.trim() || "affiliate";
+const priority = Number(document.getElementById("productPriority").value || 80);
+const benefit = document.getElementById("productBenefit").value.trim();
 
   if (!title || !category || !link) {
     alert("Title, category and link are required ❌");
@@ -895,8 +901,11 @@ window.deleteRecord = async function(collectionName, id) {
     price,
     image,
     link,
-    description,
-    active: true,
+    type,
+priority,
+benefit,
+description,
+active: true,
     createdAt: serverTimestamp(),
     createdBy: currentAdmin.uid
   });
@@ -907,8 +916,11 @@ window.deleteRecord = async function(collectionName, id) {
   document.getElementById("productCategory").value = "";
   document.getElementById("productPrice").value = "";
   document.getElementById("productImage").value = "";
-  document.getElementById("productLink").value = "";
-  document.getElementById("productDescription").value = "";
+document.getElementById("productLink").value = "";
+document.getElementById("productType").value = "";
+document.getElementById("productPriority").value = "";
+document.getElementById("productBenefit").value = "";
+document.getElementById("productDescription").value = "";
 
   await loadProducts();
 };
