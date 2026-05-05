@@ -769,10 +769,23 @@ async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
       });
     });
 
-    await setDoc(bookingRateRef, {
+  await setDoc(bookingRateRef, {
   lastBookingAt: Date.now(),
   updatedAt: serverTimestamp()
 }, { merge: true });
+
+await addDoc(collection(db, "notifications"), {
+  userId: mentorId,
+  title: "New booking request 📅",
+  body: `${user.email || "A student"} started a ${type} session booking.`,
+  type: "booking_request",
+  sessionId: sessionRef.id,
+  chatId,
+  read: false,
+  createdAt: serverTimestamp()
+});
+
+    // CREATE ORDER
 
     // CREATE ORDER
     const orderRes = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/createOrder", {
