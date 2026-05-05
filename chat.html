@@ -438,10 +438,14 @@ async function verifyPaidSession(user) {
  
 
   // 🔒 ADMIN CONTROL LOCK
-if (session.status !== "active") {
+if (
+  session.paymentStatus !== "paid" ||
+  session.status !== "active" ||
+  session.chatStatus !== "unlocked"
+) {
   blockChatAccess(
-    "Session not started yet ⏳",
-    "Admin will unlock chat before your meeting time."
+    "Session locked ⏳",
+    "Payment must be verified and admin must unlock chat before your session starts."
   );
   return false;
 }
@@ -457,9 +461,11 @@ if (session.status !== "active") {
   // 🔥 CALL BUTTON LOGIC (PASTE HERE)
 function updateCallButton() {
   if (
-    currentSessionData &&
-    currentSessionData.sessionType === "call" &&
-    currentSessionData.paymentStatus === "paid"
+   currentSessionData &&
+currentSessionData.sessionType === "call" &&
+currentSessionData.paymentStatus === "paid" &&
+currentSessionData.status === "active" &&
+currentSessionData.callStatus === "unlocked"
   ) {
     startCallBtn.style.display = "block";
   } else {
@@ -600,8 +606,13 @@ window.sendMessage = async function () {
   }
 
   // 🟡 BLOCK if session not started
-if (!currentSessionData || currentSessionData.status !== "active") {
-  chatMsg.innerText = "Chat locked. Wait for admin approval.";
+if (
+  !currentSessionData ||
+  currentSessionData.paymentStatus !== "paid" ||
+  currentSessionData.status !== "active" ||
+  currentSessionData.chatStatus !== "unlocked"
+) {
+  chatMsg.innerText = "Chat locked. Payment/admin approval required.";
   chatMsg.style.color = "red";
   return;
 }
