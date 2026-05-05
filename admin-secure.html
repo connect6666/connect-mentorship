@@ -100,6 +100,7 @@
       <button class="tab-btn" data-tab="payments">Payments</button>
 <button class="tab-btn" data-tab="products">Products</button>
 <button class="tab-btn" data-tab="reports">Reports</button>
+      <button class="tab-btn" data-tab="errors">Errors</button>
     </div>
 
     <section id="questionsTab" class="admin-card">
@@ -192,6 +193,13 @@
   </div>
   <div id="reportsList"></div>
 </section>
+
+    <section id="errorsTab" class="admin-card hidden">
+  <div class="toolbar">
+    <h2>Error Logs</h2>
+  </div>
+  <div id="errorsList"></div>
+</section>
     
   </main>
 </div>
@@ -246,6 +254,7 @@ let allChats = [];
   let allPayments = [];
 let allProducts = [];
 let allReports = [];
+  let allErrors = [];
 let currentAdmin = null;
 
   let sessionTimeoutTimer = null;
@@ -357,7 +366,8 @@ async function loadAllData() {
  loadSessions(),
 loadPayments(),
 loadProducts(),
-loadReports()
+loadReports(),
+loadErrors()
 ]);
   updateStats();
 }
@@ -991,6 +1001,26 @@ window.resolveReport = async function(id) {
   await loadReports();
 };
 
+async function loadErrors() {
+  const snap = await getDocs(collection(db, "errorLogs"));
+  allErrors = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+  allErrors.sort((a,b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
+
+  document.getElementById("errorsList").innerHTML =
+    allErrors.map(e => `
+      <div class="data-card">
+        <h3>${safe(e.type || "Error")}</h3>
+        <p><strong>Message:</strong> ${safe(e.message || "No message")}</p>
+        <p><strong>Page:</strong> ${safe(e.page || "N/A")}</p>
+        <p><strong>Source:</strong> ${safe(e.source || "N/A")}</p>
+        <p><strong>Line:</strong> ${safe(e.line || "N/A")}</p>
+        <p class="small"><strong>Created:</strong> ${safe(e.createdAt || "N/A")}</p>
+        <button class="btn danger-btn" onclick="deleteRecord('errorLogs','${e.id}')">Delete Error</button>
+      </div>
+    `).join("") || "<p class='small'>No errors found.</p>";
+}
+  
 function updateStats() {
   document.getElementById("questionCount").innerText = allQuestions.length;
   document.getElementById("mentorAppCount").innerText = allMentorApps.length;
@@ -1039,7 +1069,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-["questions", "mentorApps", "users", "contacts", "chats", "sessions", "payments", "products", "reports"].forEach(tab => {
+["questions", "mentorApps", "users", "contacts", "chats", "sessions", "payments", "products", "reports", "errors"].forEach(tab => {
       document.getElementById(`${tab}Tab`).classList.add("hidden");
     });
     document.getElementById(`${btn.dataset.tab}Tab`).classList.remove("hidden");
