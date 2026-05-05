@@ -588,7 +588,32 @@ chatBox.innerHTML = "";
 
 // ===================== SEND =====================
 window.sendMessage = async function () {
+  // CHAT RATE LIMIT: 1 message every 2 seconds
+if (!window.lastMessageTime) window.lastMessageTime = 0;
+
+const now = Date.now();
+
+if (now - window.lastMessageTime < 2000) {
+  chatMsg.innerText = "You are sending messages too fast. Please wait ⏳";
+  chatMsg.style.color = "red";
+  return;
+}
+
+window.lastMessageTime = now;
   const text = messageInput.value.trim();
+  if (!text) {
+  chatMsg.innerText = "Message cannot be empty ❌";
+  chatMsg.style.color = "red";
+  return;
+}
+
+if (text.length > 500) {
+  chatMsg.innerText = "Message too long. Max 500 characters allowed ❌";
+  chatMsg.style.color = "red";
+  return;
+}
+
+  
 
   // 🔴 BLOCK if session expired
   if (isSessionExpired(currentChatData)) {
@@ -610,7 +635,7 @@ if (
 }
 
   // 🔒 Existing validation
-if (!text) return;
+
 
 if (containsPrivateInfo(text)) {
   chatMsg.innerText = "Sharing phone, email, links, WhatsApp, Telegram, Instagram or UPI details is not allowed.";
