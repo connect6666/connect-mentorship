@@ -188,9 +188,11 @@ import {
 import {
   getFirestore,
   doc,
-  getDoc,
-  collection,
-  addDoc
+ getDoc,
+setDoc,
+collection,
+addDoc,
+serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -264,6 +266,7 @@ function cleanText(value) {
 
 fileInput.addEventListener("change", () => {
   const file = fileInput.files[0];
+ 
   filePreview.innerHTML = "";
 
   if (!file) return;
@@ -310,6 +313,24 @@ form.addEventListener("submit", async (e) => {
   const category = document.getElementById("category").value;
   const question = cleanText(document.getElementById("question").value);
   const file = fileInput.files[0];
+
+  const rateId = currentUser ? currentUser.uid : "guest_" + (localStorage.getItem("guestRateId") || crypto.randomUUID());
+
+if (!currentUser && !localStorage.getItem("guestRateId")) {
+  localStorage.setItem("guestRateId", rateId.replace("guest_", ""));
+}
+
+const rateRef = doc(db, "rateLimits", rateId);
+const rateSnap = await getDoc(rateRef);
+const lastQuestionAt = rateSnap.exists() ? rateSnap.data().lastQuestionAt : 0;
+
+if (lastQuestionAt && Date.now() - lastQuestionAt < 30000) {
+  formMessage.innerText = "Please wait 30 seconds before asking another question ⏳";
+  formMessage.style.color = "red";
+  submitBtn.disabled = false;
+  submitBtn.innerText = "Submit Question";
+  return;
+}
 
   if (!category || !question) {
     formMessage.innerText = "Fill required fields ❌";
@@ -358,6 +379,11 @@ form.addEventListener("submit", async (e) => {
       userId: currentUser ? currentUser.uid : null,
       createdAt: new Date()
     });
+
+    await setDoc(rateRef, {
+  lastQuestionAt: Date.now(),
+  updatedAt: serverTimestamp()
+}, { merge: true });
 
     formMessage.innerText = "Question submitted ✅";
     formMessage.style.color = "green";
