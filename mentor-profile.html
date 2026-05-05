@@ -626,9 +626,23 @@ document.getElementById("bookingDate").addEventListener("change", (e) => {
 window.bookSession = async function(mentorId, type) {
   const user = auth.currentUser;
 
+
+
+
+
 if (!user) {
   alert("Please login to book a session ❌");
   window.location.href = "/connect-mentorship/login.html";
+  return;
+}
+
+    const bookingRateRef = doc(db, "rateLimits", "booking_" + user.uid);
+const bookingRateSnap = await getDoc(bookingRateRef);
+const bookingRate = bookingRateSnap.exists() ? bookingRateSnap.data() : {};
+const lastBookingAt = bookingRate.lastBookingAt || 0;
+
+if (lastBookingAt && Date.now() - lastBookingAt < 60 * 1000) {
+  alert("Please wait 1 minute before booking again ⏳");
   return;
 }
 
@@ -694,6 +708,8 @@ window.continueBookingPayment = async function() {
 async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
   const user = auth.currentUser;
 
+  const bookingRateRef = doc(db, "rateLimits", "booking_" + user.uid);
+
   try {
     const chatId = [user.uid, mentorId].sort().join("_");
     const isCall = type === "call";
@@ -743,6 +759,11 @@ async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
         createdAt: serverTimestamp()
       });
     });
+
+    await setDoc(bookingRateRef, {
+  lastBookingAt: Date.now(),
+  updatedAt: serverTimestamp()
+}, { merge: true });
 
     // CREATE ORDER
     const orderRes = await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/createOrder", {
