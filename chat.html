@@ -384,7 +384,7 @@ function blockChatAccess(title, message) {
   
 
 
-// ✅ ADD HERE (immediately below)
+
 async function verifyPaidSession(user) {
   if (!sessionId) {
     blockChatAccess(
@@ -570,7 +570,7 @@ function loadMessages() {
 
   unsubscribeMessages = onSnapshot(q, { includeMetadataChanges: true }, (snap) => {
 
-  ✅ ADD HERE
+
 
 chatBox.innerHTML = "";
 
@@ -812,6 +812,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   currentUser = user;
+  enableNotifyBtn.style.display = "inline-block";
 
   startOnlineHeartbeat();
 
