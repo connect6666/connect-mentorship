@@ -129,7 +129,7 @@ function toggleMenu() {
 <!-- FIREBASE CONTACT LOGIC -->
 <script type="module">
 import { db } from "./auth.js";
-import { collection, addDoc, serverTimestamp } 
+import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const form = document.getElementById("contactForm");
@@ -144,6 +144,22 @@ form.addEventListener("submit", async (e) => {
   const consent = document.getElementById("consent").checked;
 
   const btn = form.querySelector("button");
+  const contactRateId =
+  "contact_" + (localStorage.getItem("contactRateId") || crypto.randomUUID());
+
+if (!localStorage.getItem("contactRateId")) {
+  localStorage.setItem("contactRateId", contactRateId.replace("contact_", ""));
+}
+
+const rateRef = doc(db, "rateLimits", contactRateId);
+const rateSnap = await getDoc(rateRef);
+const lastContactAt = rateSnap.exists() ? rateSnap.data().lastContactAt : 0;
+
+if (lastContactAt && Date.now() - lastContactAt < 60000) {
+  showMessage("Please wait 1 minute before sending another message ⏳", "red");
+  resetBtn(btn);
+  return;
+}
 
   btn.disabled = true;
   btn.innerText = "Sending...";
@@ -173,6 +189,11 @@ form.addEventListener("submit", async (e) => {
       message: msg,
       createdAt: serverTimestamp()
     });
+
+    await setDoc(rateRef, {
+  lastContactAt: Date.now(),
+  updatedAt: serverTimestamp()
+}, { merge: true });
 
     showMessage("✅ Message sent successfully!", "green");
     form.reset();
