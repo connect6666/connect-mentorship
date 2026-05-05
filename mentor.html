@@ -178,6 +178,7 @@ addDoc,
 onSnapshot,
 query,
 where,
+limit,
 doc,
 getDoc,
 setDoc,
@@ -349,7 +350,8 @@ const emptyState = document.getElementById("emptyState");
 const mentorQuery = query(
   collection(db, "users"),
   where("role", "==", "mentor"),
-  where("verified", "==", true)
+  where("verified", "==", true),
+  limit(12)
 );
 
 onSnapshot(mentorQuery, (snap) => {
