@@ -148,6 +148,7 @@ const msg = document.getElementById("msg");
 const btn = document.getElementById("answerBtn");
 
 let currentUserData = null;
+let currentQuestionData = null;
 let replyListeners = {};
 
 function escapeHTML(str) {
@@ -187,7 +188,8 @@ async function loadQuestion() {
     return;
   }
 
-  const q = snap.data();
+const q = snap.data();
+currentQuestionData = q;
 
  questionBox.innerHTML = `
   <span class="question-badge">${escapeHTML(q.category || "General")}</span>
@@ -299,14 +301,26 @@ btn.onclick = async () => {
   btn.innerText = "Submitting...";
 
   await addDoc(collection(db, "answers"), {
-    text,
+  text,
+  questionId: qId,
+  userId: user.uid,
+  name: currentUserData?.name || user.email,
+  createdAt: serverTimestamp(),
+  votes: 0,
+  upvotedBy: []
+});
+
+if (currentQuestionData?.userId && currentQuestionData.userId !== user.uid) {
+  await addDoc(collection(db, "notifications"), {
+    userId: currentQuestionData.userId,
+    title: "New answer received ✅",
+    body: "A mentor answered your question on Connect.",
+    type: "new_answer",
     questionId: qId,
-    userId: user.uid,
-    name: currentUserData?.name || user.email,
-    createdAt: serverTimestamp(),
-    votes: 0,
-    upvotedBy: []
+    read: false,
+    createdAt: serverTimestamp()
   });
+}
 
   msg.innerText = "Answer added ✅";
   msg.style.color = "#22c55e";
