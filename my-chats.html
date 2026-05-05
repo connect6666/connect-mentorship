@@ -195,8 +195,9 @@ import {
   getFirestore,
   collection,
   query,
-  where,
-  onSnapshot,
+where,
+limit,
+onSnapshot,
   doc,
   getDoc,
   setDoc
@@ -352,11 +353,11 @@ setInterval(async () => {
     return;
   }
 
-  const q = query(
-    collection(db, "chats"),
-    where("participants", "array-contains", user.uid)
-  );
-
+ const q = query(
+  collection(db, "chats"),
+  where("participants", "array-contains", user.uid),
+  limit(20)
+);
 onSnapshot(q, { includeMetadataChanges: true }, async (snap) => {
    allChats = [];
 
