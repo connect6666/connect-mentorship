@@ -583,8 +583,11 @@ chatBox.innerHTML = "";
 
     chatBox.scrollTop = chatBox.scrollHeight;
 
-    firstMessageLoad = false;
-    markChatAsRead();
+  if (firstMessageLoad) {
+  markChatAsRead();
+}
+
+firstMessageLoad = false;
   });
 }
 
