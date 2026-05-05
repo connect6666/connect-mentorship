@@ -149,6 +149,7 @@
 <section id="sessionsTab" class="admin-card hidden">
   <div class="toolbar">
     <h2>Session Payment Approval</h2>
+    <button class="btn btn-outline" id="exportSessionsBtn">Export CSV</button>
   </div>
   <input id="sessionSearch" placeholder="Search sessions by user id, status, payment..." />
   <div id="sessionsList"></div>
@@ -157,13 +158,16 @@
     <section id="paymentsTab" class="admin-card hidden">
   <div class="toolbar">
     <h2>Payments</h2>
+    <button class="btn btn-outline" id="exportPaymentsBtn">Export CSV</button>
   </div>
+
   <div id="paymentsList"></div>
 </section>
 
 <section id="productsTab" class="admin-card hidden">
   <div class="toolbar">
     <h2>Products</h2>
+    <button class="btn btn-outline" id="exportProductsBtn">Export CSV</button>
   </div>
 
   <div class="data-card">
@@ -1015,6 +1019,12 @@ document.getElementById("exportMentorsBtn").onclick = () => downloadCSV("mentor-
 document.getElementById("exportUsersBtn").onclick = () => downloadCSV("users.csv", [["Name","Email","Phone","Role","Verified","Admin"], ...allUsers.map(u => [u.name,u.email,u.phone,u.role,u.verified,u.isAdmin])]);
 document.getElementById("exportContactsBtn").onclick = () => downloadCSV("contacts.csv", [["Name","Email","Message","Date"], ...allContacts.map(c => [c.name,c.email,c.message,formatDate(c.createdAt || c.date)])]);
 document.getElementById("exportChatsBtn").onclick = () => downloadCSV("chats.csv", [["Chat ID","Participants","Status","Last Message","Session Minutes","Session Ends","Delete At","Updated"], ...allChats.map(c => [c.id,(c.participants || []).map(uid => getUserLabel(uid)).join(" | "),c.status,c.lastMessage,c.sessionMinutes,formatDate(c.sessionEndsAt),formatDate(c.deleteAt),formatDate(c.updatedAt)])]);
+
+document.getElementById("exportSessionsBtn").onclick = () => downloadCSV("sessions.csv", [["Session ID","Student","Mentor","Chat ID","Type","Amount","Status","Payment Status","Date","Time Slot","Created"], ...allSessions.map(s => [s.id,s.studentId,s.mentorId,s.chatId,s.sessionType,s.amount,s.status,s.paymentStatus,s.date,s.timeSlot,formatDate(s.createdAt)])]);
+
+document.getElementById("exportPaymentsBtn").onclick = () => downloadCSV("payments.csv", [["Payment ID","Session ID","Status","Razorpay Order ID","Razorpay Payment ID","Created"], ...allPayments.map(p => [p.id,p.sessionId,p.status,p.razorpayOrderId,p.razorpayPaymentId,formatDate(p.createdAt)])]);
+
+document.getElementById("exportProductsBtn").onclick = () => downloadCSV("products.csv", [["Product ID","Title","Category","Type","Price","Priority","Link","Active"], ...allProducts.map(p => [p.id,p.title,p.category,p.type,p.price,p.priority,p.link,p.active])]);
 
 document.getElementById("questionSearch").addEventListener("input", renderQuestions);
 document.getElementById("userSearch").addEventListener("input", renderUsers);
