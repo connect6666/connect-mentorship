@@ -826,39 +826,7 @@ new Razorpay(options).open();
   }
 }
 
-window.startChat = async function(mentorId) {
-  const user = auth.currentUser;
 
-  if (!user) {
-    alert("Please login to chat with mentor ❌");
-    window.location.href = "/connect-mentorship/login.html";
-    return;
-  }
-
-  if (user.uid === mentorId) {
-    alert("You cannot chat with yourself ❌");
-    return;
-  }
-
-  try {
-    const chatId = [user.uid, mentorId].sort().join("_");
-
-    await setDoc(doc(db, "chats", chatId), {
-      studentId: user.uid,
-      mentorId: mentorId,
-      participants: [user.uid, mentorId],
-      status: "active",
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    }, { merge: true });
-
-    window.location.href = `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}`;
-
-  } catch (error) {
-    console.error(error);
-    alert("Chat failed ❌ Check Firestore rules.");
-  }
-};
 
 onAuthStateChanged(auth, (user) => {
   currentUser = user || null;
