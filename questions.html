@@ -207,8 +207,8 @@ import {
   collection,
   query,
   orderBy,
-  limit,
-  onSnapshot
+ limit,
+getDocs
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -242,36 +242,38 @@ function escapeHTML(str) {
   }[m]));
 }
 
-const qRef = query(
-  collection(db, "questions"),
-  orderBy("createdAt", "desc"),
-  limit(20)
-);
+async function loadQuestions() {
+  const cached = localStorage.getItem("questions_cache");
 
-  onSnapshot(qRef, (snap) => {
-    allQuestions = [];
-
-    snap.forEach((docSnap) => {
-      const data = docSnap.data();
-
-      allQuestions.push({
-        id: docSnap.id,
-        question: data.question || "",
-        name: data.name || "User",
-        category: (data.category || "general").toLowerCase(),
-        attachmentURL: data.attachmentURL || "",
-        attachmentName: data.attachmentName || "",
-        attachmentType: data.attachmentType || ""
-      });
-    });
-
+  if (cached) {
+    allQuestions = JSON.parse(cached);
     renderQuestions();
-  }, (error) => {
-    console.error("Error loading questions:", error);
-    container.innerHTML = "";
-    noResult.innerText = "Error loading questions";
-    noResult.style.display = "block";
+  }
+
+  const qRef = query(
+    collection(db, "questions"),
+    orderBy("createdAt", "desc"),
+    limit(20)
+  );
+
+  const snap = await getDocs(qRef);
+
+  allQuestions = snap.docs.map((docSnap) => {
+    const data = docSnap.data();
+
+    return {
+      id: docSnap.id,
+      question: data.question || "",
+      name: data.name || "User",
+      category: (data.category || "general").toLowerCase(),
+      attachmentURL: data.attachmentURL || "",
+      attachmentName: data.attachmentName || "",
+      attachmentType: data.attachmentType || ""
+    };
   });
+
+  localStorage.setItem("questions_cache", JSON.stringify(allQuestions));
+  renderQuestions();
 }
 
 function renderQuestions() {
@@ -370,7 +372,7 @@ function toggleMenu() {
 </script>
 
 <script type="module" src="auth.js"></script>
-  <script src="store.js"></script>
+<script src="store.js" defer></script>
   <script>
 window.addEventListener("DOMContentLoaded", () => {
   setTimeout(() => {
