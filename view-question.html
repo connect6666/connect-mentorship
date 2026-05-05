@@ -310,6 +310,9 @@ btn.onclick = async () => {
   upvotedBy: []
 });
 
+  console.log("Question owner:", currentQuestionData?.userId);
+console.log("Answer user:", user.uid);
+
 if (currentQuestionData?.userId && currentQuestionData.userId !== user.uid) {
   await addDoc(collection(db, "notifications"), {
     userId: currentQuestionData.userId,
