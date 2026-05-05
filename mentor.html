@@ -175,7 +175,7 @@ import {
   getFirestore,
  collection,
 addDoc,
-onSnapshot,
+getDocs,
 query,
 where,
 limit,
@@ -347,24 +347,46 @@ if (userSnap.exists() && userSnap.data().verified === true && userSnap.data().ro
 const mentorList = document.getElementById("mentorList");
 const emptyState = document.getElementById("emptyState");
 
-const mentorQuery = query(
-  collection(db, "users"),
-  where("role", "==", "mentor"),
-  where("verified", "==", true),
-  limit(12)
-);
+async function loadMentors() {
+  const cached = localStorage.getItem("mentors_cache");
 
-onSnapshot(mentorQuery, (snap) => {
+  if (cached) {
+    renderMentors(JSON.parse(cached));
+  }
+
+  try {
+    const mentorQuery = query(
+      collection(db, "users"),
+      where("role", "==", "mentor"),
+      where("verified", "==", true),
+      limit(12)
+    );
+
+    const snap = await getDocs(mentorQuery);
+
+    const mentors = snap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+
+    localStorage.setItem("mentors_cache", JSON.stringify(mentors));
+    renderMentors(mentors);
+
+  } catch (error) {
+    console.error(error);
+    emptyState.innerText = "Error loading mentors ❌";
+  }
+}
+
+function renderMentors(mentors) {
   mentorList.innerHTML = "";
 
-  if (snap.empty) {
+  if (!mentors.length) {
     emptyState.innerText = "No verified mentors yet. Apply to become the first mentor.";
     return;
   }
 
-  snap.forEach((docSnap) => {
-    const data = docSnap.data();
-
+  mentors.forEach((data) => {
     const name = escapeHTML(data.name || "Mentor");
     const experience = Number(data.experience || 0);
     const rating = Number(data.rating || 4.5);
@@ -376,11 +398,10 @@ onSnapshot(mentorQuery, (snap) => {
 
     mentorList.innerHTML += `
       <div class="mentor-card">
-        <img src="${photoURL}" alt="${name}">
+        <img src="${photoURL}" alt="${name}" loading="lazy">
 
         <div class="mentor-info">
           <div class="badge">Verified Mentor</div>
-
           <h3>${name}</h3>
 
           <p style="font-size:13px;color:#94a3b8;margin-bottom:8px;">
@@ -407,7 +428,7 @@ onSnapshot(mentorQuery, (snap) => {
             `).join("")}
           </div>
 
-          <button onclick="viewProfile('${docSnap.id}')" class="btn">
+          <button onclick="viewProfile('${data.id}')" class="btn">
             View Profile
           </button>
 
@@ -420,11 +441,9 @@ onSnapshot(mentorQuery, (snap) => {
   });
 
   emptyState.innerText = "";
+}
 
-}, (error) => {
-  console.error(error);
-  emptyState.innerText = "Error loading mentors ❌";
-});
+loadMentors();
 
 window.viewProfile = function(id) {
   window.location.href = "mentor-profile.html?id=" + id;
@@ -440,7 +459,7 @@ function toggleMenu() {
 }
 </script>
 
-  <script src="store.js"></script>
+  <script src="store.js" defer></script>
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
