@@ -527,25 +527,38 @@ loadMessages();
 }
 
 
+function listenChatStatus() {
 
-  function listenChatStatus() {
-  onSnapshot(doc(db, "chats", chatId), (snap) => {
+  // First load (important)
+  getDoc(doc(db, "chats", chatId)).then((snap) => {
     if (!snap.exists()) return;
 
-   currentChatData = snap.data();
+    currentChatData = snap.data();
 
-if (sessionId) {
-  getDoc(doc(db, "sessions", sessionId)).then((sessionSnap) => {
-    if (sessionSnap.exists()) {
-      currentSessionData = sessionSnap.data();
+    if (sessionId) {
+      getDoc(doc(db, "sessions", sessionId)).then((sessionSnap) => {
+        if (sessionSnap.exists()) {
+          currentSessionData = sessionSnap.data();
+        }
+        updateSessionUI(currentChatData);
+      });
+    } else {
+      updateSessionUI(currentChatData);
     }
+  });
+
+  // Then lightweight interval (not realtime)
+  setInterval(async () => {
+    const snap = await getDoc(doc(db, "chats", chatId));
+    if (!snap.exists()) return;
+
+    currentChatData = snap.data();
     updateSessionUI(currentChatData);
-  });
-} else {
-  updateSessionUI(currentChatData);
+  }, 60000); // every 1 minute
 }
-  });
-}
+
+
+
 
 // ===================== LOAD MESSAGES =====================
 function loadMessages() {
