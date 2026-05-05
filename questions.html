@@ -10,6 +10,7 @@ if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
 n.queue=[];t=b.createElement(e);t.async=!0;
 t.src='https://connect.facebook.net/en_US/fbevents.js';
 s=b.getElementsByTagName(e)[0];
+ 
 s.parentNode.insertBefore(t,s)}(window, document,'script');
 
 fbq('init', '2190385751757102');
@@ -217,6 +218,7 @@ const firebaseConfig = {
   storageBucket: "connect-mentorship.firebasestorage.app",
   messagingSenderId: "229549559214",
   appId: "1:229549559214:web:254671d221c2aaebc80c3f"
+  
 };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
@@ -240,12 +242,11 @@ function escapeHTML(str) {
   }[m]));
 }
 
-function loadQuestions() {
-  const qRef = query(
-    collection(db, "questions"),
-    orderBy("createdAt", "desc"),
-    limit(50)
-  );
+const qRef = query(
+  collection(db, "questions"),
+  orderBy("createdAt", "desc"),
+  limit(20)
+);
 
   onSnapshot(qRef, (snap) => {
     allQuestions = [];
