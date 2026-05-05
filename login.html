@@ -57,9 +57,10 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  doc,
-  getDoc,
-  setDoc
+doc,
+getDoc,
+setDoc,
+serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const msg = document.getElementById("msg");
@@ -119,10 +120,26 @@ document.getElementById("loginBtn").addEventListener("click", async () => {
   const pass = document.getElementById("password").value;
 
   if (!email || !pass) {
-    msg.style.color = "red";
-    msg.innerText = "Enter email and password ❌";
-    return;
-  }
+  msg.style.color = "red";
+  msg.innerText = "Enter email and password ❌";
+  return;
+}
+
+  const loginRateKey = "login_" + email.toLowerCase().replace(/[^a-z0-9]/g, "_");
+const loginRateRef = doc(db, "rateLimits", loginRateKey);
+const loginRateSnap = await getDoc(loginRateRef);
+
+const loginRate = loginRateSnap.exists() ? loginRateSnap.data() : {};
+const failedCount = loginRate.failedCount || 0;
+const lockedUntil = loginRate.lockedUntil || 0;
+
+if (lockedUntil && Date.now() < lockedUntil) {
+  msg.style.color = "red";
+  msg.innerText = "Too many failed attempts. Try again after 5 minutes ⏳";
+  return;
+}
+
+
 
   try {
   if (isFakeEmail(email)) {
@@ -141,10 +158,27 @@ if (!user.emailVerified) {
   return;
 }
 
+    await setDoc(loginRateRef, {
+  failedCount: 0,
+  lockedUntil: 0,
+  updatedAt: serverTimestamp()
+}, { merge: true });
+
 await redirectByRole(user);
   } catch (error) {
-    msg.style.color = "red";
-    msg.innerText = "Wrong email or password ❌";
+    const newFailedCount = failedCount + 1;
+const lockTime = newFailedCount >= 5 ? Date.now() + 5 * 60 * 1000 : 0;
+
+await setDoc(loginRateRef, {
+  failedCount: newFailedCount,
+  lockedUntil: lockTime,
+  updatedAt: serverTimestamp()
+}, { merge: true });
+
+msg.style.color = "red";
+msg.innerText = lockTime
+  ? "Too many failed attempts. Login locked for 5 minutes ⏳"
+  : `Wrong email or password ❌ Attempts: ${newFailedCount}/5`;
   }
  
 });
