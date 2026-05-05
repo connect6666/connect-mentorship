@@ -173,13 +173,15 @@ import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebase
 
 import {
   getFirestore,
-  collection,
-  addDoc,
-  onSnapshot,
-  query,
-  where,
-  doc,
-  getDoc
+ collection,
+addDoc,
+onSnapshot,
+query,
+where,
+doc,
+getDoc,
+setDoc,
+serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -234,6 +236,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const btn = form.querySelector("button");
+ 
 
   const name = document.getElementById("mentorName").value.trim();
   const email = document.getElementById("mentorEmail").value.trim();
@@ -256,6 +259,14 @@ form.addEventListener("submit", async (e) => {
     showError("Please login before applying");
     return;
   }
+   const rateRef = doc(db, "rateLimits", "mentor_" + currentUser.uid);
+const rateSnap = await getDoc(rateRef);
+const lastApplyAt = rateSnap.exists() ? rateSnap.data().lastApplyAt : 0;
+
+if (lastApplyAt && Date.now() - lastApplyAt < 5 * 60 * 1000) {
+  showError("Please wait 5 minutes before applying again ⏳");
+  return;
+}
   if (!currentUser.emailVerified) {
   showError("Please verify your email before applying");
   return;
@@ -315,6 +326,10 @@ if (userSnap.exists() && userSnap.data().verified === true && userSnap.data().ro
       createdAt: new Date()
     });
 
+    await setDoc(rateRef, {
+  lastApplyAt: Date.now(),
+  updatedAt: serverTimestamp()
+}, { merge: true });
     msg.innerText = "Application submitted ✅ Wait for admin approval";
     msg.style.color = "green";
     form.reset();
