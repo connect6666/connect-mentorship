@@ -809,13 +809,35 @@ window.approveSessionPayment = async function(sessionId, chatId) {
   }, { merge: true });
 
   if (s.slotId) {
-    await updateDoc(doc(db, "bookedSlots", s.slotId), {
-      status: "active",
-      updatedAt: serverTimestamp()
-    });
-  }
+  await updateDoc(doc(db, "bookedSlots", s.slotId), {
+    status: "active",
+    updatedAt: serverTimestamp()
+  });
+}
 
-  alert(`${sessionType === "call" ? "Call" : "Chat"} unlocked ✅`);
+await addDoc(collection(db, "notifications"), {
+  userId: s.studentId,
+  title: "Session unlocked ✅",
+  body: `Your ${sessionType} session is now active.`,
+  type: "session_unlocked",
+  sessionId,
+  chatId,
+  read: false,
+  createdAt: serverTimestamp()
+});
+
+await addDoc(collection(db, "notifications"), {
+  userId: s.mentorId,
+  title: "Session ready ✅",
+  body: `Your ${sessionType} session with student is now active.`,
+  type: "session_unlocked",
+  sessionId,
+  chatId,
+  read: false,
+  createdAt: serverTimestamp()
+});
+
+alert(`${sessionType === "call" ? "Call" : "Chat"} unlocked ✅ Notifications sent.`);
   await loadAllData();
 };
 
