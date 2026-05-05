@@ -252,17 +252,9 @@ function escapeHTML(text) {
 }
 
 function containsPrivateInfo(text) {
-  const patterns = [
-    /\b\d{10,15}\b/,
-    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}/,
-    /(https?:\/\/|www\.)/i,
-    /\bwhatsapp\b|\bwa\.me\b/i,
-    /\binstagram\b|\binsta\b|\big\b/i,
-    /\btelegram\b|\bt\.me\b/i,
-    /\bupi\b|\bpaytm\b|\bgpay\b|\bphonepe\b/i,
-    /@[a-zA-Z0-9_.]{3,}/
-  ];
-  return patterns.some(p => p.test(text.toLowerCase()));
+  const blockedPattern = /(\+?\d[\d\s-]{8,}|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-z]{2,}|https?:\/\/|www\.|whatsapp|telegram|t\.me|wa\.me|instagram|insta|upi|paytm|gpay|phonepe|@[a-zA-Z0-9_.]{3,})/i;
+
+  return blockedPattern.test(text);
 }
 
 async function getUserName(uid) {
@@ -618,7 +610,25 @@ if (
 }
 
   // 🔒 Existing validation
-  if (!text || containsPrivateInfo(text)) return;
+if (!text) return;
+
+if (containsPrivateInfo(text)) {
+  chatMsg.innerText = "Sharing phone, email, links, WhatsApp, Telegram, Instagram or UPI details is not allowed.";
+  chatMsg.style.color = "red";
+
+  await addDoc(collection(db, "reports"), {
+    type: "blocked_private_contact",
+    chatId,
+    sessionId: sessionId || null,
+    senderId: currentUser.uid,
+    receiverId: otherUserId,
+    blockedText: text,
+    status: "pending_review",
+    createdAt: serverTimestamp()
+  });
+
+  return;
+}
   await addDoc(collection(db, "chats", chatId, "messages"), {
     text,
     senderId: currentUser.uid,
