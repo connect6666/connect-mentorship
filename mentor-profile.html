@@ -779,14 +779,7 @@ async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
           })
         });
 
-        await updateDoc(sessionRef, {
-          status: "pending_admin",
-          paymentStatus: "paid"
-        });
-
-        await updateDoc(slotRef, {
-          status: "pending_admin"
-        });
+      
 
         await setDoc(doc(db, "chats", chatId), {
           studentId: user.uid,
@@ -802,16 +795,30 @@ async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
   `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
       },
 
-      modal: {
-        ondismiss: async function() {
-          await updateDoc(slotRef, { status: "cancelled" });
-          await updateDoc(sessionRef, { status: "cancelled" });
-          alert("Payment cancelled");
-        }
-      }
-    };
+  modal: {
+  ondismiss: async function() {
+    try {
+      await fetch("https://us-central1-connect-mentorship.cloudfunctions.net/logPaymentFailure", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sessionId: sessionRef.id,
+          slotId,
+          reason: "payment_cancelled_by_user"
+        })
+      });
+    } catch (error) {
+      console.error("Cancel log failed:", error);
+    }
 
-    new Razorpay(options).open();
+    alert("Payment cancelled");
+  }
+}
+};
+
+new Razorpay(options).open();
 
   } catch (err) {
     console.error(err);
