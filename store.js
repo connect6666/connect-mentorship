@@ -17,17 +17,17 @@ const SMART_STORE_CONFIG = {
   pageVisit: 1,
   categoryVisit: 1,
 },
-  firebase: {
-    enabled: false,
-    config: {
-      apiKey: 'YOUR_API_KEY',
-      authDomain: 'YOUR_AUTH_DOMAIN',
-      projectId: 'YOUR_PROJECT_ID',
-      storageBucket: 'YOUR_STORAGE_BUCKET',
-      messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-      appId: 'YOUR_APP_ID',
-    },
+ firebase: {
+  enabled: true,
+  config: {
+    apiKey: "AIzaSyAhzR39wQx_z5Kyu-EYUHvilDkOElD9XJg",
+    authDomain: "connect-mentorship.firebaseapp.com",
+    projectId: "connect-mentorship",
+    storageBucket: "connect-mentorship.firebasestorage.app",
+    messagingSenderId: "229549559214",
+    appId: "1:229549559214:web:254671d221c2aaebc80c3f"
   },
+},
 };
 
 const products = [
@@ -293,7 +293,7 @@ async function loadProductsFromFirestore() {
   if (!db) return products;
 
   try {
-    const snapshot = await db.collection('products').get();
+    const snapshot = await db   .collection('products')   .where('active', '==', true)   .limit(20)   .get();
     const firestoreProducts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     if (firestoreProducts.length) {
       products.splice(0, products.length, ...firestoreProducts);
