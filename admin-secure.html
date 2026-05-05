@@ -689,7 +689,9 @@ function renderSessions() {
 <p><strong>Duration:</strong> ${safe(s.durationMinutes || 15)} minutes</p>
 
         <p><strong>Status:</strong> <span class="badge ${statusClass}">${safe(s.status || "pending")}</span></p>
-        <p><strong>Payment:</strong> <span class="badge ${payClass}">${safe(s.paymentStatus || "unpaid")}</span></p>
+        
+        <p><strong>Razorpay Order ID:</strong> ${safe(s.razorpayOrderId || "N/A")}</p>
+<p><strong>Razorpay Payment ID:</strong> ${safe(s.razorpayPaymentId || "N/A")}</p>
 
         <p class="small"><strong>Created:</strong> ${safe(formatDate(s.createdAt))}</p>
 
@@ -726,6 +728,10 @@ window.approveSessionPayment = async function(sessionId, chatId) {
   }
 
   const s = sessionSnap.data();
+  if (s.paymentStatus !== "paid") {
+  alert("Cannot unlock session. Payment not verified ❌");
+  return;
+}
 
   const sessionType = s.sessionType || "chat";
   const minutes = s.durationMinutes || (sessionType === "call" ? 30 : 15);
