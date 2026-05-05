@@ -97,6 +97,9 @@
       <button class="tab-btn" data-tab="contacts">Contact Messages</button>
       <button class="tab-btn" data-tab="chats">Chats</button>
       <button class="tab-btn" data-tab="sessions">Payment Approval</button>
+      <button class="tab-btn" data-tab="payments">Payments</button>
+<button class="tab-btn" data-tab="products">Products</button>
+<button class="tab-btn" data-tab="reports">Reports</button>
     </div>
 
     <section id="questionsTab" class="admin-card">
@@ -150,6 +153,38 @@
   <input id="sessionSearch" placeholder="Search sessions by user id, status, payment..." />
   <div id="sessionsList"></div>
 </section>
+
+    <section id="paymentsTab" class="admin-card hidden">
+  <div class="toolbar">
+    <h2>Payments</h2>
+  </div>
+  <div id="paymentsList"></div>
+</section>
+
+<section id="productsTab" class="admin-card hidden">
+  <div class="toolbar">
+    <h2>Products</h2>
+  </div>
+
+  <div class="data-card">
+    <h3>Create Product</h3>
+    <input id="productTitle" placeholder="Product title">
+    <input id="productCategory" placeholder="Category e.g. coding, career, ai">
+    <input id="productPrice" type="number" placeholder="Price">
+    <input id="productImage" placeholder="Image URL">
+    <input id="productLink" placeholder="Product / affiliate link">
+    <textarea id="productDescription" placeholder="Product description"></textarea>
+    <button class="btn success-btn" onclick="createProduct()">Create Product</button>
+  </div>
+
+  <div id="productsList"></div>
+</section>
+<section id="reportsTab" class="admin-card hidden">
+  <div class="toolbar">
+    <h2>Reports / Moderation</h2>
+  </div>
+  <div id="reportsList"></div>
+</section>
     
   </main>
 </div>
@@ -171,6 +206,7 @@ import {
   getDocs,
   updateDoc,
 setDoc,
+addDoc,
 deleteDoc,
   query,
   orderBy,
@@ -200,6 +236,9 @@ let allUsers = [];
 let allContacts = [];
 let allChats = [];
   let allSessions = [];
+  let allPayments = [];
+let allProducts = [];
+let allReports = [];
 let currentAdmin = null;
 
   let sessionTimeoutTimer = null;
@@ -308,7 +347,10 @@ async function loadAllData() {
   loadUsers(),
   loadContacts(),
   loadChats(),
-  loadSessions()
+ loadSessions(),
+loadPayments(),
+loadProducts(),
+loadReports()
 ]);
   updateStats();
 }
@@ -798,6 +840,118 @@ window.deleteRecord = async function(collectionName, id) {
   alert("Deleted ✅");
   await loadAllData();
 };
+  async function loadPayments() {
+  const snap = await getDocs(collection(db, "payments"));
+  allPayments = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  document.getElementById("paymentsList").innerHTML =
+    allPayments.map(p => `
+      <div class="data-card">
+        <h3>Payment: ${safe(p.id)}</h3>
+        <p><strong>Status:</strong> ${safe(p.status || "N/A")}</p>
+        <p><strong>Session:</strong> ${safe(p.sessionId || "N/A")}</p>
+        <p><strong>Razorpay Payment ID:</strong> ${safe(p.razorpayPaymentId || "N/A")}</p>
+      </div>
+    `).join("") || "<p class='small'>No payments found.</p>";
+}
+
+  window.createProduct = async function() {
+  const title = document.getElementById("productTitle").value.trim();
+  const category = document.getElementById("productCategory").value.trim();
+  const price = Number(document.getElementById("productPrice").value || 0);
+  const image = document.getElementById("productImage").value.trim();
+  const link = document.getElementById("productLink").value.trim();
+  const description = document.getElementById("productDescription").value.trim();
+
+  if (!title || !category || !link) {
+    alert("Title, category and link are required ❌");
+    return;
+  }
+
+  await addDoc(collection(db, "products"), {
+    title,
+    category,
+    price,
+    image,
+    link,
+    description,
+    active: true,
+    createdAt: serverTimestamp(),
+    createdBy: currentAdmin.uid
+  });
+
+  alert("Product created ✅");
+
+  document.getElementById("productTitle").value = "";
+  document.getElementById("productCategory").value = "";
+  document.getElementById("productPrice").value = "";
+  document.getElementById("productImage").value = "";
+  document.getElementById("productLink").value = "";
+  document.getElementById("productDescription").value = "";
+
+  await loadProducts();
+};
+
+  window.updateProduct = async function(productId) {
+  const title = document.getElementById(`editProductTitle-${productId}`).value.trim();
+  const price = Number(document.getElementById(`editProductPrice-${productId}`).value || 0);
+
+  if (!title) {
+    alert("Product title is required ❌");
+    return;
+  }
+
+  await updateDoc(doc(db, "products", productId), {
+    title,
+    price,
+    updatedAt: serverTimestamp(),
+    updatedBy: currentAdmin.uid
+  });
+
+  alert("Product updated ✅");
+  await loadProducts();
+};
+
+async function loadProducts() {
+  const snap = await getDocs(collection(db, "products"));
+  allProducts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  document.getElementById("productsList").innerHTML =
+    allProducts.map(p => `
+      <div class="data-card">
+        <h3>${safe(p.title || "Product")}</h3>
+        <p><strong>Category:</strong> ${safe(p.category || "N/A")}</p>
+     <input id="editProductTitle-${p.id}" value="${safe(p.title || "")}" placeholder="Product title">
+<input id="editProductPrice-${p.id}" type="number" value="${safe(p.price || 0)}" placeholder="Price">
+
+<button class="btn success-btn" onclick="updateProduct('${p.id}')">Update Product</button>
+<button class="btn danger-btn" onclick="deleteRecord('products','${p.id}')">Delete Product</button>
+      </div>
+    `).join("") || "<p class='small'>No products found.</p>";
+}
+
+async function loadReports() {
+  const snap = await getDocs(collection(db, "reports"));
+  allReports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  document.getElementById("reportsList").innerHTML =
+    allReports.map(r => `
+      <div class="data-card">
+        <h3>Report: ${safe(r.type || "Report")}</h3>
+        <p><strong>Status:</strong> ${safe(r.status || "pending")}</p>
+        <p><strong>Chat ID:</strong> ${safe(r.chatId || "N/A")}</p>
+        <p><strong>Blocked Text:</strong> ${safe(r.blockedText || "N/A")}</p>
+        <button class="btn success-btn" onclick="resolveReport('${r.id}')">Mark Resolved</button>
+      </div>
+    `).join("") || "<p class='small'>No reports found.</p>";
+}
+
+window.resolveReport = async function(id) {
+  await updateDoc(doc(db, "reports", id), {
+    status: "resolved",
+    resolvedAt: serverTimestamp(),
+    resolvedBy: currentAdmin.uid
+  });
+  alert("Report resolved ✅");
+  await loadReports();
+};
 
 function updateStats() {
   document.getElementById("questionCount").innerText = allQuestions.length;
@@ -841,7 +995,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-["questions", "mentorApps", "users", "contacts", "chats", "sessions"].forEach(tab => {
+["questions", "mentorApps", "users", "contacts", "chats", "sessions", "payments", "products", "reports"].forEach(tab => {
       document.getElementById(`${tab}Tab`).classList.add("hidden");
     });
     document.getElementById(`${btn.dataset.tab}Tab`).classList.remove("hidden");
