@@ -77,6 +77,7 @@ const muteBtn = document.getElementById("muteBtn");
 const cameraBtn = document.getElementById("cameraBtn");
 
 joinBtn.disabled = true;
+leaveBtn.disabled = true;
 muteBtn.disabled = true;
 cameraBtn.disabled = true;
 
@@ -192,30 +193,16 @@ async function setupCallEndTime() {
   const freshSession = freshSnap.data();
   sessionData = freshSession;
 
-  if (freshSession.callEndsAt) {
-    callEndTime = freshSession.callEndsAt.toDate
-      ? freshSession.callEndsAt.toDate().getTime()
-      : new Date(freshSession.callEndsAt).getTime();
-
-    await updateDoc(doc(db, "sessions", sessionId), {
-      callStatus: "live",
-      updatedAt: serverTimestamp()
-    });
+  if (freshSession.sessionEndsAt) {
+    callEndTime = freshSession.sessionEndsAt.toDate
+      ? freshSession.sessionEndsAt.toDate().getTime()
+      : new Date(freshSession.sessionEndsAt).getTime();
 
     return;
   }
 
   const durationMinutes = freshSession.durationMinutes || 30;
-  const endTime = new Date(Date.now() + durationMinutes * 60 * 1000);
-
-  await updateDoc(doc(db, "sessions", sessionId), {
-    callStatus: "live",
-    callStartedAt: serverTimestamp(),
-    callEndsAt: endTime,
-    updatedAt: serverTimestamp()
-  });
-
-  callEndTime = endTime.getTime();
+  callEndTime = Date.now() + durationMinutes * 60 * 1000;
 }
 
 
@@ -352,6 +339,8 @@ async function joinCall() {
     await setupCallEndTime();
 
     joined = true;
+    joinBtn.disabled = true;
+leaveBtn.disabled = false;
     callStatus.innerText = "Call live ✅";
     joinBtn.style.display = "none";
     muteBtn.disabled = false;
@@ -383,11 +372,11 @@ async function leaveCall(autoEnded = false) {
       client = null;
     }
 
-    await updateDoc(doc(db, "sessions", sessionId), {
-      callStatus: autoEnded ? "ended_auto" : "ended",
-      callEndedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    });
+    // await updateDoc(doc(db, "sessions", sessionId), {
+      // callStatus: autoEnded ? "ended_auto" : "ended",
+      // callEndedAt: serverTimestamp(),
+      // updatedAt: serverTimestamp()
+     // }); 
 
     joined = false;
     callStatus.innerText = autoEnded ? "Call time ended ✅" : "Call ended ✅";
