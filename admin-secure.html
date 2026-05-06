@@ -633,6 +633,8 @@ function renderChats() {
         <p><strong>Status:</strong> <span class="badge ${statusClass}">${safe(c.status || "pending")}</span></p>
         <p><strong>Last Message:</strong> ${safe(c.lastMessage || "No message yet")}</p>
        <p><strong>Session Type:</strong> ${safe(c.sessionType || "chat")}</p>
+       <p><strong>Booked Date:</strong> ${safe(c.scheduledDate || "Not set")}</p>
+<p><strong>Booked Time:</strong> ${safe(c.scheduledTime || "Not set")}</p>
 <p><strong>Session Minutes:</strong> ${safe(c.sessionMinutes || "Not started")}</p>
         <p><strong>Session Ends:</strong> ${safe(formatDate(c.sessionEndsAt))}</p>
         <p><strong>Delete After:</strong> ${safe(formatDate(c.deleteAt))}</p>
@@ -746,6 +748,8 @@ function renderSessions() {
        <p><strong>Session Type:</strong> ${safe(s.sessionType || "chat")}</p>
 <p><strong>Amount:</strong> ₹${safe(s.amount || 99)}</p>
 <p><strong>Duration:</strong> ${safe(s.durationMinutes || 15)} minutes</p>
+<p><strong>Booked Date:</strong> ${safe(s.scheduledDate || s.date || "Not set")}</p>
+<p><strong>Booked Time:</strong> ${safe(s.scheduledTime || s.timeSlot || "Not set")}</p>
 
         <p><strong>Status:</strong> <span class="badge ${statusClass}">${safe(s.status || "pending")}</span></p>
         
@@ -818,6 +822,8 @@ window.approveSessionPayment = async function(sessionId, chatId) {
     paymentStatus: "paid",
     chatStatus: "unlocked",
     callStatus: sessionType === "call" ? "unlocked" : null,
+    scheduledDate: s.scheduledDate || s.date || null,
+scheduledTime: s.scheduledTime || s.timeSlot || null,
     sessionMinutes: minutes,
     sessionStartedAt: serverTimestamp(),
     sessionEndsAt: endTime,
