@@ -832,10 +832,9 @@ await addDoc(collection(db, "notifications"), {
           sessionId: sessionRef.id
         });
 
-        alert("Payment successful ✅ Waiting for admin approval");
+      alert("Payment successful ✅ Waiting for admin approval. Chat will appear in My Chats after admin unlock.");
 
-      window.location.href =
-  `/connect-mentorship/chat.html?chatId=${chatId}&mentorId=${mentorId}&sessionId=${sessionRef.id}`;
+window.location.href = "/connect-mentorship/my-chats.html";
       },
 
   modal: {
