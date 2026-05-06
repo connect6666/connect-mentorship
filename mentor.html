@@ -322,12 +322,7 @@ if (userSnap.exists() && userSnap.data().verified === true && userSnap.data().ro
   }
 
 
-await setDoc(doc(db, "users", currentUser.uid), {
-  name,
-  email,
-  role: "student",
-  updatedAt: serverTimestamp()
-}, { merge: true });
+
   
   try {
     await addDoc(collection(db, "mentorApplications"), {
