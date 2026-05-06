@@ -742,24 +742,30 @@ const slotRef = doc(db, "bookedSlots", slotId);
         }
       }
 
-      transaction.set(slotRef, {
-        mentorId,
-        studentId: user.uid,
-        sessionId: sessionRef.id,
-        date: selectedDate,
-        timeSlot: selectedSlot,
-        status: "locked",
-        createdAt: serverTimestamp()
-      });
+    transaction.set(slotRef, {
+  mentorId,
+  studentId: user.uid,
+  sessionId: sessionRef.id,
+  date: selectedDate,
+  timeSlot: selectedSlot,
+  scheduledDate: selectedDate,
+  scheduledTime: selectedSlot,
+  status: "locked",
+  createdAt: serverTimestamp()
+});
 
       transaction.set(sessionRef, {
-        studentId: user.uid,
-        mentorId,
-        chatId,
-        sessionType: type,
-        date: selectedDate,
-        timeSlot: selectedSlot,
-        status: "pending_payment",
+  studentId: user.uid,
+  mentorId,
+  chatId,
+  sessionType: type,
+  date: selectedDate,
+  timeSlot: selectedSlot,
+  scheduledDate: selectedDate,
+  scheduledTime: selectedSlot,
+  sessionReminder1HourSent: false,
+  sessionReminder15MinSent: false,
+  status: "pending_payment",
         paymentStatus: "unpaid",
         chatStatus: "locked",
         callStatus: isCall ? "locked" : null,
