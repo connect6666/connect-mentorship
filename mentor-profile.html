@@ -722,7 +722,7 @@ async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
   try {
     const chatId = [user.uid, mentorId].sort().join("_");
     const isCall = type === "call";
-    const amount = isCall ? 199 : 99;
+    const amount = isCall ? 1 : 1;
     const duration = isCall ? 30 : 15;
 
     const slotId = `${mentorId}_${selectedDate}_${cleanSlotId(selectedSlot)}`;
