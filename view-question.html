@@ -281,11 +281,18 @@ function loadAnswers() {
 }
 
 btn.onclick = async () => {
-  const text = document.getElementById("answerText").value.trim();
+  const answerInput = document.getElementById("answerText");
+  const text = answerInput.value.trim();
 
   if (!text) {
     msg.innerText = "Write something first ❌";
     msg.style.color = "#ef4444";
+    return;
+  }
+
+  if (text.split(/\s+/).length < 3) {
+    msg.innerText = "Answer must contain at least 3 words ❌";
+    msg.style.color = "#f59e0b";
     return;
   }
 
@@ -297,42 +304,45 @@ btn.onclick = async () => {
     return;
   }
 
-  btn.disabled = true;
-  btn.innerText = "Submitting...";
+  try {
+    btn.disabled = true;
+    btn.innerText = "Submitting...";
 
-  await addDoc(collection(db, "answers"), {
-  text,
-  questionId: qId,
-  userId: user.uid,
-  name: currentUserData?.name || user.email,
-  createdAt: serverTimestamp(),
-  votes: 0,
-  upvotedBy: []
-});
+    await addDoc(collection(db, "answers"), {
+      text,
+      questionId: qId,
+      userId: user.uid,
+      name: currentUserData?.name || user.email,
+      createdAt: serverTimestamp(),
+      votes: 0,
+      upvotedBy: []
+    });
 
-  console.log("Question owner:", currentQuestionData?.userId);
-console.log("Answer user:", user.uid);
+    if (currentQuestionData?.userId && currentQuestionData.userId !== user.uid) {
+      await addDoc(collection(db, "notifications"), {
+        userId: currentQuestionData.userId,
+        title: "New answer received ✅",
+        body: "A mentor answered your question on Connect.",
+        type: "new_answer",
+        questionId: qId,
+        read: false,
+        createdAt: serverTimestamp()
+      });
+    }
 
-if (currentQuestionData?.userId && currentQuestionData.userId !== user.uid) {
-  await addDoc(collection(db, "notifications"), {
-    userId: currentQuestionData.userId,
-    title: "New answer received ✅",
-    body: "A mentor answered your question on Connect.",
-    type: "new_answer",
-    questionId: qId,
-    read: false,
-    createdAt: serverTimestamp()
-  });
-}
+    msg.innerText = "Answer added ✅";
+    msg.style.color = "#22c55e";
+    answerInput.value = "";
 
-  msg.innerText = "Answer added ✅";
-  msg.style.color = "#22c55e";
-  document.getElementById("answerText").value = "";
+  } catch (error) {
+    console.error("Answer submit error:", error);
+    msg.innerText = error.message || "Failed to submit answer ❌";
+    msg.style.color = "#ef4444";
+  }
 
   btn.disabled = false;
   btn.innerText = "Submit Answer";
 };
-
 window.upvote = async function(answerId) {
   const user = auth.currentUser;
 
