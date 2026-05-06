@@ -306,13 +306,13 @@ function isSessionExpired(chat) {
 
  let endMs = getTimeMs(chat.sessionEndsAt);
 
-if (
-  currentSessionData &&
-  currentSessionData.sessionType === "call" &&
-  currentSessionData.callEndsAt
-) {
-  endMs = getTimeMs(currentSessionData.callEndsAt);
-}
+// if (
+  // currentSessionData &&
+  // currentSessionData.sessionType === "call" &&
+  // currentSessionData.callEndsAt
+// ) {
+  // endMs = getTimeMs(currentSessionData.callEndsAt);
+// }
   if (!endMs) return false;
 
   return Date.now() > endMs;
@@ -324,13 +324,13 @@ function updateSessionUI(chat) {
   const expired = isSessionExpired(chat);
 let endMs = getTimeMs(chat.sessionEndsAt);
 
-if (
-  currentSessionData &&
-  currentSessionData.sessionType === "call" &&
-  currentSessionData.callEndsAt
-) {
-  endMs = getTimeMs(currentSessionData.callEndsAt);
-}
+// if (
+  // currentSessionData &&
+  // currentSessionData.sessionType === "call" &&
+  // currentSessionData.callEndsAt
+// ) {
+  // endMs = getTimeMs(currentSessionData.callEndsAt);
+// }
 
   if (sessionTimer) clearInterval(sessionTimer);
 
