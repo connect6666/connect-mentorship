@@ -720,14 +720,15 @@ async function startBookingPayment(mentorId, type, selectedDate, selectedSlot) {
   const bookingRateRef = doc(db, "rateLimits", "booking_" + user.uid);
 
   try {
-    const chatId = [user.uid, mentorId].sort().join("_");
-    const isCall = type === "call";
-    const amount = isCall ? 1 : 1;
-    const duration = isCall ? 30 : 15;
+  const isCall = type === "call";
+const amount = isCall ? 1 : 1;
+const duration = isCall ? 30 : 15;
 
-    const slotId = `${mentorId}_${selectedDate}_${cleanSlotId(selectedSlot)}`;
-    const slotRef = doc(db, "bookedSlots", slotId);
-    const sessionRef = doc(collection(db, "sessions"));
+const sessionRef = doc(collection(db, "sessions"));
+const chatId = `${user.uid}_${mentorId}_${sessionRef.id}`;
+
+const slotId = `${mentorId}_${selectedDate}_${cleanSlotId(selectedSlot)}`;
+const slotRef = doc(db, "bookedSlots", slotId);
 
     // 🔒 DOUBLE BOOKING PROTECTION
     await runTransaction(db, async (transaction) => {
@@ -823,14 +824,18 @@ await addDoc(collection(db, "notifications"), {
         });
 
       
-
-        await setDoc(doc(db, "chats", chatId), {
-          studentId: user.uid,
-          mentorId,
-          participants: [user.uid, mentorId],
-          status: "locked",
-          sessionId: sessionRef.id
-        });
+await setDoc(doc(db, "chats", chatId), {
+  studentId: user.uid,
+  mentorId,
+  participants: [user.uid, mentorId],
+  sessionId: sessionRef.id,
+  paymentStatus: "paid",
+  chatStatus: "locked",
+  status: "pending_admin",
+  sessionType: type,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp()
+});
 
       alert("Payment successful ✅ Waiting for admin approval. Chat will appear in My Chats after admin unlock.");
 
