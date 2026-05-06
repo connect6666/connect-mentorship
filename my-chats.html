@@ -298,8 +298,19 @@ function openPreview(chatId, otherUser, lastMessage, mentorId, currentPreviewSes
 
   <div class="chat-user-info">
     <h3>${escapeHTML(otherUser.name)}</h3>
+<p>
+  ${escapeHTML(chat.sessionType === "call" ? "📞 Call Session" : "💬 Chat Session")}
+  ${chat.status === "active" ? " • Active" : chat.status === "expired" ? " • Expired" : ""}
+</p>
 
-   <p>${escapeHTML(chat.lastMessage || (chat.status === "expired" ? "Session expired" : "Paid session chat"))}</p>
+<p>
+  Booked: ${escapeHTML(chat.scheduledDate || chat.date || "No date")}
+  ${escapeHTML(chat.scheduledTime || chat.timeSlot || "No time")}
+</p>
+
+<p>
+  ${escapeHTML(chat.lastMessage || "No message yet")}
+</p>
 
     <small style="color:${otherUser.isOnline ? '#22c55e' : '#9ca3af'};">
       ${otherUser.isOnline ? '● Online' : '● Offline'}
@@ -392,6 +403,12 @@ const otherUserId = chat.participants.find(id => id !== user.uid);
     otherUser
   });
 }
+
+allChats.sort((a, b) => {
+  const bTime = b.chat.createdAt?.seconds || b.chat.updatedAt?.seconds || 0;
+  const aTime = a.chat.createdAt?.seconds || a.chat.updatedAt?.seconds || 0;
+  return bTime - aTime;
+});
 
 renderChats(allChats);
 
